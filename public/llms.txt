@@ -1,0 +1,13 @@
+# Yaazhi
+
+> Boutique Inventory Management & Billing Platform
+
+Yaazhi is a specialized retail software designed for Indian boutique owners, saree emporiums, bespoke bridal ateliers, and designer apparel studios.
+
+## Core Capabilities
+- **Product & Weave Catalog**: Complete support for Kanchipuram pure silks, handloom cottons, Banarasi weaves, raw silk chudidars, and designer blouses with HSN codes and GST slab management (0%, 5%, 12%, 18%, 28%).
+- **Multi-Location Inventory & Valuation**: Live physical stock ledger across showroom counters, silk vaults, tailoring studios, and central stockrooms.
+- **Stock Movement Audit Ledger**: Immutable audit tracking for stock acquisitions, counter bill deductions, and physical count reconciliations with reason codes.
+- **Fast Counter POS & Billing**: Minimalist high-speed point of sale interface with rapid barcode scanning, instant line additions, tax calculations, and thermal invoice generation.
+- **Bespoke Tailoring Profiles**: Client measurement fitting templates for bridal blouses, chudidars, and lehengas.
+- **Procurement & Master Weavers**: Cooperative weaver purchase orders and stock receiving workflows.

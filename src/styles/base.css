@@ -1,0 +1,398 @@
+/* ==========================================================================
+   Yaazhi Base Styles & Core Components
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  background-color: var(--yz-bg-canvas);
+  color: var(--yz-text-primary);
+  font-family: var(--yz-font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography styles */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--yz-font-display);
+  font-weight: 600;
+  color: var(--yz-text-primary);
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+p, span, label, input, button, select, textarea {
+  font-family: var(--yz-font-body);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--yz-border-strong);
+  border-radius: var(--yz-radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--yz-text-muted);
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+.yz-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--yz-space-2);
+  padding: 0.5rem 1rem;
+  font-size: var(--yz-text-sm);
+  font-weight: 500;
+  line-height: 1.2;
+  border-radius: var(--yz-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  user-select: none;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.yz-btn:focus-visible {
+  outline: 2px solid var(--yz-border-focus);
+  outline-offset: 2px;
+}
+
+.yz-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.yz-btn-primary {
+  background-color: var(--yz-primary);
+  color: var(--yz-text-inverse);
+  box-shadow: var(--yz-shadow-xs);
+}
+.yz-btn-primary:hover:not(:disabled) {
+  background-color: var(--yz-primary-hover);
+}
+.yz-btn-primary:active:not(:disabled) {
+  background-color: var(--yz-primary-active);
+}
+
+.yz-btn-secondary {
+  background-color: var(--yz-bg-subtle);
+  color: var(--yz-text-primary);
+  border-color: var(--yz-border);
+}
+.yz-btn-secondary:hover:not(:disabled) {
+  background-color: var(--yz-bg-subtle-hover);
+  border-color: var(--yz-border-strong);
+}
+
+.yz-btn-gold {
+  background-color: var(--yz-gold);
+  color: #FFFFFF;
+}
+.yz-btn-gold:hover:not(:disabled) {
+  background-color: var(--yz-gold-hover);
+}
+
+.yz-btn-ghost {
+  background: transparent;
+  color: var(--yz-text-secondary);
+}
+.yz-btn-ghost:hover:not(:disabled) {
+  background-color: var(--yz-bg-subtle);
+  color: var(--yz-text-primary);
+}
+
+.yz-btn-danger {
+  background-color: var(--yz-status-out-stock-bg);
+  color: var(--yz-status-out-stock);
+  border-color: var(--yz-status-out-stock-border);
+}
+.yz-btn-danger:hover:not(:disabled) {
+  background-color: #FCA5A5;
+}
+
+.yz-btn-sm {
+  padding: 0.35rem 0.65rem;
+  font-size: var(--yz-text-xs);
+  border-radius: var(--yz-radius-sm);
+}
+
+.yz-btn-lg {
+  padding: 0.75rem 1.25rem;
+  font-size: var(--yz-text-base);
+  font-weight: 600;
+  border-radius: var(--yz-radius-lg);
+}
+
+/* ==========================================================================
+   Badges & Status Tags
+   ========================================================================== */
+.yz-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  font-size: var(--yz-text-xs);
+  font-weight: 600;
+  border-radius: var(--yz-radius-full);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.yz-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.yz-badge-in-stock {
+  background-color: var(--yz-status-in-stock-bg);
+  color: var(--yz-status-in-stock);
+  border-color: var(--yz-status-in-stock-border);
+}
+.yz-badge-in-stock .yz-badge-dot {
+  background-color: var(--yz-status-in-stock);
+}
+
+.yz-badge-low-stock {
+  background-color: var(--yz-status-low-stock-bg);
+  color: var(--yz-status-low-stock);
+  border-color: var(--yz-status-low-stock-border);
+}
+.yz-badge-low-stock .yz-badge-dot {
+  background-color: var(--yz-status-low-stock);
+}
+
+.yz-badge-out-stock {
+  background-color: var(--yz-status-out-stock-bg);
+  color: var(--yz-status-out-stock);
+  border-color: var(--yz-status-out-stock-border);
+}
+.yz-badge-out-stock .yz-badge-dot {
+  background-color: var(--yz-status-out-stock);
+}
+
+.yz-badge-category {
+  background-color: var(--yz-bg-subtle);
+  color: var(--yz-text-secondary);
+  border-color: var(--yz-border);
+}
+
+.yz-badge-gold {
+  background-color: var(--yz-gold-subtle);
+  color: var(--yz-gold-hover);
+  border-color: var(--yz-gold-border);
+}
+
+.yz-badge-crimson {
+  background-color: var(--yz-primary-subtle);
+  color: var(--yz-primary);
+  border-color: var(--yz-primary-border);
+}
+
+/* ==========================================================================
+   Form Controls
+   ========================================================================== */
+.yz-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: var(--yz-space-4);
+}
+
+.yz-label {
+  font-size: var(--yz-text-xs);
+  font-weight: 600;
+  color: var(--yz-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.yz-input, .yz-select, .yz-textarea {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  font-size: var(--yz-text-base);
+  color: var(--yz-text-primary);
+  background-color: var(--yz-bg-surface);
+  border: 1px solid var(--yz-border);
+  border-radius: var(--yz-radius-md);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+
+.yz-input:focus, .yz-select:focus, .yz-textarea:focus {
+  border-color: var(--yz-border-focus);
+  box-shadow: 0 0 0 3px var(--yz-primary-subtle);
+}
+
+.yz-input::placeholder, .yz-textarea::placeholder {
+  color: var(--yz-text-muted);
+}
+
+.yz-hint {
+  font-size: var(--yz-text-xs);
+  color: var(--yz-text-muted);
+}
+
+.yz-error-text {
+  font-size: var(--yz-text-xs);
+  color: var(--yz-status-out-stock);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Table Styles
+   ========================================================================== */
+.yz-table-container {
+  background: var(--yz-bg-surface);
+  border: 1px solid var(--yz-border);
+  border-radius: var(--yz-radius-lg);
+  box-shadow: var(--yz-shadow-sm);
+  overflow-x: auto;
+  position: relative;
+}
+
+.yz-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--yz-text-base);
+}
+
+.yz-table th {
+  background-color: var(--yz-bg-subtle);
+  padding: 0.75rem 1rem;
+  font-size: var(--yz-text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--yz-text-secondary);
+  border-bottom: 1px solid var(--yz-border);
+  white-space: nowrap;
+}
+
+.yz-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--yz-border-subtle);
+  color: var(--yz-text-primary);
+  vertical-align: middle;
+}
+
+.yz-table tr:last-child td {
+  border-bottom: none;
+}
+
+.yz-table tbody tr {
+  transition: background-color 0.12s ease;
+}
+
+.yz-table tbody tr:hover {
+  background-color: var(--yz-bg-surface-hover);
+}
+
+/* ==========================================================================
+   Cards & Content Blocks
+   ========================================================================== */
+.yz-card {
+  background: var(--yz-bg-surface);
+  border: 1px solid var(--yz-border);
+  border-radius: var(--yz-radius-lg);
+  padding: var(--yz-space-5);
+  box-shadow: var(--yz-shadow-sm);
+}
+
+.yz-stat-card {
+  background: var(--yz-bg-surface);
+  border: 1px solid var(--yz-border);
+  border-radius: var(--yz-radius-lg);
+  padding: var(--yz-space-4) var(--yz-space-5);
+  box-shadow: var(--yz-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--yz-space-1);
+}
+.yz-stat-label {
+  font-size: var(--yz-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--yz-text-muted);
+  font-weight: 600;
+}
+.yz-stat-value {
+  font-size: var(--yz-text-2xl);
+  font-family: var(--yz-font-display);
+  font-weight: 700;
+  color: var(--yz-text-primary);
+  line-height: 1.1;
+}
+.yz-stat-subtext {
+  font-size: var(--yz-text-xs);
+  color: var(--yz-text-secondary);
+}
+
+/* Modals */
+.yz-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(23, 19, 18, 0.65);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.yz-modal {
+  background: var(--yz-bg-surface);
+  border-radius: var(--yz-radius-xl);
+  box-shadow: var(--yz-shadow-modal);
+  border: 1px solid var(--yz-border);
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

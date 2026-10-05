@@ -1,0 +1,6 @@
+# Yaazhi Boutique Inventory & POS
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /settings/
+Sitemap: https://yaazhi.boutique/sitemap.xml

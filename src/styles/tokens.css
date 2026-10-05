@@ -1,0 +1,105 @@
+:root {
+  /* ==========================================================================
+     Yaazhi Design System Tokens
+     Theme: Warm Editorial Boutique (Silk, Linen, Crimson & Antique Brass)
+     ========================================================================== */
+
+  /* Typography */
+  --yz-font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', serif;
+  --yz-font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --yz-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Font Sizes */
+  --yz-text-xs: 0.75rem;     /* 12px */
+  --yz-text-sm: 0.8125rem;   /* 13px */
+  --yz-text-base: 0.875rem;  /* 14px */
+  --yz-text-md: 0.9375rem;   /* 15px */
+  --yz-text-lg: 1.0625rem;   /* 17px */
+  --yz-text-xl: 1.25rem;     /* 20px */
+  --yz-text-2xl: 1.5rem;     /* 24px */
+  --yz-text-3xl: 1.875rem;   /* 30px */
+
+  /* Canvases & Surfaces */
+  --yz-bg-canvas: #F8F6F1;             /* Warm Raw Silk / Linen Canvas */
+  --yz-bg-surface: #FFFFFF;            /* Pure Crisp Card Surface */
+  --yz-bg-surface-hover: #FCFAF7;
+  --yz-bg-subtle: #F1ECE3;             /* Soft Sand Neutral */
+  --yz-bg-subtle-hover: #E9E3D8;
+
+  /* Sidebar Deep Tonal Dark */
+  --yz-bg-sidebar: #171312;            /* Deep Espresso Noir */
+  --yz-bg-sidebar-hover: #26201F;
+  --yz-bg-sidebar-active: #382D2C;
+  --yz-border-sidebar: #2E2726;
+
+  /* Brand Signature: Heritage Crimson & Antique Gold */
+  --yz-primary: #852237;               /* Regal Silk Crimson */
+  --yz-primary-hover: #6E1B2D;
+  --yz-primary-active: #541422;
+  --yz-primary-subtle: #FAF0F2;
+  --yz-primary-border: #E8CCD2;
+
+  --yz-gold: #BD8D39;                  /* Antique Temple Brass / Zari Gold */
+  --yz-gold-hover: #A77A2C;
+  --yz-gold-subtle: #FAF5EB;
+  --yz-gold-border: #E9DDC2;
+
+  /* Text & Contrast */
+  --yz-text-primary: #1C1817;          /* Charcoal Black */
+  --yz-text-secondary: #5C5552;        /* Muted Warm Slate */
+  --yz-text-muted: #8E8580;            /* Soft Pebble */
+  --yz-text-inverse: #FFFFFF;
+  --yz-text-sidebar-muted: #9F9794;
+
+  /* Operational Status Tokens (Accessible + Color-checked) */
+  --yz-status-in-stock: #166534;
+  --yz-status-in-stock-bg: #DCFCE7;
+  --yz-status-in-stock-border: #BBF7D0;
+
+  --yz-status-low-stock: #9A3412;
+  --yz-status-low-stock-bg: #FFEDD5;
+  --yz-status-low-stock-border: #FED7AA;
+
+  --yz-status-out-stock: #991B1B;
+  --yz-status-out-stock-bg: #FEE2E2;
+  --yz-status-out-stock-border: #FECACA;
+
+  --yz-status-info: #1E40AF;
+  --yz-status-info-bg: #DBEAFE;
+  --yz-status-info-border: #BFDBFE;
+
+  /* Form & Interactive Tokens */
+  --yz-border: #E5DFD5;
+  --yz-border-subtle: #EFEBE4;
+  --yz-border-strong: #CEC6B9;
+  --yz-border-focus: #852237;
+
+  /* Radii */
+  --yz-radius-sm: 6px;
+  --yz-radius-md: 10px;
+  --yz-radius-lg: 14px;
+  --yz-radius-xl: 20px;
+  --yz-radius-full: 9999px;
+
+  /* Shadows - Warm, non-diffuse, editorial */
+  --yz-shadow-xs: 0 1px 2px rgba(28, 24, 23, 0.04);
+  --yz-shadow-sm: 0 2px 4px rgba(28, 24, 23, 0.05), 0 1px 2px rgba(28, 24, 23, 0.03);
+  --yz-shadow-md: 0 4px 12px rgba(28, 24, 23, 0.06), 0 2px 4px rgba(28, 24, 23, 0.03);
+  --yz-shadow-lg: 0 12px 28px rgba(28, 24, 23, 0.08), 0 4px 8px rgba(28, 24, 23, 0.04);
+  --yz-shadow-modal: 0 20px 48px -4px rgba(23, 19, 18, 0.22), 0 8px 16px rgba(23, 19, 18, 0.08);
+
+  /* Spacing */
+  --yz-space-1: 0.25rem;   /* 4px */
+  --yz-space-2: 0.5rem;    /* 8px */
+  --yz-space-3: 0.75rem;   /* 12px */
+  --yz-space-4: 1rem;      /* 16px */
+  --yz-space-5: 1.25rem;   /* 20px */
+  --yz-space-6: 1.5rem;    /* 24px */
+  --yz-space-8: 2rem;      /* 32px */
+  --yz-space-10: 2.5rem;   /* 40px */
+
+  /* Layout dimensions */
+  --yz-sidebar-width: 260px;
+  --yz-sidebar-collapsed-width: 76px;
+  --yz-header-height: 64px;
+}
