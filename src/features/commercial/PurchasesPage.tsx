@@ -1,30 +1,66 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Plus, Eye, CheckCircle2, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import {
+  Search,
+  Plus,
+  Loader2,
+  Trash2,
+  ChevronDown,
+  Check,
+  CheckCircle2,
+  Clock,
+  PackageCheck,
+} from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
+import { Pagination } from '../../components/common/Pagination';
+import { CustomDropdown } from '../../components/common/CustomDropdown';
+import { ProductSearchDropdown } from '../../components/common/ProductSearchDropdown';
+import { AddVendorModal } from './AddVendorModal';
 import { purchaseService, type PurchaseOrderData } from '../../services/purchaseService';
 import { supplierService, type VendorData } from '../../services/supplierService';
 import { productService } from '../../services/productService';
 import type { YaazhiProduct } from '../../types/product';
 import { useToast } from '../../components/common/Toast';
-import { CustomDropdown } from '../../components/common/CustomDropdown';
+import { usePagination } from '../../hooks/usePagination';
+
+interface POLineItemDraft {
+  productId: string;
+  productName: string;
+  sku: string;
+  orderedQty: number;
+  unitCost: number;
+  taxRate: number;
+}
 
 export const PurchasesPage: React.FC = () => {
   const [purchases, setPurchases] = useState<PurchaseOrderData[]>([]);
   const [vendors, setVendors] = useState<VendorData[]>([]);
   const [products, setProducts] = useState<YaazhiProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Search & Filter state
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ORDERED' | 'RECEIVED' | 'DRAFT' | 'CANCELLED'>('ALL');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_desc' | 'amount_asc' | 'po_asc'>('newest');
+
+  // Selected PO Details Modal
   const [selectedPO, setSelectedPO] = useState<PurchaseOrderData | null>(null);
 
-  // Create PO Modal
+  // Create PO Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedVendorId, setSelectedVendorId] = useState('');
-  const [selectedProductId, setSelectedProductId] = useState('');
-  const [orderQty, setOrderQty] = useState('5');
-  const [unitCost, setUnitCost] = useState('');
+  const [orderDate, setOrderDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [orderNotes, setOrderNotes] = useState('');
+  const [lineItems, setLineItems] = useState<POLineItemDraft[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Vendor Selector Dropdown State
+  const [isVendorDropdownOpen, setIsVendorDropdownOpen] = useState(false);
+  const [vendorSearch, setVendorSearch] = useState('');
+  const vendorDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Add Vendor Modal on top of PO
+  const [isAddVendorModalOpen, setIsAddVendorModalOpen] = useState(false);
 
   // Receiving PO State
   const [isReceiving, setIsReceiving] = useState<string | null>(null);
@@ -42,66 +78,184 @@ export const PurchasesPage: React.FC = () => {
       setPurchases(pos);
       setVendors(vList);
       setProducts(pList);
-      if (vList[0] && !selectedVendorId) setSelectedVendorId(vList[0].id);
-      if (pList[0] && !selectedProductId) {
-        setSelectedProductId(pList[0].id);
-        setUnitCost(String(pList[0].costPrice));
+
+      // Default first vendor if not yet selected
+      if (vList.length > 0 && !selectedVendorId) {
+        setSelectedVendorId(vList[0].id);
       }
     } catch {
       showToast({ type: 'error', title: 'Load Error', message: 'Could not load purchase orders' });
     } finally {
       setIsLoading(false);
     }
-  }, [selectedVendorId, selectedProductId, showToast]);
+  }, [selectedVendorId, showToast]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const handleProductSelectChange = (pId: string) => {
-    setSelectedProductId(pId);
-    const prod = products.find((p) => p.id === pId);
-    if (prod) {
-      setUnitCost(String(prod.costPrice));
+  // Click outside to close vendor dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (vendorDropdownRef.current && !vendorDropdownRef.current.contains(e.target as Node)) {
+        setIsVendorDropdownOpen(false);
+      }
+    };
+    if (isVendorDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
     }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isVendorDropdownOpen]);
+
+  // Initialize draft items when Create Modal opens
+  const handleOpenCreateModal = () => {
+    const initialProduct = products[0];
+    setOrderDate(new Date().toISOString().split('T')[0]);
+    setOrderNotes('');
+    if (initialProduct) {
+      setLineItems([
+        {
+          productId: initialProduct.id,
+          productName: initialProduct.name,
+          sku: initialProduct.sku,
+          orderedQty: 5,
+          unitCost: initialProduct.costPrice || 0,
+          taxRate: initialProduct.taxRate || 5.0,
+        },
+      ]);
+    } else {
+      setLineItems([]);
+    }
+    setIsCreateModalOpen(true);
   };
 
+  // Add line item row
+  const handleAddLineItem = () => {
+    // Find first product that is not already in lineItems
+    const existingIds = new Set(lineItems.map((it) => it.productId));
+    const nextAvailableProduct = products.find((p) => !existingIds.has(p.id)) || products[0];
+
+    if (!nextAvailableProduct) {
+      showToast({
+        type: 'warning',
+        title: 'Catalog Empty',
+        message: 'No products available in catalog to add.',
+      });
+      return;
+    }
+
+    setLineItems((prev) => [
+      ...prev,
+      {
+        productId: nextAvailableProduct.id,
+        productName: nextAvailableProduct.name,
+        sku: nextAvailableProduct.sku,
+        orderedQty: 5,
+        unitCost: nextAvailableProduct.costPrice || 0,
+        taxRate: nextAvailableProduct.taxRate || 5.0,
+      },
+    ]);
+  };
+
+  // Update line item
+  const handleUpdateLineItem = (index: number, updates: Partial<POLineItemDraft>) => {
+    setLineItems((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], ...updates };
+      return copy;
+    });
+  };
+
+  // Select product for line item
+  const handleSelectProduct = (index: number, prod: YaazhiProduct) => {
+    // Prevent accidental duplicate product rows
+    const isAlreadyAdded = lineItems.some((it, idx) => idx !== index && it.productId === prod.id);
+    if (isAlreadyAdded) {
+      showToast({
+        type: 'warning',
+        title: 'Duplicate SKU',
+        message: `${prod.name} (${prod.sku}) is already in this purchase order. Update its quantity instead.`,
+      });
+      return;
+    }
+
+    handleUpdateLineItem(index, {
+      productId: prod.id,
+      productName: prod.name,
+      sku: prod.sku,
+      unitCost: prod.costPrice || 0,
+      taxRate: prod.taxRate || 5.0,
+    });
+  };
+
+  // Remove line item
+  const handleRemoveLineItem = (index: number) => {
+    if (lineItems.length <= 1) return;
+    setLineItems((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  // Dynamic calculations for Create PO
+  const draftSubtotal = useMemo(() => {
+    return lineItems.reduce((sum, it) => sum + (it.orderedQty || 0) * (it.unitCost || 0), 0);
+  }, [lineItems]);
+
+  const draftTaxTotal = useMemo(() => {
+    return lineItems.reduce((sum, it) => {
+      const lineSubtotal = (it.orderedQty || 0) * (it.unitCost || 0);
+      return sum + (lineSubtotal * (it.taxRate || 5.0)) / 100;
+    }, 0);
+  }, [lineItems]);
+
+  const draftGrandTotal = draftSubtotal + draftTaxTotal;
+
+  // Submit PO
   const handleCreatePO = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedVendorId || !selectedProductId || Number(orderQty) <= 0) return;
+    if (!selectedVendorId) {
+      showToast({ type: 'warning', title: 'Vendor Required', message: 'Please select a supplier or vendor.' });
+      return;
+    }
+
+    if (lineItems.length === 0 || lineItems.some((it) => !it.productId || it.orderedQty <= 0)) {
+      showToast({
+        type: 'warning',
+        title: 'Invalid Line Items',
+        message: 'Please ensure every row has a product selected and quantity greater than 0.',
+      });
+      return;
+    }
 
     try {
       setIsSubmitting(true);
-      const prod = products.find((p) => p.id === selectedProductId);
       const vendor = vendors.find((v) => v.id === selectedVendorId);
 
       await purchaseService.create({
         supplier_id: selectedVendorId,
-        supplier_name: vendor?.name,
+        supplier_name: vendor?.name || 'Boutique Vendor',
+        order_date: orderDate,
         notes: orderNotes.trim() || undefined,
-        items: [
-          {
-            product_id: selectedProductId,
-            quantity: Number(orderQty),
-            unit_cost: Number(unitCost) || prod?.costPrice || 0,
-            tax_rate: prod?.taxRate || 5.0,
-          },
-        ],
+        items: lineItems.map((it) => ({
+          product_id: it.productId,
+          quantity: it.orderedQty,
+          unit_cost: it.unitCost,
+          tax_rate: it.taxRate,
+        })),
       });
 
       showToast({
         type: 'success',
-        title: 'PO Created',
-        message: `Generated purchase order for ${prod?.name}`,
+        title: 'Purchase Order Issued',
+        message: `Successfully created PO for ${vendor?.name || 'supplier'}`,
       });
 
       setIsCreateModalOpen(false);
-      setOrderNotes('');
       loadData();
     } catch (err: any) {
       showToast({
         type: 'error',
-        title: 'Error',
+        title: 'Creation Failed',
         message: err.message || 'Failed to create purchase order',
       });
     } finally {
@@ -109,38 +263,106 @@ export const PurchasesPage: React.FC = () => {
     }
   };
 
+  // Receive goods into inventory (GRN)
   const handleReceivePO = async (po: PurchaseOrderData) => {
     if (po.status === 'RECEIVED') return;
 
     try {
       setIsReceiving(po.id);
-      await purchaseService.receive(po.id, 'Counter receipt verified');
+      await purchaseService.receive(po.id, 'Counter receipt verified & stock posted to showroom ledger');
       showToast({
         type: 'success',
-        title: 'Goods Received',
-        message: `PO ${po.poNumber} stock received into inventory successfully`,
+        title: 'Goods Inward Completed',
+        message: `PO ${po.poNumber} stock received into showroom inventory successfully.`,
       });
-      loadData();
+      await loadData();
       if (selectedPO?.id === po.id) {
-        setSelectedPO({ ...selectedPO, status: 'RECEIVED' });
+        setSelectedPO((prev) => (prev ? { ...prev, status: 'RECEIVED' } : null));
       }
     } catch (err: any) {
       showToast({
         type: 'error',
-        title: 'Receive Failed',
-        message: err.message || 'Could not receive goods',
+        title: 'Receipt Failed',
+        message: err.message || 'Could not receive goods into stock',
       });
     } finally {
       setIsReceiving(null);
     }
   };
 
-  const filtered = purchases.filter(
-    (p) =>
-      p.poNumber.toLowerCase().includes(search.toLowerCase()) ||
-      p.vendorName.toLowerCase().includes(search.toLowerCase()) ||
-      p.itemsSummary.toLowerCase().includes(search.toLowerCase())
-  );
+  // Pipeline: DATA -> SEARCH -> FILTER -> SORT -> PAGINATE
+  // 1. Filtered by search
+  const searchedPurchases = useMemo(() => {
+    if (!search.trim()) return purchases;
+    const q = search.toLowerCase().trim();
+    return purchases.filter(
+      (p) =>
+        p.poNumber.toLowerCase().includes(q) ||
+        p.vendorName.toLowerCase().includes(q) ||
+        p.itemsSummary.toLowerCase().includes(q) ||
+        p.items.some(
+          (it) => it.productName.toLowerCase().includes(q) || it.sku.toLowerCase().includes(q)
+        ) ||
+        (p.notes && p.notes.toLowerCase().includes(q))
+    );
+  }, [purchases, search]);
+
+  // 2. Filtered by status
+  const statusFilteredPurchases = useMemo(() => {
+    if (statusFilter === 'ALL') return searchedPurchases;
+    return searchedPurchases.filter((p) => p.status === statusFilter);
+  }, [searchedPurchases, statusFilter]);
+
+  // 3. Sorted
+  const sortedPurchases = useMemo(() => {
+    const list = [...statusFilteredPurchases];
+    switch (sortBy) {
+      case 'newest':
+        return list.sort((a, b) => new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime());
+      case 'oldest':
+        return list.sort((a, b) => new Date(a.date || a.createdAt).getTime() - new Date(b.date || b.createdAt).getTime());
+      case 'amount_desc':
+        return list.sort((a, b) => b.totalAmount - a.totalAmount);
+      case 'amount_asc':
+        return list.sort((a, b) => a.totalAmount - b.totalAmount);
+      case 'po_asc':
+        return list.sort((a, b) => a.poNumber.localeCompare(b.poNumber));
+      default:
+        return list;
+    }
+  }, [statusFilteredPurchases, sortBy]);
+
+  // 4. Paginated
+  const {
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    totalItems,
+    paginatedItems,
+  } = usePagination({
+    items: sortedPurchases,
+    resetDependencies: [search, statusFilter, sortBy],
+  });
+
+  // Selected vendor object for create modal
+  const selectedVendor = useMemo(() => {
+    return vendors.find((v) => v.id === selectedVendorId);
+  }, [vendors, selectedVendorId]);
+
+  // Filtered vendors in dropdown
+  const filteredVendors = useMemo(() => {
+    if (!vendorSearch.trim()) return vendors;
+    const q = vendorSearch.toLowerCase().trim();
+    return vendors.filter(
+      (v) =>
+        v.name.toLowerCase().includes(q) ||
+        v.category.toLowerCase().includes(q) ||
+        v.city.toLowerCase().includes(q) ||
+        (v.contactPerson && v.contactPerson.toLowerCase().includes(q)) ||
+        (v.phone && v.phone.includes(q))
+    );
+  }, [vendors, vendorSearch]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -158,248 +380,498 @@ export const PurchasesPage: React.FC = () => {
           flexWrap: 'wrap',
         }}
       >
-        <div style={{ position: 'relative', width: '260px' }}>
-          <Search
-            size={13}
-            style={{
-              position: 'absolute',
-              left: '8px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--yz-text-muted)',
-            }}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '280px', flexWrap: 'wrap' }}>
+          {/* Search Box */}
+          <div style={{ position: 'relative', width: '260px' }}>
+            <Search
+              size={13}
+              style={{
+                position: 'absolute',
+                left: '8px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--yz-text-muted)',
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Search PO #, vendor, products..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="yz-input"
+              style={{ paddingLeft: '26px' }}
+            />
+          </div>
+
+          {/* Status Filter */}
+          <CustomDropdown
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val as any)}
+            options={[
+              { value: 'ALL', label: 'All Statuses' },
+              { value: 'ORDERED', label: 'Pending Delivery' },
+              { value: 'RECEIVED', label: 'Received (GRN)' },
+              { value: 'DRAFT', label: 'Draft' },
+              { value: 'CANCELLED', label: 'Cancelled' },
+            ]}
+            prefixLabel="Status:"
+            minWidth="140px"
           />
-          <input
-            type="text"
-            placeholder="Search PO #, weaver, or line items..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="yz-input"
-            style={{ paddingLeft: '26px' }}
+
+          {/* Sort By */}
+          <CustomDropdown
+            value={sortBy}
+            onChange={(val) => setSortBy(val as any)}
+            options={[
+              { value: 'newest', label: 'Newest First' },
+              { value: 'oldest', label: 'Oldest First' },
+              { value: 'amount_desc', label: 'Highest Amount' },
+              { value: 'amount_asc', label: 'Lowest Amount' },
+              { value: 'po_asc', label: 'PO # (A-Z)' },
+            ]}
+            prefixLabel="Sort:"
+            minWidth="140px"
           />
         </div>
 
-        <Button
-          variant="primary"
-          size="sm"
-          icon={<Plus size={14} />}
-          onClick={() => setIsCreateModalOpen(true)}
-        >
-          Create Purchase Order
-        </Button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '11px', color: 'var(--yz-text-muted)', fontFamily: 'var(--yz-font-mono)' }}>
+            {totalItems} {totalItems === 1 ? 'order' : 'orders'}
+          </span>
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<Plus size={14} />}
+            onClick={handleOpenCreateModal}
+          >
+            Create Purchase Order
+          </Button>
+        </div>
       </div>
 
-      {/* Clean Compact Single-Line Purchases Table */}
+      {/* Clean Compact ERP Purchases Table (NO ACTIONS COLUMN, ENTIRE ROW CLICKABLE) */}
       <div className="yz-table-container">
         <table className="yz-table">
           <thead>
             <tr>
-              <th style={{ width: '120px' }}>PO Number</th>
-              <th>Weaver / Vendor</th>
-              <th style={{ width: '100px' }}>Order Date</th>
-              <th>Items & Weaves</th>
-              <th style={{ width: '60px', textAlign: 'center' }}>Units</th>
-              <th style={{ width: '110px', textAlign: 'right' }}>Total Cost</th>
-              <th style={{ width: '100px', textAlign: 'center' }}>Status</th>
-              <th style={{ width: '90px', textAlign: 'center' }}>Action</th>
+              <th style={{ width: '130px' }}>PO NUMBER</th>
+              <th style={{ minWidth: '180px' }}>VENDOR</th>
+              <th style={{ width: '105px' }}>DATE</th>
+              <th>PRODUCTS</th>
+              <th style={{ width: '120px', textAlign: 'right' }}>TOTAL AMOUNT</th>
+              <th style={{ width: '125px', textAlign: 'center' }}>STATUS</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '24px' }}>
+                <td colSpan={6} style={{ textAlign: 'center', padding: '28px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                     <Loader2 size={16} className="animate-spin" />
                     <span>Loading purchase orders from database...</span>
                   </div>
                 </td>
               </tr>
-            ) : filtered.length === 0 ? (
+            ) : paginatedItems.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: 'var(--yz-text-muted)' }}>
+                <td colSpan={6} style={{ textAlign: 'center', padding: '28px', color: 'var(--yz-text-muted)' }}>
                   No purchase orders found matching search criteria.
                 </td>
               </tr>
             ) : (
-              filtered.map((p) => (
-                <tr
-                  key={p.id}
-                  onClick={() => setSelectedPO(p)}
-                  style={{ cursor: 'pointer' }}
-                  title="Click to view purchase order lines"
-                >
-                  <td style={{ fontWeight: 600, fontFamily: 'var(--yz-font-mono)' }}>
-                    {p.poNumber}
-                  </td>
-                  <td>
-                    <div className="yz-cell-truncate" style={{ maxWidth: '180px' }}>
-                      {p.vendorName}
-                    </div>
-                  </td>
-                  <td style={{ fontSize: '11px', color: 'var(--yz-text-muted)' }}>
-                    {p.date}
-                  </td>
-                  <td>
-                    <div className="yz-cell-truncate" style={{ maxWidth: '240px' }} title={p.itemsSummary}>
-                      {p.itemsSummary}
-                    </div>
-                  </td>
-                  <td style={{ textAlign: 'center', fontFamily: 'var(--yz-font-mono)' }}>
-                    {p.itemsCount}
-                  </td>
-                  <td
-                    style={{
-                      textAlign: 'right',
-                      fontWeight: 600,
-                      fontFamily: 'var(--yz-font-mono)',
-                    }}
+              paginatedItems.map((p) => {
+                const isOrdered = p.status === 'ORDERED';
+                const isReceived = p.status === 'RECEIVED';
+
+                return (
+                  <tr
+                    key={p.id}
+                    onClick={() => setSelectedPO(p)}
+                    style={{ cursor: 'pointer' }}
+                    title="Click row to view purchase order details"
                   >
-                    ₹{p.totalAmount.toLocaleString('en-IN')}
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <span
+                    {/* PO NUMBER */}
+                    <td style={{ fontWeight: 700, fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-primary, #832729)' }}>
+                      {p.poNumber}
+                    </td>
+
+                    {/* VENDOR */}
+                    <td>
+                      <div className="yz-cell-truncate" style={{ maxWidth: '240px', fontWeight: 600 }}>
+                        {p.vendorName}
+                      </div>
+                    </td>
+
+                    {/* DATE */}
+                    <td style={{ fontSize: '11px', color: 'var(--yz-text-secondary)', fontFamily: 'var(--yz-font-mono)' }}>
+                      {p.date}
+                    </td>
+
+                    {/* PRODUCTS */}
+                    <td>
+                      <div className="yz-cell-truncate" style={{ maxWidth: '340px' }} title={p.itemsSummary}>
+                        {p.itemsSummary || `${p.itemsCount} line items`}
+                      </div>
+                    </td>
+
+                    {/* TOTAL AMOUNT */}
+                    <td
                       style={{
-                        padding: '1px 6px',
-                        borderRadius: 'var(--yz-radius-sm)',
-                        fontSize: '10.5px',
-                        fontWeight: 600,
-                        backgroundColor:
-                          p.status === 'RECEIVED'
+                        textAlign: 'right',
+                        fontWeight: 700,
+                        fontFamily: 'var(--yz-font-mono)',
+                      }}
+                      className="tabular-nums"
+                    >
+                      ₹{p.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+
+                    {/* STATUS */}
+                    <td style={{ textAlign: 'center' }}>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '2px 8px',
+                          borderRadius: 'var(--yz-radius-sm)',
+                          fontSize: '10.5px',
+                          fontWeight: 700,
+                          backgroundColor: isReceived
                             ? '#DCFCE7'
-                            : p.status === 'ORDERED'
+                            : isOrdered
                             ? '#FEF3C7'
                             : 'var(--yz-bg-subtle)',
-                        color:
-                          p.status === 'RECEIVED'
+                          color: isReceived
                             ? '#166534'
-                            : p.status === 'ORDERED'
+                            : isOrdered
                             ? '#92400E'
                             : 'var(--yz-text-muted)',
-                      }}
-                    >
-                      {p.status}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                      {p.status === 'ORDERED' && (
-                        <button
-                          className="yz-btn yz-btn-primary yz-btn-sm"
-                          style={{ padding: '2px 6px', height: '22px', fontSize: '10.5px', backgroundColor: '#166534' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleReceivePO(p);
-                          }}
-                          disabled={isReceiving === p.id}
-                          title="Receive goods into inventory"
-                        >
-                          {isReceiving === p.id ? '...' : 'Receive'}
-                        </button>
-                      )}
-                      <button
-                        className="yz-btn yz-btn-secondary yz-btn-sm"
-                        style={{ padding: '2px 5px', height: '22px' }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedPO(p);
+                          border: isReceived
+                            ? '1px solid #BBF7D0'
+                            : isOrdered
+                            ? '1px solid #FDE68A'
+                            : '1px solid var(--yz-border)',
                         }}
-                        title="View PO Details"
                       >
-                        <Eye size={12} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                        {isReceived ? (
+                          <>
+                            <CheckCircle2 size={11} />
+                            <span>RECEIVED</span>
+                          </>
+                        ) : isOrdered ? (
+                          <>
+                            <Clock size={11} />
+                            <span>ORDERED</span>
+                          </>
+                        ) : (
+                          <span>{p.status}</span>
+                        )}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
+
+        {/* Compact Shared Pagination Bar */}
+        <Pagination
+          currentPage={currentPage}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          itemLabel="purchase orders"
+        />
       </div>
 
-      {/* Purchase Order Details Modal */}
+      {/* Informational Purchase Order Detail Modal */}
       {selectedPO && (
         <Modal
           isOpen={true}
           onClose={() => setSelectedPO(null)}
-          title={`Purchase Order: ${selectedPO.poNumber}`}
-          size="md"
+          title={`Purchase Order ${selectedPO.poNumber}`}
+          subtitle={`Vendor: ${selectedPO.vendorName} • Order Date: ${selectedPO.date}`}
+          maxWidth="680px"
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Top Order Information Cards */}
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: '8px',
+                gridTemplateColumns: '1.2fr 1fr',
+                gap: '10px',
                 backgroundColor: 'var(--yz-bg-subtle)',
-                padding: '8px 10px',
+                padding: '10px 12px',
                 borderRadius: 'var(--yz-radius-sm)',
                 border: '1px solid var(--yz-border)',
+                fontSize: '11.5px',
               }}
             >
+              {/* Supplier / Vendor Details */}
               <div>
-                <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)' }}>WEAVER / VENDOR</div>
-                <div style={{ fontSize: '12px', fontWeight: 600 }}>{selectedPO.vendorName}</div>
+                <strong
+                  style={{
+                    display: 'block',
+                    fontSize: '10px',
+                    textTransform: 'uppercase',
+                    color: 'var(--yz-text-muted)',
+                    marginBottom: '3px',
+                  }}
+                >
+                  Vendor & Guild Details:
+                </strong>
+                <div style={{ fontWeight: 600, color: 'var(--yz-text-primary)' }}>
+                  {selectedPO.vendorName}
+                </div>
+                {selectedPO.supplierPhone && (
+                  <div style={{ color: 'var(--yz-text-secondary)', fontSize: '11px', marginTop: '1px' }}>
+                    Phone: {selectedPO.supplierPhone}
+                  </div>
+                )}
+                {selectedPO.supplierAddress && (
+                  <div style={{ color: 'var(--yz-text-muted)', fontSize: '11px', marginTop: '1px' }}>
+                    Address: {selectedPO.supplierAddress}
+                  </div>
+                )}
+                {selectedPO.supplierGstin && (
+                  <div style={{ color: 'var(--yz-text-muted)', fontSize: '10.5px', marginTop: '1px', fontFamily: 'var(--yz-font-mono)' }}>
+                    GSTIN: {selectedPO.supplierGstin}
+                  </div>
+                )}
               </div>
+
+              {/* Order & Showroom Details */}
               <div>
-                <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)' }}>ORDER DATE</div>
-                <div style={{ fontSize: '12px', fontWeight: 600 }}>{selectedPO.date}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)' }}>STATUS</div>
-                <div style={{ fontSize: '12px', fontWeight: 600 }}>{selectedPO.status}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)' }}>TOTAL VALUE</div>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--yz-primary)' }}>
-                  ₹{selectedPO.totalAmount.toLocaleString('en-IN')}
+                <strong
+                  style={{
+                    display: 'block',
+                    fontSize: '10px',
+                    textTransform: 'uppercase',
+                    color: 'var(--yz-text-muted)',
+                    marginBottom: '3px',
+                  }}
+                >
+                  Order & Warehouse Details:
+                </strong>
+                <div style={{ color: 'var(--yz-text-secondary)', fontSize: '11px' }}>
+                  Order Date: <strong style={{ color: 'var(--yz-text-primary)' }}>{selectedPO.date}</strong>
+                </div>
+                <div style={{ color: 'var(--yz-text-secondary)', fontSize: '11px', marginTop: '1px' }}>
+                  Receiving Desk: <strong style={{ color: 'var(--yz-text-primary)' }}>{selectedPO.location}</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--yz-text-muted)' }}>Status:</span>
+                  <span
+                    style={{
+                      padding: '1px 6px',
+                      borderRadius: '3px',
+                      fontSize: '10.5px',
+                      fontWeight: 700,
+                      backgroundColor:
+                        selectedPO.status === 'RECEIVED' ? '#DCFCE7' : '#FEF3C7',
+                      color:
+                        selectedPO.status === 'RECEIVED' ? '#166534' : '#92400E',
+                    }}
+                  >
+                    {selectedPO.status === 'RECEIVED' ? 'RECEIVED (INVENTORY POSTED)' : 'PENDING DELIVERY'}
+                  </span>
                 </div>
               </div>
             </div>
 
-            <div style={{ fontSize: '12px', fontWeight: 600 }}>Itemized Procurement Lines</div>
-            <div className="yz-table-container">
-              <table className="yz-table">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th style={{ width: '90px' }}>SKU</th>
-                    <th style={{ width: '60px', textAlign: 'center' }}>Qty</th>
-                    <th style={{ width: '90px', textAlign: 'right' }}>Unit Cost</th>
-                    <th style={{ width: '90px', textAlign: 'right' }}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedPO.items.map((it, idx) => (
-                    <tr key={idx}>
-                      <td>{it.productName}</td>
-                      <td style={{ fontFamily: 'var(--yz-font-mono)' }}>{it.sku}</td>
-                      <td style={{ textAlign: 'center' }}>{it.quantity}</td>
-                      <td style={{ textAlign: 'right' }}>₹{it.unitCost.toLocaleString('en-IN')}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 600 }}>
-                        ₹{(it.total || it.quantity * it.unitCost).toLocaleString('en-IN')}
-                      </td>
+            {/* Itemized Procurement Lines */}
+            <div>
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: 'var(--yz-text-secondary)',
+                  marginBottom: '4px',
+                }}
+              >
+                Itemized Procurement Lines
+              </div>
+              <div className="yz-table-container">
+                <table className="yz-table">
+                  <thead>
+                    <tr>
+                      <th>Product Description</th>
+                      <th style={{ width: '100px' }}>SKU</th>
+                      <th style={{ width: '60px', textAlign: 'center' }}>Qty</th>
+                      <th style={{ width: '100px', textAlign: 'right' }}>Unit Cost</th>
+                      <th style={{ width: '110px', textAlign: 'right' }}>Line Total</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {selectedPO.items.map((it, idx) => (
+                      <tr key={idx}>
+                        <td style={{ fontWeight: 500 }}>{it.productName}</td>
+                        <td
+                          style={{
+                            fontFamily: 'var(--yz-font-mono)',
+                            fontSize: '11px',
+                            color: 'var(--yz-text-secondary)',
+                          }}
+                        >
+                          {it.sku}
+                        </td>
+                        <td style={{ textAlign: 'center', fontFamily: 'var(--yz-font-mono)' }}>
+                          {it.quantity}
+                        </td>
+                        <td
+                          style={{ textAlign: 'right', fontFamily: 'var(--yz-font-mono)' }}
+                          className="tabular-nums"
+                        >
+                          ₹{it.unitCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td
+                          style={{ textAlign: 'right', fontWeight: 600, fontFamily: 'var(--yz-font-mono)' }}
+                          className="tabular-nums"
+                        >
+                          ₹{(it.total || it.quantity * it.unitCost).toLocaleString('en-IN', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            {selectedPO.notes && (
-              <div style={{ fontSize: '11px', color: 'var(--yz-text-muted)', fontStyle: 'italic' }}>
-                Procurement Notes: {selectedPO.notes}
+            {/* Financial Summary & Notes */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: '12px',
+                borderTop: '1px solid var(--yz-border)',
+                paddingTop: '8px',
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                {selectedPO.notes && (
+                  <div style={{ fontSize: '11px', color: 'var(--yz-text-muted)', fontStyle: 'italic' }}>
+                    Procurement Notes: {selectedPO.notes}
+                  </div>
+                )}
+                {selectedPO.status === 'RECEIVED' ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '11px',
+                      color: '#166534',
+                      backgroundColor: '#F0FDF4',
+                      padding: '4px 8px',
+                      borderRadius: 'var(--yz-radius-sm)',
+                      border: '1px solid #BBF7D0',
+                      marginTop: '6px',
+                    }}
+                  >
+                    <PackageCheck size={13} />
+                    <span>Stock verified & credited to showroom inventory ledger.</span>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '11px',
+                      color: '#92400E',
+                      backgroundColor: '#FEF3C7',
+                      padding: '4px 8px',
+                      borderRadius: 'var(--yz-radius-sm)',
+                      border: '1px solid #FDE68A',
+                      marginTop: '6px',
+                    }}
+                  >
+                    <Clock size={13} />
+                    <span>Awaiting shipment delivery from artisan loom guild.</span>
+                  </div>
+                )}
               </div>
-            )}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
+              <div
+                style={{
+                  width: '220px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '3px',
+                  fontSize: '11.5px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--yz-text-muted)' }}>Subtotal:</span>
+                  <span style={{ fontFamily: 'var(--yz-font-mono)' }}>
+                    ₹{(selectedPO.subtotal || selectedPO.totalAmount * 0.9523).toLocaleString('en-IN', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--yz-text-muted)' }}>GST (5%):</span>
+                  <span style={{ fontFamily: 'var(--yz-font-mono)' }}>
+                    ₹{(selectedPO.taxTotal || selectedPO.totalAmount * 0.0477).toLocaleString('en-IN', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    borderTop: '1px solid var(--yz-border)',
+                    paddingTop: '3px',
+                    marginTop: '2px',
+                  }}
+                >
+                  <strong style={{ color: 'var(--yz-text-primary)' }}>Grand Total:</strong>
+                  <strong
+                    style={{
+                      fontFamily: 'var(--yz-font-mono)',
+                      color: 'var(--yz-primary, #832729)',
+                      fontSize: '12px',
+                    }}
+                  >
+                    ₹{selectedPO.totalAmount.toLocaleString('en-IN', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer with Actions */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '8px',
+                marginTop: '6px',
+                borderTop: '1px solid var(--yz-border)',
+                paddingTop: '10px',
+              }}
+            >
               {selectedPO.status === 'ORDERED' && (
                 <Button
                   variant="primary"
                   size="sm"
-                  icon={<CheckCircle2 size={13} />}
+                  icon={<PackageCheck size={14} />}
                   onClick={() => handleReceivePO(selectedPO)}
                   disabled={isReceiving === selectedPO.id}
+                  style={{ backgroundColor: '#166534' }}
                 >
-                  {isReceiving === selectedPO.id ? 'Receiving...' : 'Receive into Stock'}
+                  {isReceiving === selectedPO.id ? 'Processing Receipt...' : 'Receive Goods into Stock (GRN)'}
                 </Button>
               )}
               <Button variant="secondary" size="sm" onClick={() => setSelectedPO(null)}>
@@ -410,84 +882,453 @@ export const PurchasesPage: React.FC = () => {
         </Modal>
       )}
 
-      {/* Create Purchase Order Modal */}
+      {/* Reworked Invenaro-Style Create Purchase Order Modal */}
       {isCreateModalOpen && (
         <Modal
           isOpen={true}
           onClose={() => !isSubmitting && setIsCreateModalOpen(false)}
-          title="Create New Purchase Order"
-          size="md"
+          title="Create Purchase Order (PO)"
+          subtitle="Issues a formal procurement order to an artisanal supplier or weaver guild"
+          maxWidth="720px"
         >
-          <form onSubmit={handleCreatePO} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <div>
-                <label className="yz-label">Select Weaver / Vendor *</label>
-                <CustomDropdown
-                  value={selectedVendorId}
-                  onChange={(val) => setSelectedVendorId(String(val))}
-                  options={vendors.map((v) => ({
-                    value: v.id,
-                    label: `${v.name} (${v.city})`,
-                  }))}
-                  minWidth="100%"
-                  style={{ width: '100%' }}
-                />
+          <form onSubmit={handleCreatePO} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Top Fields: Vendor Selector & Order Date */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '10px' }}>
+              {/* Supplier / Vendor with custom dropdown + Create New Vendor */}
+              <div ref={vendorDropdownRef} style={{ position: 'relative' }}>
+                <label className="yz-label">Supplier / Vendor *</label>
+                <button
+                  id="po-vendor-dropdown-btn"
+                  type="button"
+                  onClick={() => setIsVendorDropdownOpen((prev) => !prev)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '6px',
+                    height: '30px',
+                    padding: '0 8px',
+                    borderRadius: 'var(--yz-radius-sm)',
+                    border: '1px solid var(--yz-border)',
+                    backgroundColor: 'var(--yz-bg-surface)',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    color: 'var(--yz-text-primary)',
+                    textAlign: 'left',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <span
+                    style={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontWeight: selectedVendor ? 600 : 400,
+                    }}
+                  >
+                    {selectedVendor ? `${selectedVendor.name} (${selectedVendor.city || selectedVendor.category})` : 'Select vendor / supplier...'}
+                  </span>
+                  <ChevronDown
+                    size={13}
+                    style={{
+                      flexShrink: 0,
+                      color: 'var(--yz-text-muted)',
+                      transform: isVendorDropdownOpen ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.15s ease',
+                    }}
+                  />
+                </button>
+
+                {/* Vendor Dropdown Menu */}
+                {isVendorDropdownOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 3px)',
+                      left: 0,
+                      right: 0,
+                      backgroundColor: 'var(--yz-bg-surface)',
+                      border: '1px solid var(--yz-border)',
+                      borderRadius: 'var(--yz-radius-sm)',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+                      zIndex: 80,
+                      padding: '6px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
+                      maxHeight: '260px',
+                    }}
+                  >
+                    {/* Search vendors... */}
+                    <div style={{ position: 'relative' }}>
+                      <Search
+                        size={12}
+                        style={{
+                          position: 'absolute',
+                          left: '7px',
+                          top: '50%',
+                          transform: 'translateY(-50)',
+                          color: 'var(--yz-text-muted)',
+                        }}
+                      />
+                      <input
+                        type="text"
+                        autoFocus
+                        placeholder="Search vendors..."
+                        value={vendorSearch}
+                        onChange={(e) => setVendorSearch(e.target.value)}
+                        className="yz-input"
+                        style={{ height: '26px', fontSize: '11px', paddingLeft: '24px', width: '100%', boxSizing: 'border-box' }}
+                      />
+                    </div>
+
+                    {/* Vendors List */}
+                    <div
+                      style={{
+                        overflowY: 'auto',
+                        maxHeight: '160px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1px',
+                      }}
+                    >
+                      {filteredVendors.length === 0 ? (
+                        <div style={{ padding: '8px', fontSize: '11px', color: 'var(--yz-text-muted)', textAlign: 'center' }}>
+                          No matching vendor found
+                        </div>
+                      ) : (
+                        filteredVendors.map((v) => {
+                          const isSelected = selectedVendorId === v.id;
+                          return (
+                            <button
+                              key={v.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedVendorId(v.id);
+                                setIsVendorDropdownOpen(false);
+                                setVendorSearch('');
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '5px 8px',
+                                borderRadius: 'var(--yz-radius-sm)',
+                                border: 'none',
+                                backgroundColor: isSelected ? 'var(--yz-primary-subtle, #FDF2F4)' : 'transparent',
+                                cursor: 'pointer',
+                                textAlign: 'left',
+                                fontSize: '11px',
+                                color: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-text-primary)',
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isSelected) e.currentTarget.style.backgroundColor = '#F1F5F9';
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
+                              }}
+                            >
+                              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <div style={{ fontWeight: isSelected ? 600 : 500 }}>{v.name}</div>
+                                <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)' }}>
+                                  {v.category} {v.city ? `• ${v.city}` : ''} {v.phone ? `• ${v.phone}` : ''}
+                                </div>
+                              </div>
+                              {isSelected && <Check size={13} style={{ color: 'var(--yz-primary, #832729)' }} />}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    {/* + Create New Vendor Action Button */}
+                    <div style={{ borderTop: '1px solid var(--yz-border)', paddingTop: '4px', marginTop: '2px' }}>
+                      <button
+                        id="po-create-vendor-btn"
+                        type="button"
+                        onClick={() => {
+                          setIsVendorDropdownOpen(false);
+                          setIsAddVendorModalOpen(true);
+                        }}
+                        className="yz-btn yz-btn-ghost yz-btn-sm"
+                        style={{
+                          width: '100%',
+                          justifyContent: 'flex-start',
+                          color: 'var(--yz-primary, #832729)',
+                          fontWeight: 600,
+                          fontSize: '11px',
+                          height: '26px',
+                          padding: '0 6px',
+                          gap: '4px',
+                        }}
+                      >
+                        <Plus size={12} />
+                        <span>Create New Vendor</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
+              {/* Order Date */}
               <div>
-                <label className="yz-label">Select Product / Weave *</label>
-                <CustomDropdown
-                  value={selectedProductId}
-                  onChange={(val) => handleProductSelectChange(String(val))}
-                  options={products.map((p) => ({
-                    value: p.id,
-                    label: `${p.name} (${p.sku})`,
-                  }))}
-                  minWidth="100%"
-                  style={{ width: '100%' }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <div>
-                <label className="yz-label">Order Quantity (Units) *</label>
+                <label className="yz-label">Order Date *</label>
                 <input
-                  type="number"
-                  min="1"
+                  type="date"
+                  value={orderDate}
+                  onChange={(e) => setOrderDate(e.target.value)}
                   className="yz-input"
-                  value={orderQty}
-                  onChange={(e) => setOrderQty(e.target.value)}
                   required
+                  style={{ height: '30px', fontSize: '11px', fontFamily: 'var(--yz-font-mono)' }}
                 />
               </div>
+            </div>
 
+            {/* Line Items Editor */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--yz-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Line Items ({lineItems.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAddLineItem}
+                  className="yz-btn yz-btn-ghost yz-btn-sm"
+                  style={{
+                    color: 'var(--yz-primary, #832729)',
+                    fontWeight: 700,
+                    fontSize: '11px',
+                    height: '24px',
+                    padding: '0 6px',
+                    gap: '4px',
+                  }}
+                >
+                  <Plus size={13} />
+                  <span>Add SKU</span>
+                </button>
+              </div>
+
+              {/* Table Column Headers */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 70px 95px 95px 28px',
+                  gap: '6px',
+                  padding: '0 4px',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  color: 'var(--yz-text-muted)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                <span>Product Catalog</span>
+                <span style={{ textAlign: 'center' }}>Qty</span>
+                <span style={{ textAlign: 'right' }}>Unit Cost</span>
+                <span style={{ textAlign: 'right' }}>Line Total</span>
+                <span></span>
+              </div>
+
+              {/* Line Item Rows */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {lineItems.map((item, index) => {
+                  const lineTotal = (item.orderedQty || 0) * (item.unitCost || 0);
+
+                  return (
+                    <div
+                      key={index}
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 70px 95px 95px 28px',
+                        gap: '6px',
+                        alignItems: 'center',
+                        backgroundColor: '#F8FAFC',
+                        padding: '6px 8px',
+                        borderRadius: 'var(--yz-radius-sm)',
+                        border: '1px solid var(--yz-border)',
+                      }}
+                    >
+                      {/* Product Catalog Search Dropdown */}
+                      <ProductSearchDropdown
+                        products={products}
+                        selectedProductId={item.productId}
+                        disabledProductIds={lineItems
+                          .map((l, i) => (i !== index ? l.productId : ''))
+                          .filter(Boolean)}
+                        onSelect={(prod) => handleSelectProduct(index, prod)}
+                      />
+
+                      {/* Quantity Input */}
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.orderedQty || ''}
+                        onChange={(e) =>
+                          handleUpdateLineItem(index, {
+                            orderedQty: parseInt(e.target.value, 10) || 1,
+                          })
+                        }
+                        className="yz-input"
+                        style={{
+                          height: '30px',
+                          textAlign: 'center',
+                          fontSize: '11px',
+                          fontFamily: 'var(--yz-font-mono)',
+                          padding: '0 4px',
+                        }}
+                      />
+
+                      {/* Unit Cost Input */}
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.unitCost}
+                        onChange={(e) =>
+                          handleUpdateLineItem(index, {
+                            unitCost: parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        className="yz-input"
+                        style={{
+                          height: '30px',
+                          textAlign: 'right',
+                          fontSize: '11px',
+                          fontFamily: 'var(--yz-font-mono)',
+                          padding: '0 6px',
+                        }}
+                      />
+
+                      {/* Line Total */}
+                      <div
+                        style={{
+                          textAlign: 'right',
+                          fontWeight: 700,
+                          fontFamily: 'var(--yz-font-mono)',
+                          fontSize: '11px',
+                          color: 'var(--yz-text-primary)',
+                        }}
+                        className="tabular-nums"
+                      >
+                        ₹{lineTotal.toLocaleString('en-IN', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </div>
+
+                      {/* Remove Button */}
+                      <div style={{ textAlign: 'center' }}>
+                        {lineItems.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveLineItem(index)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              color: 'var(--yz-text-muted)',
+                              padding: '2px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '2px',
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = '#DC2626')}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--yz-text-muted)')}
+                            title="Remove SKU"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Procurement Notes & Dynamic Totals Summary */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1.2fr 1fr',
+                gap: '12px',
+                borderTop: '1px solid var(--yz-border)',
+                paddingTop: '8px',
+              }}
+            >
               <div>
-                <label className="yz-label">Negotiated Unit Cost (₹) *</label>
-                <input
-                  type="number"
-                  min="0"
+                <label className="yz-label">Procurement & Loom Notes</label>
+                <textarea
                   className="yz-input"
-                  value={unitCost}
-                  onChange={(e) => setUnitCost(e.target.value)}
-                  required
+                  rows={2}
+                  placeholder="e.g. Traditional loom order, certified mulberry silk lot"
+                  value={orderNotes}
+                  onChange={(e) => setOrderNotes(e.target.value)}
+                  style={{ height: 'auto', padding: '6px', fontSize: '11px', width: '100%', boxSizing: 'border-box' }}
                 />
+              </div>
+
+              {/* Totals Box */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  backgroundColor: '#F8FAFC',
+                  padding: '8px 10px',
+                  borderRadius: 'var(--yz-radius-sm)',
+                  border: '1px solid var(--yz-border)',
+                  fontSize: '11.5px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--yz-text-muted)' }}>Subtotal:</span>
+                  <span style={{ fontFamily: 'var(--yz-font-mono)' }}>
+                    ₹{draftSubtotal.toLocaleString('en-IN', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--yz-text-muted)' }}>GST (5%):</span>
+                  <span style={{ fontFamily: 'var(--yz-font-mono)' }}>
+                    ₹{draftTaxTotal.toLocaleString('en-IN', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    borderTop: '1px solid var(--yz-border)',
+                    paddingTop: '4px',
+                    marginTop: '2px',
+                  }}
+                >
+                  <strong style={{ color: 'var(--yz-text-primary)' }}>Grand Total:</strong>
+                  <strong
+                    style={{
+                      fontFamily: 'var(--yz-font-mono)',
+                      color: 'var(--yz-primary, #832729)',
+                      fontSize: '12px',
+                    }}
+                  >
+                    ₹{draftGrandTotal.toLocaleString('en-IN', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="yz-label">Procurement & Loom Notes</label>
-              <textarea
-                className="yz-input"
-                rows={2}
-                placeholder="e.g. Traditional loom order, certified silver zari lot"
-                value={orderNotes}
-                onChange={(e) => setOrderNotes(e.target.value)}
-                style={{ height: 'auto', padding: '6px' }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
+            {/* Modal Footer */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
               <Button
                 variant="secondary"
                 size="sm"
@@ -497,13 +1338,30 @@ export const PurchasesPage: React.FC = () => {
               >
                 Cancel
               </Button>
-              <Button variant="primary" size="sm" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating...' : 'Create Order'}
+              <Button
+                variant="primary"
+                size="sm"
+                type="submit"
+                disabled={isSubmitting || !selectedVendorId || lineItems.length === 0}
+              >
+                {isSubmitting ? 'Issuing PO...' : 'Issue Purchase Order'}
               </Button>
             </div>
           </form>
         </Modal>
       )}
+
+      {/* Embedded Add Vendor Modal triggered directly from PO vendor selector */}
+      <AddVendorModal
+        isOpen={isAddVendorModalOpen}
+        onClose={() => setIsAddVendorModalOpen(false)}
+        onVendorCreated={(newVendor) => {
+          // Add to vendors list and auto-select
+          setVendors((prev) => [newVendor, ...prev]);
+          setSelectedVendorId(newVendor.id);
+          setIsAddVendorModalOpen(false);
+        }}
+      />
     </div>
   );
 };

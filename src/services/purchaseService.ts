@@ -19,9 +19,14 @@ export interface PurchaseOrderData {
   date: string;
   itemsCount: number;
   totalAmount: number;
+  subtotal?: number;
+  taxTotal?: number;
   status: 'DRAFT' | 'ORDERED' | 'RECEIVED' | 'CANCELLED';
   location: string;
   godownId?: string;
+  supplierPhone?: string;
+  supplierAddress?: string;
+  supplierGstin?: string;
   itemsSummary: string;
   notes?: string;
   items: PurchaseOrderItemData[];
@@ -41,6 +46,7 @@ class PurchaseService {
     supplier_id?: string;
     supplier_name?: string;
     godown_id?: string;
+    order_date?: string;
     notes?: string;
     items: {
       product_id: string;

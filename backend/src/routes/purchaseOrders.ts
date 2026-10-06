@@ -37,9 +37,14 @@ router.get('/', async (_req, res): Promise<void> => {
         orderDate: p.order_date,
         itemsCount,
         totalAmount: Number(p.grand_total),
+        subtotal: Number(p.subtotal),
+        taxTotal: Number(p.tax_total),
         status: p.status, // ORDERED, RECEIVED, DRAFT, CANCELLED
         location: p.godown?.name || 'Main Showroom Counter',
         godownId: p.godown_id,
+        supplierPhone: p.supplier_phone || p.supplier?.phone || undefined,
+        supplierAddress: p.supplier_address || p.supplier?.address || undefined,
+        supplierGstin: p.supplier_gstin || p.supplier?.gstin || undefined,
         itemsSummary,
         notes: p.notes,
         items: p.items.map((it) => ({
@@ -111,6 +116,7 @@ router.post('/', async (req, res): Promise<void> => {
       supplier_id: supplierId,
       supplier_name: supplierName || 'Direct Loom Guild',
       godown_id: req.body.godown_id || req.body.godownId,
+      order_date: req.body.order_date || req.body.orderDate || new Date().toISOString(),
       items: rawItems,
     };
 
@@ -127,6 +133,7 @@ router.post('/', async (req, res): Promise<void> => {
       supplier_address,
       supplier_gstin,
       godown_id,
+      order_date,
       notes,
       items,
     } = parsed.data;
@@ -182,6 +189,7 @@ router.post('/', async (req, res): Promise<void> => {
         supplier_address,
         supplier_gstin,
         godown_id: targetGodownId!,
+        order_date: order_date ? new Date(order_date) : new Date(),
         status: POStatus.ORDERED,
         subtotal,
         tax_total: taxTotal,

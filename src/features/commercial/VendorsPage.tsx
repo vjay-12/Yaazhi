@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Plus, Eye, Loader2 } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
+import { AddVendorModal } from './AddVendorModal';
 import { supplierService, type VendorData } from '../../services/supplierService';
 import { useToast } from '../../components/common/Toast';
-import { CustomDropdown } from '../../components/common/CustomDropdown';
 
 export const VendorsPage: React.FC = () => {
   const [vendors, setVendors] = useState<VendorData[]>([]);
@@ -14,15 +14,6 @@ export const VendorsPage: React.FC = () => {
 
   // Add Vendor Modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newContactPerson, setNewContactPerson] = useState('');
-  const [newCategory, setNewCategory] = useState('Fabric Supplier');
-  const [newPhone, setNewPhone] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [newCity, setNewCity] = useState('Kanchipuram');
-  const [newGstin, setNewGstin] = useState('');
-  const [newNotes, setNewNotes] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { showToast } = useToast();
 
@@ -42,48 +33,7 @@ export const VendorsPage: React.FC = () => {
     loadVendors();
   }, [loadVendors]);
 
-  const handleCreateVendor = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newName.trim()) return;
 
-    try {
-      setIsSubmitting(true);
-      const created = await supplierService.create({
-        name: newName.trim(),
-        contactPerson: newContactPerson.trim() || undefined,
-        category: newCategory,
-        vendorType: newCategory,
-        phone: newPhone.trim() || undefined,
-        email: newEmail.trim() || undefined,
-        city: newCity.trim(),
-        gstin: newGstin.trim() || undefined,
-        notes: newNotes.trim() || undefined,
-      });
-
-      showToast({
-        type: 'success',
-        title: 'Vendor Added',
-        message: `Registered ${created.name} in procurement master`,
-      });
-
-      setIsAddModalOpen(false);
-      setNewName('');
-      setNewContactPerson('');
-      setNewPhone('');
-      setNewEmail('');
-      setNewGstin('');
-      setNewNotes('');
-      loadVendors();
-    } catch (err: any) {
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: err.message || 'Could not register vendor',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -290,130 +240,11 @@ export const VendorsPage: React.FC = () => {
       )}
 
       {/* Add Vendor Modal */}
-      {isAddModalOpen && (
-        <Modal
-          isOpen={true}
-          onClose={() => !isSubmitting && setIsAddModalOpen(false)}
-          title="Add New Weaver / Vendor"
-          size="sm"
-        >
-          <form onSubmit={handleCreateVendor} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div>
-              <label className="yz-label">Vendor / Weaver Guild Name *</label>
-              <input
-                type="text"
-                className="yz-input"
-                required
-                placeholder="e.g. Arani Silk Weavers Cooperative"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <div>
-                <label className="yz-label">Specialization / Type</label>
-                <CustomDropdown
-                  value={newCategory}
-                  onChange={(val) => setNewCategory(String(val))}
-                  options={[
-                    { value: 'Fabric Supplier', label: 'Fabric Supplier' },
-                    { value: 'Master Weaver', label: 'Master Weaver' },
-                    { value: 'Lace / Border Supplier', label: 'Lace / Border Supplier' },
-                    { value: 'Textile Mill', label: 'Textile Mill' },
-                    { value: 'Zari Artisan', label: 'Zari Artisan' },
-                  ]}
-                  minWidth="100%"
-                  style={{ width: '100%' }}
-                />
-              </div>
-              <div>
-                <label className="yz-label">Contact Person</label>
-                <input
-                  type="text"
-                  className="yz-input"
-                  placeholder="Master Weaver Shanmugam"
-                  value={newContactPerson}
-                  onChange={(e) => setNewContactPerson(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <div>
-                <label className="yz-label">Phone Number</label>
-                <input
-                  type="text"
-                  className="yz-input"
-                  placeholder="+91 94432 12345"
-                  value={newPhone}
-                  onChange={(e) => setNewPhone(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="yz-label">City / Town</label>
-                <input
-                  type="text"
-                  className="yz-input"
-                  placeholder="Kanchipuram"
-                  value={newCity}
-                  onChange={(e) => setNewCity(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <div>
-                <label className="yz-label">GSTIN</label>
-                <input
-                  type="text"
-                  className="yz-input"
-                  placeholder="33AAAAA1234A1Z5"
-                  value={newGstin}
-                  onChange={(e) => setNewGstin(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="yz-label">Email Address</label>
-                <input
-                  type="email"
-                  className="yz-input"
-                  placeholder="vendor@guild.in"
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="yz-label">Notes & Looms Details</label>
-              <textarea
-                className="yz-input"
-                rows={2}
-                placeholder="e.g. Traditional pit looms, certified mulberry silk lot provider"
-                value={newNotes}
-                onChange={(e) => setNewNotes(e.target.value)}
-                style={{ height: 'auto', padding: '6px' }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
-              <Button
-                variant="secondary"
-                size="sm"
-                type="button"
-                onClick={() => setIsAddModalOpen(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button variant="primary" size="sm" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : 'Save Vendor'}
-              </Button>
-            </div>
-          </form>
-        </Modal>
-      )}
+      <AddVendorModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onVendorCreated={() => loadVendors()}
+      />
     </div>
   );
 };
