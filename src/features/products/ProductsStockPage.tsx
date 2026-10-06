@@ -4,13 +4,12 @@ import {
   Edit2,
   Archive,
   RotateCcw,
-  SlidersHorizontal,
   Package,
   RefreshCw,
   Loader2,
 } from 'lucide-react';
 import type { YaazhiProduct, BoutiqueCategory, StockStatus } from '../../types/product';
-import type { StockSummary, BoutiqueLocation } from '../../types/inventory';
+import type { StockSummary } from '../../types/inventory';
 import { productService } from '../../services/productService';
 import { inventoryService } from '../../services/inventoryService';
 import { StockBadge, CategoryBadge } from '../../components/common/Badge';
@@ -20,7 +19,6 @@ import { TableSkeleton } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { CustomDropdown, type DropdownOption } from '../../components/common/CustomDropdown';
 import { ProductModal } from './ProductModal';
-import { StockAdjustmentModal } from '../inventory/StockAdjustmentModal';
 import { useToast } from '../../components/common/Toast';
 import { ProductImage } from '../../components/common/ProductImage';
 import { Pagination } from '../../components/common/Pagination';
@@ -78,13 +76,11 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
   const { showToast } = useToast();
   const [products, setProducts] = useState<YaazhiProduct[]>([]);
   const [summary, setSummary] = useState<StockSummary | null>(null);
-  const [locations, setLocations] = useState<BoutiqueLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Filters
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<BoutiqueCategory | 'ALL'>('ALL');
-  const [selectedLocation, setSelectedLocation] = useState<string>('ALL');
   const [stockStatusFilter, setStockStatusFilter] = useState<StockStatus | 'ARCHIVED' | 'ALL'>('ALL');
   const [sortBy, setSortBy] = useState<'name' | 'sellPrice' | 'currentStock' | 'createdAt'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -92,7 +88,6 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
   // Modals & Action states
   const [isAddModalOpen, setIsAddModalOpen] = useState(isAddModalOpenInitially);
   const [productToEdit, setProductToEdit] = useState<YaazhiProduct | null>(null);
-  const [adjustProduct, setAdjustProduct] = useState<YaazhiProduct | null>(null);
   const [productToArchive, setProductToArchive] = useState<YaazhiProduct | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
 
@@ -105,7 +100,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [allProducts, stockSummary, allLocations] = await Promise.all([
+      const [allProducts, stockSummary] = await Promise.all([
         productService.list({
           search,
           category: selectedCategory,
@@ -114,12 +109,10 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
           sortOrder,
         }),
         inventoryService.getStockSummary(),
-        inventoryService.getLocations(),
       ]);
 
       setProducts(allProducts);
       setSummary(stockSummary);
-      setLocations(allLocations);
     } catch (err: any) {
       showToast({
         type: 'error',
@@ -196,13 +189,6 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
     }
   };
 
-  // Filter products by location if selected
-  const displayedProducts = products.filter((p) => {
-    if (selectedLocation === 'ALL') return true;
-    const locStock = p.locationStock[selectedLocation] || 0;
-    return locStock > 0;
-  });
-
   const {
     currentPage,
     setCurrentPage,
@@ -211,8 +197,8 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
     totalItems,
     paginatedItems,
   } = usePagination({
-    items: displayedProducts,
-    resetDependencies: [search, selectedCategory, selectedLocation, stockStatusFilter, sortBy, sortOrder],
+    items: products,
+    resetDependencies: [search, selectedCategory, stockStatusFilter, sortBy, sortOrder],
   });
 
   const lowStockCount = summary?.lowStockCount || 0;
@@ -220,11 +206,6 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
 
   // Active products count
   const activeProductsCount = products.filter((p) => !p.isArchived && p.isActive !== false).length;
-
-  const locationOptions: DropdownOption[] = [
-    { value: 'ALL', label: 'All Counters & Vaults' },
-    ...locations.map((loc) => ({ value: loc.id, label: loc.name })),
-  ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -328,14 +309,6 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
             minWidth="125px"
           />
 
-          {/* Counter / Vault Dropdown */}
-          <CustomDropdown
-            value={selectedLocation}
-            onChange={(val) => setSelectedLocation(String(val))}
-            options={locationOptions}
-            minWidth="145px"
-          />
-
           {/* Status Dropdown */}
           <CustomDropdown
             value={stockStatusFilter}
@@ -385,28 +358,27 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
 
       {/* Main Dense Table */}
       {isLoading ? (
-        <TableSkeleton rows={8} columns={9} />
-      ) : displayedProducts.length === 0 ? (
+        <TableSkeleton rows={8} columns={8} />
+      ) : products.length === 0 ? (
         <EmptyState
           icon={<Package size={24} />}
           title={stockStatusFilter === 'ARCHIVED' ? 'No archived products' : 'No products found'}
           description={
             stockStatusFilter === 'ARCHIVED'
               ? 'There are currently no archived products in the boutique catalog.'
-              : search || selectedCategory !== 'ALL' || stockStatusFilter !== 'ALL' || selectedLocation !== 'ALL'
+              : search || selectedCategory !== 'ALL' || stockStatusFilter !== 'ALL'
               ? 'No products match your active search or filter criteria.'
               : 'Your boutique catalog is empty. Add your first silk weave or designer garment to begin.'
           }
           actionLabel={
-            search || selectedCategory !== 'ALL' || stockStatusFilter !== 'ALL' || selectedLocation !== 'ALL'
+            search || selectedCategory !== 'ALL' || stockStatusFilter !== 'ALL'
               ? 'Reset Filters'
               : 'Add Product'
           }
           onAction={() => {
-            if (search || selectedCategory !== 'ALL' || stockStatusFilter !== 'ALL' || selectedLocation !== 'ALL') {
+            if (search || selectedCategory !== 'ALL' || stockStatusFilter !== 'ALL') {
               setSearch('');
               setSelectedCategory('ALL');
-              setSelectedLocation('ALL');
               setStockStatusFilter('ALL');
             } else {
               setIsAddModalOpen(true);
@@ -418,24 +390,19 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
           <table className="yz-table" style={{ width: '100%' }}>
             <thead>
               <tr>
-                <th style={{ minWidth: '260px', paddingLeft: '12px' }}>PRODUCT & WEAVE</th>
-                <th style={{ width: '115px' }}>CATEGORY</th>
-                <th style={{ width: '95px' }}>SKU</th>
-                <th style={{ width: '65px', textAlign: 'center' }}>UNITS</th>
-                <th style={{ width: '85px', textAlign: 'right' }}>COST</th>
-                <th style={{ width: '85px', textAlign: 'right' }}>RETAIL</th>
-                <th style={{ width: '65px', textAlign: 'center' }}>REORDER</th>
-                <th style={{ width: '110px' }}>STATUS</th>
-                <th style={{ width: '85px', textAlign: 'center', paddingRight: '12px' }}>ACTIONS</th>
+                <th style={{ minWidth: '180px', paddingLeft: '12px', textAlign: 'left' }}>PRODUCT & WEAVE</th>
+                <th style={{ width: '110px', textAlign: 'left' }}>CATEGORY</th>
+                <th style={{ width: '95px', textAlign: 'left' }}>SKU</th>
+                <th style={{ width: '80px', textAlign: 'right' }}>COST</th>
+                <th style={{ width: '80px', textAlign: 'right' }}>RETAIL</th>
+                <th style={{ width: '60px', textAlign: 'center' }}>REORDER</th>
+                <th style={{ width: '105px', textAlign: 'left' }}>STATUS</th>
+                <th style={{ width: '65px', textAlign: 'right', paddingRight: '12px' }}>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {paginatedItems.map((product) => {
                 const status = productService.getStockStatus(product);
-                const displayStock =
-                  selectedLocation === 'ALL'
-                    ? product.currentStock
-                    : product.locationStock[selectedLocation] || 0;
 
                 return (
                   <tr
@@ -445,8 +412,8 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
                     style={{ cursor: 'pointer', height: '35px' }}
                   >
                     {/* PRODUCT & WEAVE: Single-line with ellipsis */}
-                    <td style={{ paddingLeft: '12px', whiteSpace: 'nowrap' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                    <td style={{ paddingLeft: '12px', textAlign: 'left', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
                         <ProductImage
                           src={product.imageUrl}
                           alt={product.name}
@@ -458,11 +425,12 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
                           iconSize={12}
                         />
                         <div
+                          className="yz-cell-truncate"
                           style={{
+                            maxWidth: '260px',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
-                            maxWidth: '300px',
                           }}
                           title={`${product.name}${product.craft ? ` (${product.craft})` : ''}`}
                         >
@@ -479,26 +447,13 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
                     </td>
 
                     {/* CATEGORY */}
-                    <td style={{ whiteSpace: 'nowrap' }}>
+                    <td style={{ textAlign: 'left', whiteSpace: 'nowrap' }}>
                       <CategoryBadge category={product.category} />
                     </td>
 
                     {/* SKU */}
-                    <td style={{ fontFamily: 'var(--yz-font-mono)', fontSize: '11px', color: 'var(--yz-text-secondary)', whiteSpace: 'nowrap' }}>
+                    <td style={{ textAlign: 'left', fontFamily: 'var(--yz-font-mono)', fontSize: '11px', color: 'var(--yz-text-secondary)', whiteSpace: 'nowrap' }}>
                       {product.sku}
-                    </td>
-
-                    {/* UNITS */}
-                    <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                      <span
-                        style={{
-                          fontWeight: 700,
-                          fontSize: '12px',
-                          fontFamily: 'var(--yz-font-mono)',
-                        }}
-                      >
-                        {displayStock}
-                      </span>
                     </td>
 
                     {/* COST */}
@@ -526,34 +481,31 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
                     </td>
 
                     {/* STATUS */}
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      <StockBadge status={status} stockCount={displayStock} />
+                    <td style={{ textAlign: 'left', whiteSpace: 'nowrap' }}>
+                      <StockBadge status={status} stockCount={product.currentStock} />
                     </td>
 
-                    {/* ACTIONS: Fixed width */}
-                    <td style={{ textAlign: 'center', paddingRight: '12px', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
+                    {/* ACTIONS: Fixed width, right-aligned */}
+                    <td
+                      style={{
+                        textAlign: 'right',
+                        paddingRight: '12px',
+                        whiteSpace: 'nowrap',
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <div
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '3px',
-                          width: '76px',
+                          justifyContent: 'flex-end',
+                          gap: '4px',
+                          width: '100%',
                           height: '22px',
                         }}
                       >
                         {!product.isArchived ? (
                           <>
-                            <button
-                              type="button"
-                              onClick={() => setAdjustProduct(product)}
-                              className="yz-btn yz-btn-ghost yz-btn-sm"
-                              title="Adjust Stock Count"
-                              style={{ width: '22px', height: '22px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                            >
-                              <SlidersHorizontal size={12} />
-                            </button>
-
                             <button
                               type="button"
                               onClick={() => {
@@ -633,21 +585,6 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
         }}
         onSubmit={handleCreateOrUpdate}
         productToEdit={productToEdit}
-      />
-
-      {/* Stock Adjustment Modal */}
-      <StockAdjustmentModal
-        isOpen={!!adjustProduct}
-        onClose={() => setAdjustProduct(null)}
-        product={adjustProduct}
-        onStockAdjusted={() => {
-          showToast({
-            type: 'success',
-            title: 'Stock Reconciled',
-            message: 'Physical stock updated and recorded in audit ledger.',
-          });
-          loadData();
-        }}
       />
 
       {/* Archive Product Confirmation Modal */}
