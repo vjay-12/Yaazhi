@@ -46,7 +46,7 @@ router.get('/', async (req, res): Promise<void> => {
 
     const result = suppliers.map((s) => {
       const activeOrders = s.purchase_orders.filter(
-        (po) => po.status === 'ORDERED' || po.status === 'DRAFT'
+        (po) => po.status === 'ORDERED'
       ).length;
 
       const nonCancelledPOs = s.purchase_orders.filter((po) => po.status !== 'CANCELLED');
@@ -113,7 +113,7 @@ router.get('/:id', async (req, res): Promise<void> => {
     const nonCancelledPOs = pos.filter((po) => po.status !== 'CANCELLED');
     const totalPurchaseValue = nonCancelledPOs.reduce((sum, po) => sum + Number(po.grand_total), 0);
 
-    const pendingPOs = pos.filter((po) => po.status === 'ORDERED' || po.status === 'DRAFT');
+    const pendingPOs = pos.filter((po) => po.status === 'ORDERED');
     const pendingPoCount = pendingPOs.length;
     const pendingPoValue = pendingPOs.reduce((sum, po) => sum + Number(po.grand_total), 0);
 
@@ -128,7 +128,7 @@ router.get('/:id', async (req, res): Promise<void> => {
       totalAmount: Number(po.grand_total),
       subtotal: Number(po.subtotal),
       taxTotal: Number(po.tax_total),
-      status: po.status,
+      status: po.status === 'RECEIVED' ? 'RECEIVED' : po.status === 'CANCELLED' ? 'CANCELLED' : 'ORDERED',
       itemsCount: po.items.reduce((sum, it) => sum + Number(it.quantity), 0),
       location: po.godown?.name || 'Main Showroom Counter',
       items: po.items.map((it) => ({

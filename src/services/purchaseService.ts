@@ -11,6 +11,8 @@ export interface PurchaseOrderItemData {
   total?: number;
 }
 
+export type PurchaseOrderStatus = 'ORDERED' | 'RECEIVED' | 'CANCELLED';
+
 export interface PurchaseOrderData {
   id: string;
   poNumber: string;
@@ -21,7 +23,7 @@ export interface PurchaseOrderData {
   totalAmount: number;
   subtotal?: number;
   taxTotal?: number;
-  status: 'DRAFT' | 'ORDERED' | 'RECEIVED' | 'CANCELLED';
+  status: PurchaseOrderStatus;
   location: string;
   godownId?: string;
   supplierPhone?: string;
@@ -60,6 +62,10 @@ class PurchaseService {
 
   public async receive(id: string, notes?: string): Promise<any> {
     return api.post<any>(`/purchase-orders/${id}/receive`, { notes });
+  }
+
+  public async cancel(id: string, reason?: string): Promise<any> {
+    return api.post<any>(`/purchase-orders/${id}/cancel`, { reason });
   }
 }
 

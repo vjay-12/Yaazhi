@@ -1238,6 +1238,7 @@ export const VendorsPage: React.FC = () => {
                                   <td style={{ textAlign: 'center' }}>
                                     <span
                                       style={{
+                                        display: 'inline-block',
                                         padding: '1px 6px',
                                         borderRadius: 'var(--yz-radius-sm)',
                                         fontSize: '10px',
@@ -1247,16 +1248,26 @@ export const VendorsPage: React.FC = () => {
                                             ? '#DCFCE7'
                                             : po.status === 'ORDERED'
                                             ? '#FEF3C7'
-                                            : 'var(--yz-bg-subtle)',
+                                            : '#FEE2E2',
                                         color:
                                           po.status === 'RECEIVED'
                                             ? '#166534'
                                             : po.status === 'ORDERED'
                                             ? '#92400E'
-                                            : 'var(--yz-text-muted)',
+                                            : '#991B1B',
+                                        border:
+                                          po.status === 'RECEIVED'
+                                            ? '1px solid #BBF7D0'
+                                            : po.status === 'ORDERED'
+                                            ? '1px solid #FDE68A'
+                                            : '1px solid #FECACA',
                                       }}
                                     >
-                                      {po.status}
+                                      {po.status === 'RECEIVED'
+                                        ? 'Received'
+                                        : po.status === 'ORDERED'
+                                        ? 'Ordered'
+                                        : 'Cancelled'}
                                     </span>
                                   </td>
                                 </tr>

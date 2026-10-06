@@ -6,6 +6,14 @@ import { MovementType, POStatus } from '@prisma/client';
 
 const router = Router();
 
+// Canonical PO Status normalizer
+const normalizePOStatus = (status: any): 'ORDERED' | 'RECEIVED' | 'CANCELLED' => {
+  if (status === 'RECEIVED') return 'RECEIVED';
+  if (status === 'CANCELLED') return 'CANCELLED';
+  // Maps PENDING_DELIVERY, Pending Delivery, DRAFT, etc. to ORDERED
+  return 'ORDERED';
+};
+
 // GET /api/purchase-orders - list purchase orders
 router.get('/', async (_req, res): Promise<void> => {
   try {
@@ -39,7 +47,7 @@ router.get('/', async (_req, res): Promise<void> => {
         totalAmount: Number(p.grand_total),
         subtotal: Number(p.subtotal),
         taxTotal: Number(p.tax_total),
-        status: p.status, // ORDERED, RECEIVED, DRAFT, CANCELLED
+        status: normalizePOStatus(p.status), // Canonical: ORDERED, RECEIVED, CANCELLED
         location: p.godown?.name || 'Main Showroom Counter',
         godownId: p.godown_id,
         supplierPhone: p.supplier_phone || p.supplier?.phone || undefined,
@@ -291,6 +299,50 @@ router.post('/:id/receive', async (req, res): Promise<void> => {
     console.error('Receive PO error:', err);
     const status = err.message.includes('not found') ? 404 : 400;
     res.status(status).json({ error: err.message || 'Failed to receive purchase order' });
+  }
+});
+
+// POST /api/purchase-orders/:id/cancel - Cancel PO
+router.post('/:id/cancel', async (req, res): Promise<void> => {
+  const poId = req.params.id;
+  try {
+    const po = await prisma.purchaseOrder.findUnique({
+      where: { id: poId },
+    });
+
+    if (!po) {
+      res.status(404).json({ error: 'Purchase order not found' });
+      return;
+    }
+
+    if (po.status === POStatus.RECEIVED) {
+      res.status(400).json({ error: 'Cannot cancel an already received purchase order' });
+      return;
+    }
+
+    if (po.status === POStatus.CANCELLED) {
+      res.status(400).json({ error: 'Purchase order is already cancelled' });
+      return;
+    }
+
+    const updatedPO = await prisma.purchaseOrder.update({
+      where: { id: po.id },
+      data: { status: POStatus.CANCELLED },
+      include: {
+        supplier: true,
+        godown: true,
+        items: { include: { product: true } },
+      },
+    });
+
+    res.json({
+      success: true,
+      message: `Purchase order ${updatedPO.po_number} cancelled`,
+      po: updatedPO,
+    });
+  } catch (err: any) {
+    console.error('Cancel PO error:', err);
+    res.status(500).json({ error: err.message || 'Failed to cancel purchase order' });
   }
 });
 

@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   Clock,
   PackageCheck,
+  XCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
@@ -16,7 +18,7 @@ import { Pagination } from '../../components/common/Pagination';
 import { CustomDropdown } from '../../components/common/CustomDropdown';
 import { ProductSearchDropdown } from '../../components/common/ProductSearchDropdown';
 import { AddVendorModal } from './AddVendorModal';
-import { purchaseService, type PurchaseOrderData } from '../../services/purchaseService';
+import { purchaseService, type PurchaseOrderData, type PurchaseOrderStatus } from '../../services/purchaseService';
 import { supplierService, type VendorData } from '../../services/supplierService';
 import { productService } from '../../services/productService';
 import type { YaazhiProduct } from '../../types/product';
@@ -40,11 +42,15 @@ export const PurchasesPage: React.FC = () => {
 
   // Search & Filter state
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ORDERED' | 'RECEIVED' | 'DRAFT' | 'CANCELLED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | PurchaseOrderStatus>('ALL');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_desc' | 'amount_asc' | 'po_asc'>('newest');
 
   // Selected PO Details Modal
   const [selectedPO, setSelectedPO] = useState<PurchaseOrderData | null>(null);
+
+  // Cancel PO Confirmation Modal State
+  const [poToCancel, setPoToCancel] = useState<PurchaseOrderData | null>(null);
+  const [isCancelling, setIsCancelling] = useState<string | null>(null);
 
   // Create PO Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -290,6 +296,33 @@ export const PurchasesPage: React.FC = () => {
     }
   };
 
+  // Cancel PO handler
+  const handleConfirmCancelPO = async () => {
+    if (!poToCancel) return;
+    try {
+      setIsCancelling(poToCancel.id);
+      await purchaseService.cancel(poToCancel.id, 'Cancelled by showroom manager');
+      showToast({
+        type: 'success',
+        title: 'Purchase Order Cancelled',
+        message: `PO ${poToCancel.poNumber} has been cancelled successfully.`,
+      });
+      await loadData();
+      if (selectedPO?.id === poToCancel.id) {
+        setSelectedPO((prev) => (prev ? { ...prev, status: 'CANCELLED' } : null));
+      }
+      setPoToCancel(null);
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Cancellation Failed',
+        message: err.message || 'Could not cancel purchase order',
+      });
+    } finally {
+      setIsCancelling(null);
+    }
+  };
+
   // Pipeline: DATA -> SEARCH -> FILTER -> SORT -> PAGINATE
   // 1. Filtered by search
   const searchedPurchases = useMemo(() => {
@@ -409,9 +442,8 @@ export const PurchasesPage: React.FC = () => {
             onChange={(val) => setStatusFilter(val as any)}
             options={[
               { value: 'ALL', label: 'All Statuses' },
-              { value: 'ORDERED', label: 'Pending Delivery' },
-              { value: 'RECEIVED', label: 'Received (GRN)' },
-              { value: 'DRAFT', label: 'Draft' },
+              { value: 'ORDERED', label: 'Ordered' },
+              { value: 'RECEIVED', label: 'Received' },
               { value: 'CANCELLED', label: 'Cancelled' },
             ]}
             prefixLabel="Status:"
@@ -480,9 +512,6 @@ export const PurchasesPage: React.FC = () => {
               </tr>
             ) : (
               paginatedItems.map((p) => {
-                const isOrdered = p.status === 'ORDERED';
-                const isReceived = p.status === 'RECEIVED';
-
                 return (
                   <tr
                     key={p.id}
@@ -537,35 +566,41 @@ export const PurchasesPage: React.FC = () => {
                           borderRadius: 'var(--yz-radius-sm)',
                           fontSize: '10.5px',
                           fontWeight: 700,
-                          backgroundColor: isReceived
-                            ? '#DCFCE7'
-                            : isOrdered
-                            ? '#FEF3C7'
-                            : 'var(--yz-bg-subtle)',
-                          color: isReceived
-                            ? '#166534'
-                            : isOrdered
-                            ? '#92400E'
-                            : 'var(--yz-text-muted)',
-                          border: isReceived
-                            ? '1px solid #BBF7D0'
-                            : isOrdered
-                            ? '1px solid #FDE68A'
-                            : '1px solid var(--yz-border)',
+                          backgroundColor:
+                            p.status === 'RECEIVED'
+                              ? '#DCFCE7'
+                              : p.status === 'ORDERED'
+                              ? '#FEF3C7'
+                              : '#FEE2E2',
+                          color:
+                            p.status === 'RECEIVED'
+                              ? '#166534'
+                              : p.status === 'ORDERED'
+                              ? '#92400E'
+                              : '#991B1B',
+                          border:
+                            p.status === 'RECEIVED'
+                              ? '1px solid #BBF7D0'
+                              : p.status === 'ORDERED'
+                              ? '1px solid #FDE68A'
+                              : '1px solid #FECACA',
                         }}
                       >
-                        {isReceived ? (
+                        {p.status === 'RECEIVED' ? (
                           <>
                             <CheckCircle2 size={11} />
-                            <span>RECEIVED</span>
+                            <span>Received</span>
                           </>
-                        ) : isOrdered ? (
+                        ) : p.status === 'ORDERED' ? (
                           <>
                             <Clock size={11} />
-                            <span>ORDERED</span>
+                            <span>Ordered</span>
                           </>
                         ) : (
-                          <span>{p.status}</span>
+                          <>
+                            <XCircle size={11} />
+                            <span>Cancelled</span>
+                          </>
                         )}
                       </span>
                     </td>
@@ -666,17 +701,49 @@ export const PurchasesPage: React.FC = () => {
                   <span style={{ fontSize: '11px', color: 'var(--yz-text-muted)' }}>Status:</span>
                   <span
                     style={{
-                      padding: '1px 6px',
-                      borderRadius: '3px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '2px 8px',
+                      borderRadius: 'var(--yz-radius-sm)',
                       fontSize: '10.5px',
                       fontWeight: 700,
                       backgroundColor:
-                        selectedPO.status === 'RECEIVED' ? '#DCFCE7' : '#FEF3C7',
+                        selectedPO.status === 'RECEIVED'
+                          ? '#DCFCE7'
+                          : selectedPO.status === 'ORDERED'
+                          ? '#FEF3C7'
+                          : '#FEE2E2',
                       color:
-                        selectedPO.status === 'RECEIVED' ? '#166534' : '#92400E',
+                        selectedPO.status === 'RECEIVED'
+                          ? '#166534'
+                          : selectedPO.status === 'ORDERED'
+                          ? '#92400E'
+                          : '#991B1B',
+                      border:
+                        selectedPO.status === 'RECEIVED'
+                          ? '1px solid #BBF7D0'
+                          : selectedPO.status === 'ORDERED'
+                          ? '1px solid #FDE68A'
+                          : '1px solid #FECACA',
                     }}
                   >
-                    {selectedPO.status === 'RECEIVED' ? 'RECEIVED (INVENTORY POSTED)' : 'PENDING DELIVERY'}
+                    {selectedPO.status === 'RECEIVED' ? (
+                      <>
+                        <CheckCircle2 size={11} />
+                        <span>Received</span>
+                      </>
+                    ) : selectedPO.status === 'ORDERED' ? (
+                      <>
+                        <Clock size={11} />
+                        <span>Ordered</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle size={11} />
+                        <span>Cancelled</span>
+                      </>
+                    )}
                   </span>
                 </div>
               </div>
@@ -777,7 +844,7 @@ export const PurchasesPage: React.FC = () => {
                     <PackageCheck size={13} />
                     <span>Stock verified & credited to showroom inventory ledger.</span>
                   </div>
-                ) : (
+                ) : selectedPO.status === 'ORDERED' ? (
                   <div
                     style={{
                       display: 'flex',
@@ -794,6 +861,24 @@ export const PurchasesPage: React.FC = () => {
                   >
                     <Clock size={13} />
                     <span>Awaiting shipment delivery from artisan loom guild.</span>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '11px',
+                      color: '#991B1B',
+                      backgroundColor: '#FEF2F2',
+                      padding: '4px 8px',
+                      borderRadius: 'var(--yz-radius-sm)',
+                      border: '1px solid #FECACA',
+                      marginTop: '6px',
+                    }}
+                  >
+                    <XCircle size={13} />
+                    <span>This purchase order has been cancelled. No inventory or financial postings were made.</span>
                   </div>
                 )}
               </div>
@@ -856,6 +941,7 @@ export const PurchasesPage: React.FC = () => {
               style={{
                 display: 'flex',
                 justifyContent: 'flex-end',
+                alignItems: 'center',
                 gap: '8px',
                 marginTop: '6px',
                 borderTop: '1px solid var(--yz-border)',
@@ -863,19 +949,87 @@ export const PurchasesPage: React.FC = () => {
               }}
             >
               {selectedPO.status === 'ORDERED' && (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  icon={<PackageCheck size={14} />}
-                  onClick={() => handleReceivePO(selectedPO)}
-                  disabled={isReceiving === selectedPO.id}
-                  style={{ backgroundColor: '#166534' }}
-                >
-                  {isReceiving === selectedPO.id ? 'Processing Receipt...' : 'Receive Goods into Stock (GRN)'}
-                </Button>
+                <>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon={<XCircle size={13} />}
+                    onClick={() => setPoToCancel(selectedPO)}
+                    disabled={isCancelling === selectedPO.id || isReceiving === selectedPO.id}
+                    style={{ color: '#DC2626', borderColor: '#FCA5A5' }}
+                  >
+                    Cancel Purchase Order
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    icon={<PackageCheck size={14} />}
+                    onClick={() => handleReceivePO(selectedPO)}
+                    disabled={isReceiving === selectedPO.id || isCancelling === selectedPO.id}
+                    style={{ backgroundColor: '#166534', borderColor: '#166534' }}
+                  >
+                    {isReceiving === selectedPO.id ? 'Processing Receipt...' : 'Receive Goods into Stock (GRN)'}
+                  </Button>
+                </>
               )}
               <Button variant="secondary" size="sm" onClick={() => setSelectedPO(null)}>
                 Close
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Cancel Purchase Order Confirmation Modal */}
+      {poToCancel && (
+        <Modal
+          isOpen={true}
+          onClose={() => !isCancelling && setPoToCancel(null)}
+          title={`Cancel Purchase Order ${poToCancel.poNumber}`}
+          size="sm"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
+                backgroundColor: '#FEF2F2',
+                border: '1px solid #FECACA',
+                padding: '10px 12px',
+                borderRadius: 'var(--yz-radius-sm)',
+                fontSize: '11.5px',
+                color: '#991B1B',
+                lineHeight: 1.5,
+              }}
+            >
+              <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px', color: '#DC2626' }} />
+              <div>
+                <strong>Are you sure you want to cancel this purchase order?</strong>
+                <p style={{ marginTop: '4px', margin: 0 }}>
+                  This will mark <strong>{poToCancel.poNumber}</strong> ({poToCancel.vendorName}) as Cancelled.
+                  No goods will be received into showroom inventory and the order becomes read-only history.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setPoToCancel(null)}
+                disabled={Boolean(isCancelling)}
+              >
+                Keep Order
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleConfirmCancelPO}
+                disabled={Boolean(isCancelling)}
+                style={{ backgroundColor: '#DC2626', borderColor: '#DC2626' }}
+              >
+                {isCancelling ? 'Cancelling...' : 'Confirm Cancellation'}
               </Button>
             </div>
           </div>

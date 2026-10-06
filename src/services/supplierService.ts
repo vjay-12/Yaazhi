@@ -19,7 +19,7 @@ export interface VendorPOHistoryItem {
   totalAmount: number;
   subtotal: number;
   taxTotal: number;
-  status: 'DRAFT' | 'ORDERED' | 'RECEIVED' | 'CANCELLED';
+  status: 'ORDERED' | 'RECEIVED' | 'CANCELLED';
   itemsCount: number;
   location: string;
   items: VendorPOItem[];
