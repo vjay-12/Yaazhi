@@ -352,6 +352,22 @@ router.put('/:id', async (req, res): Promise<void> => {
       min_stock_level,
     } = parsed.data;
 
+    let targetCategoryId = category_id;
+    const catName = req.body.category;
+    if (catName && typeof catName === 'string') {
+      const existingCat = await prisma.productCategory.findFirst({
+        where: { name: { equals: catName.trim(), mode: 'insensitive' } },
+      });
+      if (existingCat) {
+        targetCategoryId = existingCat.id;
+      } else {
+        const newCat = await prisma.productCategory.create({
+          data: { name: catName.trim() },
+        });
+        targetCategoryId = newCat.id;
+      }
+    }
+
     const updated = await prisma.product.update({
       where: { id: req.params.id },
       data: {
@@ -359,7 +375,7 @@ router.put('/:id', async (req, res): Promise<void> => {
         ...(description !== undefined && { description }),
         ...(fabric !== undefined && { fabric }),
         ...(craft !== undefined && { craft }),
-        ...(category_id !== undefined && { category_id }),
+        ...(targetCategoryId !== undefined && { category_id: targetCategoryId }),
         ...(unit && { unit }),
         ...(sale_price !== undefined && { sale_price }),
         ...(purchase_price !== undefined && { purchase_price }),

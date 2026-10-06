@@ -8,7 +8,7 @@ import {
   RefreshCw,
   Loader2,
 } from 'lucide-react';
-import type { YaazhiProduct, BoutiqueCategory, StockStatus } from '../../types/product';
+import type { YaazhiProduct, StockStatus } from '../../types/product';
 import type { StockSummary } from '../../types/inventory';
 import { productService } from '../../services/productService';
 import { inventoryService } from '../../services/inventoryService';
@@ -30,25 +30,6 @@ interface ProductsStockPageProps {
   isAddModalOpenInitially?: boolean;
   onCloseInitialAddModal?: () => void;
 }
-
-const CATEGORY_LIST: (BoutiqueCategory | 'ALL')[] = [
-  'ALL',
-  'Kanchipuram Silk',
-  'Cotton Handloom',
-  'Banarasi Silk',
-  'Designer Chudidar',
-  'Anarkali Set',
-  'Kurtis & Tunics',
-  'Designer Blouse',
-  'Ethnic Menswear',
-  'Kids Ethnic',
-  'Dupattas & Shawls',
-];
-
-const CATEGORY_OPTIONS: DropdownOption[] = CATEGORY_LIST.map((c) => ({
-  value: c,
-  label: c === 'ALL' ? 'All Weaves' : c,
-}));
 
 const STATUS_OPTIONS: DropdownOption<StockStatus | 'ARCHIVED' | 'ALL'>[] = [
   { value: 'ALL', label: 'All Statuses' },
@@ -80,10 +61,17 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
 
   // Filters
   const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<BoutiqueCategory | 'ALL'>('ALL');
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [stockStatusFilter, setStockStatusFilter] = useState<StockStatus | 'ARCHIVED' | 'ALL'>('ALL');
   const [sortBy, setSortBy] = useState<'name' | 'sellPrice' | 'currentStock' | 'createdAt'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [catalogCategories, setCatalogCategories] = useState<string[]>([]);
+
+  // Dynamically derive category options from actual catalog data
+  const categoryOptions: DropdownOption[] = React.useMemo(() => [
+    { value: 'ALL', label: 'All Weaves' },
+    ...catalogCategories.map((c) => ({ value: c, label: c })),
+  ], [catalogCategories]);
 
   // Modals & Action states
   const [isAddModalOpen, setIsAddModalOpen] = useState(isAddModalOpenInitially);
@@ -113,6 +101,12 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
 
       setProducts(allProducts);
       setSummary(stockSummary);
+
+      // Keep catalog categories updated when viewing all
+      if (selectedCategory === 'ALL' && !search && stockStatusFilter === 'ALL') {
+        const uniqueCats = Array.from(new Set(allProducts.map((p) => p.category).filter(Boolean))).sort();
+        setCatalogCategories(uniqueCats);
+      }
     } catch (err: any) {
       showToast({
         type: 'error',
@@ -305,7 +299,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
           <CustomDropdown
             value={selectedCategory}
             onChange={(val) => setSelectedCategory(val as any)}
-            options={CATEGORY_OPTIONS}
+            options={categoryOptions}
             minWidth="125px"
           />
 

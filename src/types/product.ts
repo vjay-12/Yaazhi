@@ -10,7 +10,10 @@ export type BoutiqueCategory =
   | 'Kids Ethnic'
   | 'Dupattas & Shawls'
   | 'Fabrics & Unstitched'
-  | 'Accessories';
+  | 'Accessories'
+  | 'Churidars & Salwars'
+  | 'Sarees'
+  | 'Dupattas & Stoles';
 
 export type UnitOfMeasure = 'pcs' | 'meters' | 'sets' | 'pairs' | 'box';
 
@@ -88,7 +91,7 @@ export interface UpdateProductInput extends Partial<CreateProductInput> {
 
 export interface ProductFilterOptions {
   search?: string;
-  category?: BoutiqueCategory | 'ALL';
+  category?: BoutiqueCategory | 'ALL' | string;
   stockStatus?: StockStatus | 'ARCHIVED' | 'ALL';
   fabric?: string;
   sortBy?: 'name' | 'sellPrice' | 'currentStock' | 'createdAt';

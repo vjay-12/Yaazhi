@@ -19,6 +19,10 @@ interface ProductModalProps {
 }
 
 const CATEGORIES: BoutiqueCategory[] = [
+  'Churidars & Salwars',
+  'Kids Ethnic',
+  'Sarees',
+  'Dupattas & Stoles',
   'Kanchipuram Silk',
   'Cotton Handloom',
   'Banarasi Silk',
@@ -27,8 +31,6 @@ const CATEGORIES: BoutiqueCategory[] = [
   'Kurtis & Tunics',
   'Designer Blouse',
   'Ethnic Menswear',
-  'Kids Ethnic',
-  'Dupattas & Shawls',
   'Fabrics & Unstitched',
   'Accessories',
 ];
@@ -86,7 +88,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       setHsnCode(productToEdit.hsnCode);
       setGstRate(productToEdit.gstRate);
       setDescription(productToEdit.description || '');
-      setImageUrl(productToEdit.imageUrl || '');
+      setImageUrl(productToEdit.imageUrl || getValidatedProductImage(productToEdit.name, productToEdit.category, productToEdit.imageUrl) || '');
     } else {
       setName('');
       setSku(`YZ-${Math.floor(100 + Math.random() * 900)}`);

@@ -12,6 +12,10 @@ export const VALIDATED_PRODUCT_IMAGES = {
   MYSORE_CREPE: '/images/products/mysore-crepe-saree.jpg',
   CHUDIDAR_SUIT: '/images/products/chudidar-suit-set.jpg',
   TUSSAR_DUPATTA: '/images/products/tussar-silk-dupatta.jpg',
+  MAROON_CHURIDAR: '/images/products/maroon-churidar-set.jpg',
+  EMERALD_ANARKALI: '/images/products/emerald-anarkali-set.jpg',
+  KIDS_PINK_PALAZZO: '/images/products/kids-pink-palazzo.jpg',
+  KIDS_BLUE_KURTA: '/images/products/kids-blue-kurta.jpg',
 };
 
 const LEGACY_PATH_MAP: Record<string, string> = {
@@ -39,9 +43,52 @@ export function getValidatedProductImage(
     return currentSrc;
   }
 
+  // Check if current source is already one of our validated product images
+  if (currentSrc && Object.values(VALIDATED_PRODUCT_IMAGES).includes(currentSrc)) {
+    return currentSrc;
+  }
+
+  // Check if current source is a legacy path and redirect to canonical
+  if (currentSrc && LEGACY_PATH_MAP[currentSrc]) {
+    return LEGACY_PATH_MAP[currentSrc];
+  }
+
   const text = `${name} ${category}`.toLowerCase();
 
-  // 1. Banarasi Silk Saree (Authentic Kadwa brocade jaal, pure silk, gold zari)
+  // 1. Kids Festive Pink Kurta Palazzo Set (Girls festive ethnic wear)
+  if (
+    text.includes('palazzo') ||
+    (text.includes('pink') && (text.includes('kid') || text.includes('girl') || text.includes('palazzo')))
+  ) {
+    return VALIDATED_PRODUCT_IMAGES.KIDS_PINK_PALAZZO;
+  }
+
+  // 2. Kids Royal Blue Kurta Pyjama Set (Boys festive ethnic wear)
+  if (
+    text.includes('pyjama') ||
+    text.includes('pajama') ||
+    (text.includes('blue') && (text.includes('kid') || text.includes('boy')))
+  ) {
+    return VALIDATED_PRODUCT_IMAGES.KIDS_BLUE_KURTA;
+  }
+
+  // 3. Emerald Green Anarkali Churidar Set (Georgette flared anarkali suit)
+  if (
+    text.includes('anarkali') ||
+    (text.includes('emerald') && (text.includes('churidar') || text.includes('chudidar') || text.includes('green') || text.includes('suit')))
+  ) {
+    return VALIDATED_PRODUCT_IMAGES.EMERALD_ANARKALI;
+  }
+
+  // 4. Royal Maroon Embroidered Churidar Set (Maroon silk embroidered suit)
+  if (
+    text.includes('maroon') &&
+    (text.includes('churidar') || text.includes('chudidar') || text.includes('salwar') || text.includes('suit'))
+  ) {
+    return VALIDATED_PRODUCT_IMAGES.MAROON_CHURIDAR;
+  }
+
+  // 5. Banarasi Silk Saree (Authentic Kadwa brocade jaal, pure silk, gold zari)
   if (
     text.includes('banarasi') ||
     text.includes('katan') ||
@@ -52,7 +99,7 @@ export function getValidatedProductImage(
     return VALIDATED_PRODUCT_IMAGES.BANARASI_SILK;
   }
 
-  // 2. Kanchipuram Pure Silk Bridal Saree (Korvai handloom, pearl check muthu kattam)
+  // 6. Kanchipuram Pure Silk Bridal Saree (Korvai handloom, pearl check muthu kattam)
   if (
     text.includes('kanchipuram') ||
     text.includes('kanjivaram') ||
@@ -63,7 +110,7 @@ export function getValidatedProductImage(
     return VALIDATED_PRODUCT_IMAGES.KANCHIPURAM_SILK;
   }
 
-  // 3. Chettinad Cotton / Cotton Handloom Saree (Thousand-steps temple border)
+  // 7. Chettinad Cotton / Cotton Handloom Saree (Thousand-steps temple border)
   if (
     text.includes('chettinad') ||
     text.includes('cotton') ||
@@ -74,12 +121,12 @@ export function getValidatedProductImage(
     return VALIDATED_PRODUCT_IMAGES.CHETTINAD_COTTON;
   }
 
-  // 4. Mysore Crepe Silk Saree (Peacock emerald lustrous crepe silk with gold zari border)
+  // 8. Mysore Crepe Silk Saree (Peacock emerald lustrous crepe silk with gold zari border)
   if (text.includes('mysore') || text.includes('crepe')) {
     return VALIDATED_PRODUCT_IMAGES.MYSORE_CREPE;
   }
 
-  // 5. Designer Chudidar / Salwar Suit Set (Clean flatlay: peach raw silk, aari embroidery)
+  // 9. Designer Chudidar / Salwar Suit Set (Clean flatlay: peach raw silk, aari embroidery)
   if (
     text.includes('chudidar') ||
     text.includes('churidar') ||
@@ -91,7 +138,7 @@ export function getValidatedProductImage(
     return VALIDATED_PRODUCT_IMAGES.CHUDIDAR_SUIT;
   }
 
-  // 6. Handloom Tussar Silk Dupatta / Stole (Pure wild tussar silk with Kantha embroidery)
+  // 10. Handloom Tussar Silk Dupatta / Stole (Pure wild tussar silk with Kantha embroidery)
   if (
     text.includes('dupatta') ||
     text.includes('stole') ||

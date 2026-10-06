@@ -61,7 +61,8 @@ class ProductService {
       }
 
       if (filters.category && filters.category !== 'ALL') {
-        products = products.filter((p) => p.category === filters.category);
+        const catFilter = filters.category.trim().toLowerCase();
+        products = products.filter((p) => p.category?.trim().toLowerCase() === catFilter);
       }
 
       if (filters.stockStatus === 'ARCHIVED') {

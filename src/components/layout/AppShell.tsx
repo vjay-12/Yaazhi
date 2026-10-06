@@ -39,6 +39,7 @@ export const AppShell: React.FC = () => {
   const getInitialTab = (): NavTabId => {
     const hash = window.location.hash.replace('#', '').split('?')[0];
     if (hash === 'inventory') return 'products';
+    if (hash === 'sales-orders' || hash === 'sales') return 'orders';
     const validTabs: NavTabId[] = [
       'overview',
       'billing',
@@ -74,6 +75,17 @@ export const AppShell: React.FC = () => {
       document.title = TAB_PAGE_TITLES[currentTab] || 'Yaazhi Boutique';
     }
   }, [currentTab, selectedProductId]);
+
+  // Listen to hash changes (browser forward/back or external navigation)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const tab = getInitialTab();
+      setCurrentTab(tab);
+      setSelectedProductId(null);
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Global Keyboard Shortcuts (⌘K or ctrl+k for quick search)
   useEffect(() => {
