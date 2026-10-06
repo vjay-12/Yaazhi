@@ -45,8 +45,13 @@ export const supplierSchema = z.object({
   state: z.string().optional().nullable(),
   state_code: z.string().optional().nullable(),
   gstin: z.string().optional().nullable(),
+  bank_name: z.string().optional().nullable(),
+  account_number: z.string().optional().nullable(),
+  ifsc_code: z.string().optional().nullable(),
+  upi_id: z.string().optional().nullable(),
   opening_balance: z.number().default(0),
   is_active: z.boolean().default(true),
+  is_archived: z.boolean().default(false),
 });
 
 export const purchaseOrderItemSchema = z.object({

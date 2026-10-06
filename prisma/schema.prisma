@@ -148,8 +148,13 @@ model Supplier {
   state           String?
   state_code      String?
   gstin           String?
+  bank_name       String?
+  account_number  String?
+  ifsc_code       String?
+  upi_id          String?
   opening_balance Decimal         @default(0) @db.Decimal(12, 2)
   is_active       Boolean         @default(true)
+  is_archived     Boolean         @default(false)
   created_at      DateTime        @default(now())
   updated_at      DateTime        @updatedAt
 
