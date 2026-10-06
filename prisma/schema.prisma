@@ -17,6 +17,8 @@ model CompanySettings {
   state_code   String?  @default("33") // Tamil Nadu
   gstin        String?  @default("33AABCY1234A1Z5")
   enable_gst   Boolean  @default(true)
+  upi_id       String?  @default("yaazhi@oksbi")
+  upi_qr_url   String?  @default("/images/payment/yaazhi-upi-qr.png")
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
 

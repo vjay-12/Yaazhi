@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, Download, Ban, Loader2, ChevronDown, Check } from 'lucide-react';
+import { Search, Download, Ban, Loader2, ChevronDown, Check, Banknote, QrCode } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { Pagination } from '../../components/common/Pagination';
 import { usePagination } from '../../hooks/usePagination';
 import { salesOrderService, type SalesOrderData } from '../../services/salesOrderService';
+import { settingsService } from '../../services/settingsService';
 import { useToast } from '../../components/common/Toast';
 import { downloadSalesOrderPdf } from '../../utils/invoicePdfGenerator';
 
@@ -28,9 +29,14 @@ export const SalesOrdersPage: React.FC = () => {
   // Settle modal state
   const [orderToSettle, setOrderToSettle] = useState<SalesOrderData | null>(null);
   const [settleAmount, setSettleAmount] = useState<string>('');
-  const [settlePaymentMode, setSettlePaymentMode] = useState<string>('CASH');
+  const [settleCashTendered, setSettleCashTendered] = useState<string>('');
+  const [settlePaymentMode, setSettlePaymentMode] = useState<'CASH' | 'UPI'>('CASH');
   const [settleReference, setSettleReference] = useState<string>('');
   const [isSubmittingSettle, setIsSubmittingSettle] = useState(false);
+  const [storePaymentSettings, setStorePaymentSettings] = useState<{ upiId: string; upiQrUrl: string }>({
+    upiId: 'yaazhi@oksbi',
+    upiQrUrl: '/images/payment/yaazhi-upi-qr.png',
+  });
 
   // Void confirmation state
   const [orderToVoid, setOrderToVoid] = useState<SalesOrderData | null>(null);
@@ -64,6 +70,17 @@ export const SalesOrdersPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    settingsService
+      .getSettings()
+      .then((s) => {
+        if (s) {
+          setStorePaymentSettings({
+            upiId: s.upi_id || 'yaazhi@oksbi',
+            upiQrUrl: s.upi_qr_url || '/images/payment/yaazhi-upi-qr.png',
+          });
+        }
+      })
+      .catch(() => {});
   }, [loadData]);
 
   // Click outside to close custom status dropdown
@@ -85,6 +102,7 @@ export const SalesOrdersPage: React.FC = () => {
   const handleOpenSettle = (order: SalesOrderData) => {
     setOrderToSettle(order);
     setSettleAmount(order.pendingAmount.toString());
+    setSettleCashTendered(order.pendingAmount.toString());
     setSettlePaymentMode('CASH');
     setSettleReference('');
   };
@@ -110,12 +128,33 @@ export const SalesOrdersPage: React.FC = () => {
       return;
     }
 
+    if (settlePaymentMode === 'CASH') {
+      const tenderedStr = settleCashTendered.trim();
+      const tendered = tenderedStr === '' ? numAmount : Number(tenderedStr);
+      if (isNaN(tendered) || tendered < 0) {
+        showToast({
+          type: 'error',
+          title: 'Invalid Cash Input',
+          message: 'Cash received cannot be negative or invalid.',
+        });
+        return;
+      }
+      if (tendered < numAmount) {
+        showToast({
+          type: 'error',
+          title: 'Insufficient Cash',
+          message: `Cash received (₹${tendered.toLocaleString('en-IN')}) is less than required settlement amount (₹${numAmount.toLocaleString('en-IN')}).`,
+        });
+        return;
+      }
+    }
+
     try {
       setIsSubmittingSettle(true);
       await salesOrderService.settle(orderToSettle.id, {
         amount: numAmount,
         payment_mode: settlePaymentMode,
-        reference_number: settleReference.trim() || undefined,
+        reference_number: settlePaymentMode === 'UPI' ? (settleReference.trim() || undefined) : undefined,
         notes: `Balance settlement from Sales Orders table`,
       });
 
@@ -1376,7 +1415,7 @@ export const SalesOrdersPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Payment Mode */}
+            {/* Payment Mode (Cash and UPI only, Card removed) */}
             <div>
               <label
                 style={{
@@ -1389,65 +1428,236 @@ export const SalesOrdersPage: React.FC = () => {
               >
                 Payment Mode
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
-                {[
-                  { id: 'CASH', label: 'Cash' },
-                  { id: 'UPI', label: 'UPI' },
-                  { id: 'CARD', label: 'Card' },
-                  { id: 'BANK_TRANSFER', label: 'Net Bank' },
-                ].map((mode) => (
-                  <button
-                    key={mode.id}
-                    type="button"
-                    onClick={() => setSettlePaymentMode(mode.id)}
-                    style={{
-                      height: '26px',
-                      fontSize: '11px',
-                      borderRadius: 'var(--yz-radius-sm)',
-                      border:
-                        settlePaymentMode === mode.id
-                          ? '1px solid var(--yz-primary, #832729)'
-                          : '1px solid var(--yz-border)',
-                      backgroundColor:
-                        settlePaymentMode === mode.id
-                          ? 'var(--yz-primary-50, #FDF2F2)'
-                          : 'var(--yz-bg-surface)',
-                      color:
-                        settlePaymentMode === mode.id
-                          ? 'var(--yz-primary, #832729)'
-                          : 'var(--yz-text-secondary)',
-                      fontWeight: settlePaymentMode === mode.id ? 600 : 400,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {mode.label}
-                  </button>
-                ))}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setSettlePaymentMode('CASH')}
+                  style={{
+                    height: '28px',
+                    fontSize: '11px',
+                    borderRadius: 'var(--yz-radius-sm)',
+                    border:
+                      settlePaymentMode === 'CASH'
+                        ? '1px solid var(--yz-primary, #832729)'
+                        : '1px solid var(--yz-border)',
+                    backgroundColor:
+                      settlePaymentMode === 'CASH'
+                        ? 'var(--yz-primary-50, #FDF2F2)'
+                        : 'var(--yz-bg-surface)',
+                    color:
+                      settlePaymentMode === 'CASH'
+                        ? 'var(--yz-primary, #832729)'
+                        : 'var(--yz-text-secondary)',
+                    fontWeight: settlePaymentMode === 'CASH' ? 600 : 400,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <Banknote size={14} />
+                  <span>Cash</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSettlePaymentMode('UPI')}
+                  style={{
+                    height: '28px',
+                    fontSize: '11px',
+                    borderRadius: 'var(--yz-radius-sm)',
+                    border:
+                      settlePaymentMode === 'UPI'
+                        ? '1px solid var(--yz-primary, #832729)'
+                        : '1px solid var(--yz-border)',
+                    backgroundColor:
+                      settlePaymentMode === 'UPI'
+                        ? 'var(--yz-primary-50, #FDF2F2)'
+                        : 'var(--yz-bg-surface)',
+                    color:
+                      settlePaymentMode === 'UPI'
+                        ? 'var(--yz-primary, #832729)'
+                        : 'var(--yz-text-secondary)',
+                    fontWeight: settlePaymentMode === 'UPI' ? 600 : 400,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <QrCode size={14} />
+                  <span>UPI</span>
+                </button>
               </div>
             </div>
 
-            {/* Reference / UTR Number (Optional) */}
-            <div>
-              <label
+            {/* Cash Flow Details (Tendered & Change Calculation) */}
+            {settlePaymentMode === 'CASH' && (
+              <div
                 style={{
-                  display: 'block',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: 'var(--yz-text-primary)',
-                  marginBottom: '4px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                  backgroundColor: 'var(--yz-bg-subtle)',
+                  padding: '8px 10px',
+                  borderRadius: 'var(--yz-radius-sm)',
+                  border: '1px solid var(--yz-border)',
                 }}
               >
-                Payment Reference / Note (Optional)
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. UPI UTR number, card auth code..."
-                className="yz-input"
-                value={settleReference}
-                onChange={(e) => setSettleReference(e.target.value)}
-                style={{ height: '28px', fontSize: '11px' }}
-              />
-            </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--yz-text-secondary)' }}>
+                    Cash Received (Tendered)
+                  </label>
+                  <span style={{ fontSize: '10px', color: 'var(--yz-text-muted)' }}>Amount given by client</span>
+                </div>
+                <input
+                  type="number"
+                  min="0"
+                  value={settleCashTendered}
+                  onChange={(e) => setSettleCashTendered(e.target.value)}
+                  className="yz-input tabular-nums"
+                  placeholder={`₹${Number(settleAmount || 0).toLocaleString('en-IN')}`}
+                  style={{ height: '28px', fontSize: '12px', fontWeight: 600 }}
+                />
+
+                {/* Presets */}
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => setSettleCashTendered(settleAmount)}
+                    style={{
+                      padding: '2px 6px',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      borderRadius: '3px',
+                      border: '1px solid var(--yz-primary)',
+                      backgroundColor: 'var(--yz-primary-subtle)',
+                      color: 'var(--yz-primary)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Exact (₹{Number(settleAmount || 0).toLocaleString('en-IN')})
+                  </button>
+                  {[500, 1000, 2000, 5000]
+                    .filter((val) => val >= Number(settleAmount || 0))
+                    .map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setSettleCashTendered(String(preset))}
+                        style={{
+                          padding: '2px 6px',
+                          fontSize: '10px',
+                          borderRadius: '3px',
+                          border: '1px solid var(--yz-border)',
+                          backgroundColor: 'var(--yz-bg-surface)',
+                          color: 'var(--yz-text-secondary)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ₹{preset.toLocaleString('en-IN')}
+                      </button>
+                    ))}
+                </div>
+
+                {/* Change calculation */}
+                {(() => {
+                  const targetNum = Number(settleAmount) || 0;
+                  const tendered = settleCashTendered.trim() === '' ? targetNum : Number(settleCashTendered);
+                  if (isNaN(tendered)) return null;
+                  if (tendered >= targetNum) {
+                    const change = tendered - targetNum;
+                    return (
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          backgroundColor: '#DCFCE7',
+                          border: '1px solid #86EFAC',
+                          borderRadius: '4px',
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          color: '#166534',
+                        }}
+                      >
+                        <span style={{ fontWeight: 600 }}>Change to Return:</span>
+                        <strong style={{ fontSize: '12px', fontFamily: 'var(--yz-font-mono)' }}>
+                          ₹{change.toLocaleString('en-IN')}
+                        </strong>
+                      </div>
+                    );
+                  } else {
+                    const short = targetNum - tendered;
+                    return (
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          backgroundColor: '#FEF2F2',
+                          border: '1px solid #FECACA',
+                          borderRadius: '4px',
+                          padding: '4px 8px',
+                          fontSize: '10.5px',
+                          color: '#991B1B',
+                        }}
+                      >
+                        <span>Remaining Shortfall:</span>
+                        <strong style={{ fontFamily: 'var(--yz-font-mono)' }}>
+                          -₹{short.toLocaleString('en-IN')}
+                        </strong>
+                      </div>
+                    );
+                  }
+                })()}
+              </div>
+            )}
+
+            {/* UPI Flow Details */}
+            {settlePaymentMode === 'UPI' && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                  backgroundColor: 'var(--yz-bg-subtle)',
+                  padding: '8px 10px',
+                  borderRadius: 'var(--yz-radius-sm)',
+                  border: '1px solid var(--yz-border)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                  <span style={{ color: 'var(--yz-text-secondary)' }}>Merchant UPI ID:</span>
+                  <strong style={{ fontFamily: 'var(--yz-font-mono)' }}>
+                    {storePaymentSettings.upiId || 'yaazhi@oksbi'}
+                  </strong>
+                </div>
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '10.5px',
+                      fontWeight: 600,
+                      color: 'var(--yz-text-secondary)',
+                      marginBottom: '2px',
+                    }}
+                  >
+                    UPI Reference / UTR Number (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. UPI UTR number / transaction ID..."
+                    className="yz-input"
+                    value={settleReference}
+                    onChange={(e) => setSettleReference(e.target.value)}
+                    style={{ height: '28px', fontSize: '11px' }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </Modal>
       )}

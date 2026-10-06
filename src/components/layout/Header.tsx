@@ -1,11 +1,10 @@
 import React from 'react';
-import { Search, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import type { NavTabId } from './Sidebar';
 import { Button } from '../common/Button';
 
 interface HeaderProps {
   currentTab: NavTabId;
-  onOpenQuickSearch: () => void;
   onNewBillClick?: () => void;
   onNewProductClick: () => void;
 }
@@ -55,7 +54,6 @@ const TAB_TITLES: Record<NavTabId, { title: string; subtitle: string }> = {
 
 export const Header: React.FC<HeaderProps> = ({
   currentTab,
-  onOpenQuickSearch,
   onNewProductClick,
 }) => {
   const currentInfo = TAB_TITLES[currentTab] || {
@@ -77,17 +75,6 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="yz-header-right">
-        {/* Quick Search trigger */}
-        <button
-          className="yz-quick-search-btn"
-          onClick={onOpenQuickSearch}
-          title="Search products by SKU, name, or barcode (⌘K)"
-        >
-          <Search size={13} />
-          <span>Search catalog, SKUs...</span>
-          <kbd className="yz-kbd">⌘K</kbd>
-        </button>
-
         {/* Contextual primary action */}
         {currentTab === 'products' && (
           <Button

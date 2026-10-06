@@ -10,6 +10,8 @@ export interface BoutiqueSettings {
   state_code?: string;
   gstin?: string;
   enable_gst: boolean;
+  upi_id?: string;
+  upi_qr_url?: string;
 }
 
 class SettingsService {

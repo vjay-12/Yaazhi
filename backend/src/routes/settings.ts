@@ -32,7 +32,7 @@ router.get('/', async (_req, res): Promise<void> => {
 // PUT /api/settings - update boutique settings
 router.put('/', async (req, res): Promise<void> => {
   try {
-    const { company_name, legal_name, phone, email, address, state_code, gstin, enable_gst } = req.body;
+    const { company_name, legal_name, phone, email, address, state_code, gstin, enable_gst, upi_id, upi_qr_url } = req.body;
 
     const updated = await prisma.companySettings.upsert({
       where: { id: 'yaazhi_settings' },
@@ -45,6 +45,8 @@ router.put('/', async (req, res): Promise<void> => {
         ...(state_code !== undefined && { state_code }),
         ...(gstin !== undefined && { gstin }),
         ...(enable_gst !== undefined && { enable_gst }),
+        ...(upi_id !== undefined && { upi_id }),
+        ...(upi_qr_url !== undefined && { upi_qr_url }),
       },
       create: {
         id: 'yaazhi_settings',
@@ -56,6 +58,8 @@ router.put('/', async (req, res): Promise<void> => {
         state_code,
         gstin,
         enable_gst: enable_gst ?? true,
+        upi_id: upi_id || 'yaazhi@oksbi',
+        upi_qr_url: upi_qr_url || '/images/payment/yaazhi-upi-qr.png',
       },
     });
 

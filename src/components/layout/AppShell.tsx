@@ -144,7 +144,6 @@ export const AppShell: React.FC = () => {
       <div className="yz-main-wrapper">
         <Header
           currentTab={currentTab}
-          onOpenQuickSearch={() => setIsQuickSearchOpen(true)}
           onNewBillClick={() => {
             setCurrentTab('billing');
             setSelectedProductId(null);

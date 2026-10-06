@@ -4,7 +4,6 @@ import {
   Plus,
   Minus,
   Trash2,
-  CreditCard,
   QrCode,
   Banknote,
   CheckCircle2,
@@ -16,6 +15,7 @@ import type { YaazhiProduct } from '../../types/product';
 import { productService } from '../../services/productService';
 import { billingService } from '../../services/billingService';
 import { customerService } from '../../services/customerService';
+import { settingsService } from '../../services/settingsService';
 import { StockBadge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
@@ -66,9 +66,16 @@ export const BillingPage: React.FC = () => {
 
   // Payment Modal State
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const [paymentMode, setPaymentMode] = useState<'CASH' | 'UPI' | 'CARD'>('UPI');
+  const [paymentMode, setPaymentMode] = useState<'CASH' | 'UPI'>('CASH');
   const [billPaymentStatus, setBillPaymentStatus] = useState<'PAID' | 'PARTIAL' | 'PENDING'>('PAID');
   const [receivedAmountInput, setReceivedAmountInput] = useState<string>('');
+  const [cashTenderedInput, setCashTenderedInput] = useState<string>('');
+  const [upiReference, setUpiReference] = useState<string>('');
+  const [lastChangeReturned, setLastChangeReturned] = useState<number>(0);
+  const [paymentSettings, setPaymentSettings] = useState<{ upiId: string; upiQrUrl: string }>({
+    upiId: 'yaazhi@oksbi',
+    upiQrUrl: '/images/payment/yaazhi-upi-qr.png',
+  });
   const [isCompleted, setIsCompleted] = useState(false);
   const [completedBillNo, setCompletedBillNo] = useState<string>('');
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
@@ -77,6 +84,17 @@ export const BillingPage: React.FC = () => {
   useEffect(() => {
     productService.list().then(setProducts);
     customerService.list().then(setRecentCustomers).catch(() => {});
+    settingsService
+      .getSettings()
+      .then((s) => {
+        if (s) {
+          setPaymentSettings({
+            upiId: s.upi_id || 'yaazhi@oksbi',
+            upiQrUrl: s.upi_qr_url || '/images/payment/yaazhi-upi-qr.png',
+          });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Close dropdown when clicking outside
@@ -242,6 +260,30 @@ export const BillingPage: React.FC = () => {
       }
     }
 
+    let calculatedChange = 0;
+    if (computedReceivedAmount > 0 && paymentMode === 'CASH') {
+      const tenderedStr = cashTenderedInput.trim();
+      const tendered = tenderedStr === '' ? computedReceivedAmount : Number(tenderedStr);
+      if (isNaN(tendered) || tendered < 0) {
+        showToast({
+          type: 'warning',
+          title: 'Invalid Cash Received',
+          message: 'Cash received amount cannot be negative or invalid.',
+        });
+        return;
+      }
+      if (tendered < computedReceivedAmount) {
+        showToast({
+          type: 'warning',
+          title: 'Insufficient Cash',
+          message: `Cash received (₹${tendered.toLocaleString('en-IN')}) is less than required amount (₹${computedReceivedAmount.toLocaleString('en-IN')}).`,
+        });
+        return;
+      }
+      calculatedChange = Math.max(0, tendered - computedReceivedAmount);
+      setLastChangeReturned(calculatedChange);
+    }
+
     try {
       setIsSubmittingPayment(true);
       const matched = recentCustomers.find(
@@ -255,6 +297,7 @@ export const BillingPage: React.FC = () => {
         customer_name: customerName,
         customer_phone: customerPhone || undefined,
         payment_mode: paymentMode,
+        payment_reference: paymentMode === 'UPI' ? (upiReference.trim() || undefined) : undefined,
         payment_status: billPaymentStatus,
         paid_amount: computedReceivedAmount,
         pending_amount: computedPendingAmount,
@@ -297,6 +340,9 @@ export const BillingPage: React.FC = () => {
     setCustomerPhone('');
     setBillPaymentStatus('PAID');
     setReceivedAmountInput('');
+    setCashTenderedInput('');
+    setUpiReference('');
+    setLastChangeReturned(0);
   };
 
   const filteredProducts = products.filter((p) => {
@@ -760,7 +806,7 @@ export const BillingPage: React.FC = () => {
                   }}
                 >
                   <Plus size={12} />
-                  <span>+ Create New Customer</span>
+                  <span>Create New Customer</span>
                 </button>
               </div>
             </div>
@@ -948,6 +994,7 @@ export const BillingPage: React.FC = () => {
                   setIsCustomerDropdownOpen(true);
                   return;
                 }
+                setCashTenderedInput(String(grandTotal));
                 setIsPaymentOpen(true);
               }}
               style={{ width: '100%', marginTop: '4px', height: '32px' }}
@@ -962,7 +1009,7 @@ export const BillingPage: React.FC = () => {
       <Modal
         isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}
-        title={isCompleted ? 'Invoice Issued Successfully' : 'Boutique POS Payment'}
+        title={isCompleted ? 'Invoice Issued Successfully' : 'Payment & Checkout'}
         subtitle={
           isCompleted
             ? `Invoice #${completedBillNo} generated for ${customerName}`
@@ -973,7 +1020,7 @@ export const BillingPage: React.FC = () => {
           isCompleted ? (
             <div style={{ display: 'flex', gap: '6px', width: '100%', justifyContent: 'space-between' }}>
               <Button variant="secondary" size="sm" icon={<Printer size={13} />} onClick={() => window.print()}>
-                Print Thermal Bill
+                Print Bill
               </Button>
               <Button variant="primary" size="sm" onClick={handleStartNewBill}>
                 Start New Bill
@@ -1009,7 +1056,9 @@ export const BillingPage: React.FC = () => {
               </div>
               <p style={{ fontSize: '11px', color: 'var(--yz-text-secondary)', marginTop: '2px' }}>
                 {billPaymentStatus === 'PAID'
-                  ? `₹${grandTotal.toLocaleString('en-IN')} received via ${paymentMode}`
+                  ? paymentMode === 'CASH' && lastChangeReturned > 0
+                    ? `₹${grandTotal.toLocaleString('en-IN')} received via Cash • ₹${lastChangeReturned.toLocaleString('en-IN')} change returned`
+                    : `₹${grandTotal.toLocaleString('en-IN')} received via ${paymentMode}`
                   : billPaymentStatus === 'PARTIAL'
                   ? `₹${computedReceivedAmount.toLocaleString('en-IN')} received via ${paymentMode} • ₹${computedPendingAmount.toLocaleString('en-IN')} pending balance`
                   : `₹${grandTotal.toLocaleString('en-IN')} outstanding balance`}
@@ -1093,10 +1142,14 @@ export const BillingPage: React.FC = () => {
                     setBillPaymentStatus(next);
                     if (next === 'PAID') {
                       setReceivedAmountInput(String(grandTotal));
+                      setCashTenderedInput(String(grandTotal));
                     } else if (next === 'PENDING') {
                       setReceivedAmountInput('0');
+                      setCashTenderedInput('0');
                     } else {
-                      setReceivedAmountInput(String(Math.round(grandTotal / 2)));
+                      const half = Math.round(grandTotal / 2);
+                      setReceivedAmountInput(String(half));
+                      setCashTenderedInput(String(half));
                     }
                   }}
                   options={[
@@ -1125,7 +1178,10 @@ export const BillingPage: React.FC = () => {
                     min="1"
                     max={grandTotal - 1}
                     value={receivedAmountInput}
-                    onChange={(e) => setReceivedAmountInput(e.target.value)}
+                    onChange={(e) => {
+                      setReceivedAmountInput(e.target.value);
+                      setCashTenderedInput(e.target.value);
+                    }}
                     className="yz-input tabular-nums"
                     placeholder="Enter received advance amount"
                     style={{ height: '28px', fontSize: '12px', fontWeight: 600 }}
@@ -1175,31 +1231,10 @@ export const BillingPage: React.FC = () => {
             {computedReceivedAmount > 0 && (
               <>
                 <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--yz-text-secondary)' }}>
-                  Payment Method for Received Amount:
+                  Payment Method:
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMode('UPI')}
-                    style={{
-                      padding: '8px 4px',
-                      borderRadius: 'var(--yz-radius-sm)',
-                      border: '1px solid',
-                      borderColor: paymentMode === 'UPI' ? 'var(--yz-primary)' : 'var(--yz-border)',
-                      backgroundColor: paymentMode === 'UPI' ? 'var(--yz-primary-subtle)' : 'var(--yz-bg-surface)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '3px',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                      fontSize: '11px',
-                    }}
-                  >
-                    <QrCode size={18} color={paymentMode === 'UPI' ? 'var(--yz-primary)' : 'inherit'} />
-                    <span>UPI / QR</span>
-                  </button>
-
+                {/* 2 Payment Methods: Cash and UPI (Card removed) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
                   <button
                     type="button"
                     onClick={() => setPaymentMode('CASH')}
@@ -1209,6 +1244,7 @@ export const BillingPage: React.FC = () => {
                       border: '1px solid',
                       borderColor: paymentMode === 'CASH' ? 'var(--yz-primary)' : 'var(--yz-border)',
                       backgroundColor: paymentMode === 'CASH' ? 'var(--yz-primary-subtle)' : 'var(--yz-bg-surface)',
+                      color: paymentMode === 'CASH' ? 'var(--yz-primary)' : 'var(--yz-text-primary)',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
@@ -1224,13 +1260,14 @@ export const BillingPage: React.FC = () => {
 
                   <button
                     type="button"
-                    onClick={() => setPaymentMode('CARD')}
+                    onClick={() => setPaymentMode('UPI')}
                     style={{
                       padding: '8px 4px',
                       borderRadius: 'var(--yz-radius-sm)',
                       border: '1px solid',
-                      borderColor: paymentMode === 'CARD' ? 'var(--yz-primary)' : 'var(--yz-border)',
-                      backgroundColor: paymentMode === 'CARD' ? 'var(--yz-primary-subtle)' : 'var(--yz-bg-surface)',
+                      borderColor: paymentMode === 'UPI' ? 'var(--yz-primary)' : 'var(--yz-border)',
+                      backgroundColor: paymentMode === 'UPI' ? 'var(--yz-primary-subtle)' : 'var(--yz-bg-surface)',
+                      color: paymentMode === 'UPI' ? 'var(--yz-primary)' : 'var(--yz-text-primary)',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
@@ -1240,41 +1277,200 @@ export const BillingPage: React.FC = () => {
                       fontSize: '11px',
                     }}
                   >
-                    <CreditCard size={18} color={paymentMode === 'CARD' ? 'var(--yz-primary)' : 'inherit'} />
-                    <span>Card</span>
+                    <QrCode size={18} color={paymentMode === 'UPI' ? 'var(--yz-primary)' : 'inherit'} />
+                    <span>UPI / QR</span>
                   </button>
                 </div>
 
+                {/* Cash Flow Panel (BillFlow inspired) */}
+                {paymentMode === 'CASH' && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                      backgroundColor: 'var(--yz-bg-subtle)',
+                      padding: '10px 12px',
+                      borderRadius: 'var(--yz-radius-sm)',
+                      border: '1px solid var(--yz-border)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--yz-text-secondary)' }}>
+                        Amount Due
+                      </span>
+                      <span style={{ fontSize: '14px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-text-primary)' }}>
+                        ₹{computedReceivedAmount.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--yz-text-secondary)' }}>
+                          Cash Received (Tendered)
+                        </label>
+                        <span style={{ fontSize: '10px', color: 'var(--yz-text-muted)' }}>Physical cash received</span>
+                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        value={cashTenderedInput}
+                        onChange={(e) => setCashTenderedInput(e.target.value)}
+                        className="yz-input tabular-nums"
+                        placeholder={`₹${computedReceivedAmount.toLocaleString('en-IN')}`}
+                        style={{ height: '30px', fontSize: '13px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)' }}
+                      />
+                    </div>
+
+                    {/* Quick Presets */}
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => setCashTenderedInput(String(computedReceivedAmount))}
+                        style={{
+                          padding: '3px 8px',
+                          fontSize: '10.5px',
+                          fontWeight: 600,
+                          borderRadius: '4px',
+                          border: '1px solid var(--yz-primary)',
+                          backgroundColor: 'var(--yz-primary-subtle)',
+                          color: 'var(--yz-primary)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Exact (₹{computedReceivedAmount.toLocaleString('en-IN')})
+                      </button>
+                      {[500, 1000, 2000, 5000]
+                        .filter((val) => val >= computedReceivedAmount)
+                        .map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setCashTenderedInput(String(preset))}
+                            style={{
+                              padding: '3px 8px',
+                              fontSize: '10.5px',
+                              borderRadius: '4px',
+                              border: '1px solid var(--yz-border)',
+                              backgroundColor: 'var(--yz-bg-surface)',
+                              color: 'var(--yz-text-secondary)',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            ₹{preset.toLocaleString('en-IN')}
+                          </button>
+                        ))}
+                    </div>
+
+                    {/* Change Calculation Box */}
+                    {(() => {
+                      const tenderNum = cashTenderedInput.trim() === '' ? computedReceivedAmount : Number(cashTenderedInput);
+                      if (isNaN(tenderNum)) return null;
+                      if (tenderNum >= computedReceivedAmount) {
+                        const change = tenderNum - computedReceivedAmount;
+                        return (
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              backgroundColor: '#DCFCE7',
+                              border: '1px solid #86EFAC',
+                              borderRadius: '4px',
+                              padding: '6px 10px',
+                              fontSize: '11.5px',
+                              color: '#166534',
+                            }}
+                          >
+                            <span style={{ fontWeight: 600 }}>Change to Return:</span>
+                            <strong style={{ fontSize: '13px', fontFamily: 'var(--yz-font-mono)' }}>
+                              ₹{change.toLocaleString('en-IN')}
+                            </strong>
+                          </div>
+                        );
+                      } else {
+                        const short = computedReceivedAmount - tenderNum;
+                        return (
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              backgroundColor: '#FEF2F2',
+                              border: '1px solid #FECACA',
+                              borderRadius: '4px',
+                              padding: '6px 10px',
+                              fontSize: '11px',
+                              color: '#991B1B',
+                            }}
+                          >
+                            <span>Remaining / Shortfall:</span>
+                            <strong style={{ fontFamily: 'var(--yz-font-mono)' }}>
+                              -₹{short.toLocaleString('en-IN')}
+                            </strong>
+                          </div>
+                        );
+                      }
+                    })()}
+                  </div>
+                )}
+
+                {/* UPI Panel (Store QR & Merchant details) */}
                 {paymentMode === 'UPI' && (
                   <div
                     style={{
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      padding: '10px',
+                      padding: '10px 12px',
                       backgroundColor: 'var(--yz-bg-subtle)',
                       borderRadius: 'var(--yz-radius-sm)',
+                      border: '1px solid var(--yz-border)',
                       textAlign: 'center',
+                      gap: '6px',
                     }}
                   >
                     <div
                       style={{
-                        width: '100px',
-                        height: '100px',
+                        width: '110px',
+                        height: '110px',
                         backgroundColor: '#FFFFFF',
                         border: '1px solid var(--yz-border)',
-                        borderRadius: '4px',
+                        borderRadius: '6px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        marginBottom: '6px',
+                        padding: '6px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                       }}
                     >
-                      <QrCode size={80} color="#0F172A" />
+                      <img
+                        src={paymentSettings.upiQrUrl || '/images/payment/yaazhi-upi-qr.png'}
+                        alt="Store UPI QR Code"
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      />
                     </div>
-                    <div style={{ fontWeight: 600, fontSize: '11.5px' }}>yaazhiboutique@okhdfcbank</div>
-                    <div style={{ fontSize: '10px', color: 'var(--yz-text-secondary)', marginTop: '1px' }}>
-                      Scan and pay ₹{computedReceivedAmount.toLocaleString('en-IN')}
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '11.5px', color: 'var(--yz-text-primary)', fontFamily: 'var(--yz-font-mono)' }}>
+                        {paymentSettings.upiId || 'yaazhi@oksbi'}
+                      </div>
+                      <div style={{ fontSize: '10px', color: 'var(--yz-text-secondary)', marginTop: '1px' }}>
+                        Scan & pay ₹{computedReceivedAmount.toLocaleString('en-IN')}
+                      </div>
+                    </div>
+
+                    <div style={{ width: '100%', textAlign: 'left', marginTop: '2px' }}>
+                      <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--yz-text-secondary)', display: 'block', marginBottom: '2px' }}>
+                        UPI Reference / UTR Number (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={upiReference}
+                        onChange={(e) => setUpiReference(e.target.value)}
+                        className="yz-input"
+                        placeholder="e.g. 428910482910"
+                        style={{ height: '26px', fontSize: '11px' }}
+                      />
                     </div>
                   </div>
                 )}

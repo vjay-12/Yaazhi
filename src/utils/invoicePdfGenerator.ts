@@ -114,10 +114,12 @@ export async function downloadSalesOrderPdf(
   customCompanyInfo?: CompanyInvoiceInfo
 ): Promise<void> {
   let companyInfo = customCompanyInfo || DEFAULT_COMPANY_INFO;
+  let storeUpiId = 'yaazhi@oksbi';
   if (!customCompanyInfo) {
     try {
       const dbSettings = await settingsService.getSettings();
       if (dbSettings) {
+        if (dbSettings.upi_id) storeUpiId = dbSettings.upi_id;
         companyInfo = {
           companyName: dbSettings.company_name || DEFAULT_COMPANY_INFO.companyName,
           legalName: dbSettings.legal_name || DEFAULT_COMPANY_INFO.legalName,
@@ -385,118 +387,218 @@ export async function downloadSalesOrderPdf(
     cursorY = margin;
   }
 
-  // --- 5. Bottom Section: Left (Amount in Words & Payment Record) & Right (Totals Box) ---
+  // --- 5. Bottom Section: Coordinated Two-Box Layout (PAYMENT & NOTES & AMOUNT SUMMARY) ---
   const totalsBoxWidth = 76;
   const totalsBoxX = pageWidth - margin - totalsBoxWidth;
   const paymentBoxWidth = contentWidth - totalsBoxWidth - 6;
   const paymentBoxX = margin;
-
-  // LEFT BOX: Amount in Words & Payment Record
-  doc.setDrawColor(203, 213, 225);
-  doc.setFillColor(248, 250, 252);
-  doc.roundedRect(paymentBoxX, cursorY, paymentBoxWidth, 38, 1.5, 1.5, 'FD');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(131, 39, 41);
-  doc.text('AMOUNT IN WORDS:', paymentBoxX + 4, cursorY + 5);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.setTextColor(30, 41, 59);
-  const words = doc.splitTextToSize(numberToIndianWords(order.totalAmount), paymentBoxWidth - 8);
-  doc.text(words, paymentBoxX + 4, cursorY + 9.5);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(131, 39, 41);
-  doc.text('PAYMENT RECORD:', paymentBoxX + 4, cursorY + 18);
-
-  const statusLabel = isVoided ? 'VOIDED' : isPaid ? 'PAID' : 'PENDING';
-  const displayPaid = isVoided ? order.paidAmount : isPaid ? order.totalAmount : order.paidAmount;
-  const displayBalance = isVoided ? 0 : isPaid ? 0 : order.pendingAmount;
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.setTextColor(51, 65, 85);
-  doc.text(`Payment Status: ${statusLabel}`, paymentBoxX + 4, cursorY + 22.5);
-  doc.text(`Paid Amount:    Rs. ${displayPaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, paymentBoxX + 4, cursorY + 27);
-  doc.text(`Balance:        Rs. ${displayBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, paymentBoxX + 4, cursorY + 31.5);
-  doc.text(`Payment Mode:   ${order.invoiceNumber ? 'Boutique POS / Counter' : 'Standard Counter'}`, paymentBoxX + 4, cursorY + 36);
-
-  // RIGHT BOX: Totals Breakdown (Subtotal, GST, Discount, Grand Total, Paid/Balance)
-  doc.setDrawColor(226, 232, 240);
-  doc.setFillColor(255, 255, 255); // Clean light background
-  doc.roundedRect(totalsBoxX, cursorY, totalsBoxWidth, 38, 1.5, 1.5, 'FD');
 
   const subtotal = order.subtotal || order.totalAmount;
   const tax = order.taxTotal || 0;
   const discount = order.discountTotal || 0;
   const rightValX = totalsBoxX + totalsBoxWidth - 4;
 
-  let totalLineY = cursorY + 5;
+  const displayPaid = isVoided ? order.paidAmount : isPaid ? order.totalAmount : order.paidAmount;
+  const displayBalance = isVoided ? 0 : isPaid ? 0 : order.pendingAmount;
+
+  const payments = order.payments && order.payments.length > 0 ? order.payments : [];
+
+  // Calculate required height for Left Box
+  let leftContentHeight = 10;
+  if (payments.length === 0) {
+    leftContentHeight += 16;
+  } else if (payments.length === 1) {
+    const p = payments[0];
+    const isUpi = p.paymentMode?.toUpperCase() === 'UPI';
+    leftContentHeight += isUpi && p.referenceNumber ? 20 : 16;
+  } else {
+    leftContentHeight += 6 + payments.length * 4.5;
+  }
+
+  const words = doc.splitTextToSize(numberToIndianWords(order.totalAmount), paymentBoxWidth - 8);
+  leftContentHeight += 5 + words.length * 3.5;
+
+  let splitNotes: string[] = [];
+  if (order.notes && order.notes.trim()) {
+    splitNotes = doc.splitTextToSize(order.notes.trim(), paymentBoxWidth - 8);
+    leftContentHeight += 5 + splitNotes.length * 3.5;
+  }
+
+  // Right Box requires ~48mm
+  const rightContentHeight = 48;
+  const bottomBoxHeight = Math.max(leftContentHeight + 4, rightContentHeight, 48);
+
+  // Check page fit
+  if (cursorY + bottomBoxHeight + 26 > pageHeight - margin) {
+    doc.addPage();
+    cursorY = margin;
+  }
+
+  // Draw coordinated outer box containers (identical top cursorY, matching height, elegant styling)
+  doc.setDrawColor(203, 213, 225);
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(paymentBoxX, cursorY, paymentBoxWidth, bottomBoxHeight, 1.5, 1.5, 'FD');
+
+  doc.setDrawColor(226, 232, 240);
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(totalsBoxX, cursorY, totalsBoxWidth, bottomBoxHeight, 1.5, 1.5, 'FD');
+
+  // --- LEFT BOX: PAYMENT & NOTES ---
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(131, 39, 41);
+  doc.text('PAYMENT & NOTES', paymentBoxX + 4, cursorY + 5.5);
+
+  let pY = cursorY + 10;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(71, 85, 105);
+
+  if (payments.length === 0) {
+    if (order.paidAmount > 0) {
+      doc.text('Payment Method: Cash', paymentBoxX + 4, pY);
+      doc.text(`Amount Paid:    Rs. ${order.paidAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, paymentBoxX + 4, pY + 4);
+      doc.text(`Payment Date:   ${formatDisplayDate(order.date)}`, paymentBoxX + 4, pY + 8);
+      pY += 13;
+    } else {
+      doc.text('Payment Status: PENDING', paymentBoxX + 4, pY);
+      doc.text('No payment recorded yet.', paymentBoxX + 4, pY + 4);
+      if (storeUpiId) {
+        doc.text(`UPI Transfer:   ${storeUpiId}`, paymentBoxX + 4, pY + 8);
+        pY += 13;
+      } else {
+        pY += 9;
+      }
+    }
+  } else if (payments.length === 1) {
+    const p = payments[0];
+    const mode = p.paymentMode?.toUpperCase() === 'UPI' ? 'UPI' : 'Cash';
+    doc.text(`Payment Method: ${mode}`, paymentBoxX + 4, pY);
+    pY += 4;
+    doc.text(`Amount Paid:    Rs. ${p.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, paymentBoxX + 4, pY);
+    pY += 4;
+    if (mode === 'UPI' && p.referenceNumber) {
+      doc.text(`Reference:      ${p.referenceNumber}`, paymentBoxX + 4, pY);
+      pY += 4;
+    }
+    doc.text(`Payment Date:   ${formatDisplayDate(p.paymentDate || p.date || order.date)}`, paymentBoxX + 4, pY);
+    pY += 5;
+  } else {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.2);
+    doc.setTextColor(100, 116, 139);
+    doc.text('PAYMENT HISTORY', paymentBoxX + 4, pY);
+    pY += 4;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.2);
+    doc.setTextColor(51, 65, 85);
+    payments.forEach((p) => {
+      const mode = p.paymentMode?.toUpperCase() === 'UPI' ? 'UPI' : 'Cash';
+      const refText = mode === 'UPI' && p.referenceNumber ? ` (${p.referenceNumber})` : '';
+      doc.text(
+        `${mode}: Rs. ${p.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}${refText} • ${formatDisplayDate(p.paymentDate || p.date)}`,
+        paymentBoxX + 4,
+        pY
+      );
+      pY += 4;
+    });
+    pY += 1.5;
+  }
+
+  // Notes inside Left Box
+  if (splitNotes.length > 0) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(100, 116, 139);
+    doc.text('Notes:', paymentBoxX + 4, pY);
+    pY += 3.5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(51, 65, 85);
+    doc.text(splitNotes, paymentBoxX + 4, pY);
+    pY += splitNotes.length * 3.5 + 1;
+  }
+
+  // Amount in Words inside Left Box
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Amount in Words:', paymentBoxX + 4, pY);
+  pY += 3.5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(30, 41, 59);
+  doc.text(words, paymentBoxX + 4, pY);
+
+  // --- RIGHT BOX: AMOUNT SUMMARY ---
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(131, 39, 41);
+  doc.text('AMOUNT SUMMARY', totalsBoxX + 4, cursorY + 5.5);
+
+  let rY = cursorY + 10.5;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(100, 116, 139);
-  doc.text('Subtotal:', totalsBoxX + 4, totalLineY);
+  doc.text('Subtotal:', totalsBoxX + 4, rY);
   doc.setTextColor(30, 41, 59);
-  doc.text(`Rs. ${subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, rightValX, totalLineY, { align: 'right' });
+  doc.text(`Rs. ${subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, rightValX, rY, { align: 'right' });
 
-  totalLineY += 4.5;
+  rY += 4.5;
   doc.setTextColor(100, 116, 139);
-  doc.text('GST:', totalsBoxX + 4, totalLineY);
+  doc.text('GST:', totalsBoxX + 4, rY);
   doc.setTextColor(30, 41, 59);
-  doc.text(`Rs. ${tax.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, rightValX, totalLineY, { align: 'right' });
+  doc.text(`Rs. ${tax.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, rightValX, rY, { align: 'right' });
 
-  totalLineY += 4.5;
+  rY += 4.5;
   doc.setTextColor(100, 116, 139);
-  doc.text('Discount:', totalsBoxX + 4, totalLineY);
+  doc.text('Discount:', totalsBoxX + 4, rY);
   doc.setTextColor(discount > 0 ? 22 : 30, discount > 0 ? 101 : 41, discount > 0 ? 52 : 59);
   doc.text(
     discount > 0 ? `- Rs. ${discount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : 'Rs. 0.00',
     rightValX,
-    totalLineY,
+    rY,
     { align: 'right' }
   );
 
-  totalLineY += 2;
+  rY += 2.5;
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.3);
-  doc.line(totalsBoxX + 4, totalLineY, rightValX, totalLineY);
-  totalLineY += 4.5;
+  doc.line(totalsBoxX + 4, rY, rightValX, rY);
 
-  // Grand Total Highlight: Clean, light, professional Yaazhi-themed row with strong contrast
-  const grandTotalBoxY = totalLineY - 3.5;
-  doc.setFillColor(254, 242, 242); // Soft light Yaazhi rose tint (clean and light)
-  doc.setDrawColor(254, 205, 211); // Subtle rose accent border
+  // Dedicated Grand Total Highlight Row (with strong background, border, and vertical clearance)
+  const grandTotalRowY = rY + 1.8;
+  const grandTotalRowHeight = 7.5;
+  doc.setFillColor(254, 242, 242);
+  doc.setDrawColor(254, 205, 211);
   doc.setLineWidth(0.3);
-  doc.roundedRect(totalsBoxX + 2, grandTotalBoxY, totalsBoxWidth - 4, 7, 1, 1, 'FD');
+  doc.roundedRect(totalsBoxX + 2, grandTotalRowY, totalsBoxWidth - 4, grandTotalRowHeight, 1, 1, 'FD');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(131, 39, 41); // Strong contrast bold Yaazhi burgundy
-  doc.text('Grand Total:', totalsBoxX + 5, totalLineY + 1.2);
-  doc.text(`Rs. ${order.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, rightValX - 1, totalLineY + 1.2, { align: 'right' });
+  doc.setFontSize(8.5);
+  doc.setTextColor(131, 39, 41);
+  doc.text('Grand Total:', totalsBoxX + 5, grandTotalRowY + 5.2);
+  doc.text(`Rs. ${order.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, rightValX - 1, grandTotalRowY + 5.2, { align: 'right' });
 
-  totalLineY += 5.5;
-
+  // Paid and Balance Due placed below with ample clearance (no overlap!)
+  let postGtY = grandTotalRowY + grandTotalRowHeight + 4.5;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(100, 116, 139);
-  doc.text('Paid:', totalsBoxX + 4, totalLineY);
+  doc.text('Paid:', totalsBoxX + 4, postGtY);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(22, 101, 52); // green for paid
-  doc.text(`Rs. ${displayPaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, rightValX, totalLineY, { align: 'right' });
+  doc.setTextColor(22, 101, 52);
+  doc.text(`Rs. ${displayPaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, rightValX, postGtY, { align: 'right' });
 
-  totalLineY += 4;
+  postGtY += 4.5;
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 116, 139);
-  doc.text('Balance:', totalsBoxX + 4, totalLineY);
+  doc.text('Balance Due:', totalsBoxX + 4, postGtY);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(displayBalance > 0 ? 180 : 100, displayBalance > 0 ? 83 : 116, displayBalance > 0 ? 9 : 139);
-  doc.text(`Rs. ${displayBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, rightValX, totalLineY, { align: 'right' });
+  doc.text(`Rs. ${displayBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, rightValX, postGtY, { align: 'right' });
 
-  cursorY += 42;
+  cursorY += bottomBoxHeight + 6;
 
   // --- 6. Terms & Conditions and Signature Section ---
   if (cursorY + 22 > pageHeight - margin) {

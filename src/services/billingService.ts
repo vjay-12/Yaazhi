@@ -5,7 +5,7 @@ export interface BillingCheckoutInput {
   customer_name?: string;
   customer_phone?: string;
   godown_id?: string;
-  payment_mode: 'CASH' | 'CARD' | 'UPI' | 'BANK_TRANSFER';
+  payment_mode: 'CASH' | 'UPI';
   payment_reference?: string;
   payment_status?: 'PAID' | 'PARTIAL' | 'PENDING';
   paid_amount?: number;
