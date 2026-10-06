@@ -419,7 +419,7 @@ export const VendorsPage: React.FC = () => {
               {statusFilter === 'ALL' && (
                 <th style={{ width: '75px', textAlign: 'center' }}>Status</th>
               )}
-              <th style={{ width: '130px', textAlign: 'center' }}>Actions</th>
+              <th style={{ width: '80px', textAlign: 'center' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -518,38 +518,39 @@ export const VendorsPage: React.FC = () => {
                       </td>
                     )}
 
-                    {/* Actions: [Edit] [Archive] or [Restore] - NO EYE ICON */}
+                    {/* Actions: [Edit] [Archive] or [Restore] - Ghost icon buttons matching other components */}
                     <td style={{ textAlign: 'center' }}>
                       <div
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: '6px',
+                          gap: '4px',
                         }}
                         onClick={(e) => e.stopPropagation()}
                       >
                         {/* Edit Action */}
                         <button
                           type="button"
-                          className="yz-btn yz-btn-secondary yz-btn-sm"
+                          className="yz-btn yz-btn-ghost yz-btn-sm"
                           style={{
-                            padding: '2px 8px',
-                            height: '24px',
-                            fontSize: '11px',
+                            width: '24px',
+                            height: '22px',
+                            padding: 0,
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '4px',
+                            justifyContent: 'center',
+                            color: 'var(--yz-text-secondary)',
+                            flexShrink: 0,
                           }}
                           onClick={(e) => {
                             e.stopPropagation();
                             setVendorToEdit(v);
                             setIsAddModalOpen(true);
                           }}
-                          title="Edit vendor details & bank information"
+                          title="Edit vendor details"
                         >
-                          <Edit2 size={11} />
-                          <span>Edit</span>
+                          <Edit2 size={12} />
                         </button>
 
                         {/* Archive or Restore Action */}
@@ -558,13 +559,14 @@ export const VendorsPage: React.FC = () => {
                             type="button"
                             className="yz-btn yz-btn-ghost yz-btn-sm"
                             style={{
-                              padding: '2px 8px',
-                              height: '24px',
-                              fontSize: '11px',
-                              color: 'var(--yz-text-secondary)',
+                              width: '24px',
+                              height: '22px',
+                              padding: 0,
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '4px',
+                              justifyContent: 'center',
+                              color: 'var(--yz-text-muted, #64748B)',
+                              flexShrink: 0,
                             }}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -572,21 +574,21 @@ export const VendorsPage: React.FC = () => {
                             }}
                             title="Archive vendor"
                           >
-                            <Archive size={11} />
-                            <span>Archive</span>
+                            <Archive size={12} />
                           </button>
                         ) : (
                           <button
                             type="button"
                             className="yz-btn yz-btn-ghost yz-btn-sm"
                             style={{
-                              padding: '2px 8px',
-                              height: '24px',
-                              fontSize: '11px',
-                              color: '#0284C7',
+                              width: '24px',
+                              height: '22px',
+                              padding: 0,
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '4px',
+                              justifyContent: 'center',
+                              color: '#166534',
+                              flexShrink: 0,
                             }}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -594,8 +596,7 @@ export const VendorsPage: React.FC = () => {
                             }}
                             title="Restore vendor"
                           >
-                            <RotateCcw size={11} />
-                            <span>Restore</span>
+                            <RotateCcw size={12} />
                           </button>
                         )}
                       </div>
@@ -664,30 +665,11 @@ export const VendorsPage: React.FC = () => {
                         fontSize: '11.5px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between',
+                        gap: '6px',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <AlertTriangle size={13} />
-                        <span>This vendor is currently archived. Historical records remain fully accessible.</span>
-                      </div>
-                      <button
-                        type="button"
-                        className="yz-btn yz-btn-sm"
-                        style={{
-                          height: '22px',
-                          fontSize: '10.5px',
-                          padding: '0 8px',
-                          backgroundColor: '#FFFFFF',
-                          border: '1px solid #FECACA',
-                          color: '#991B1B',
-                        }}
-                        onClick={() => {
-                          setVendorToRestore(vendor);
-                        }}
-                      >
-                        Restore Vendor
-                      </button>
+                      <AlertTriangle size={13} />
+                      <span>This vendor is currently archived. Historical records remain fully accessible.</span>
                     </div>
                   )}
 
@@ -1327,55 +1309,14 @@ export const VendorsPage: React.FC = () => {
                   <div
                     style={{
                       display: 'flex',
-                      justifyContent: 'space-between',
+                      justifyContent: 'flex-end',
                       alignItems: 'center',
                       marginTop: '4px',
                     }}
                   >
-                    <div>
-                      {!vendor.isArchived ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          icon={<Archive size={13} />}
-                          onClick={() => {
-                            setVendorToArchive(vendor);
-                          }}
-                          style={{ color: 'var(--yz-text-secondary)' }}
-                        >
-                          Archive Vendor
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          icon={<RotateCcw size={13} />}
-                          onClick={() => {
-                            setVendorToRestore(vendor);
-                          }}
-                          style={{ color: '#0284C7' }}
-                        >
-                          Restore Vendor
-                        </Button>
-                      )}
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        icon={<Edit2 size={13} />}
-                        onClick={() => {
-                          setVendorToEdit(vendor);
-                          setIsAddModalOpen(true);
-                        }}
-                      >
-                        Edit Details
-                      </Button>
-                      <Button variant="secondary" size="sm" onClick={() => setSelectedVendor(null)}>
-                        Close
-                      </Button>
-                    </div>
+                    <Button variant="secondary" size="sm" onClick={() => setSelectedVendor(null)}>
+                      Close
+                    </Button>
                   </div>
                 </div>
               );
