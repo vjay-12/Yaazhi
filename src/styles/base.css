@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Yaazhi Base Styles & Core Components
+   Yaazhi Base Styles & Core Components - Compact Invenaro Proportions
    ========================================================================== */
 
 *, *::before, *::after {
@@ -14,8 +14,8 @@ html, body {
   background-color: var(--yz-bg-canvas);
   color: var(--yz-text-primary);
   font-family: var(--yz-font-body);
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.4;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -31,7 +31,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--yz-font-display);
   font-weight: 600;
   color: var(--yz-text-primary);
-  letter-spacing: -0.015em;
+  letter-spacing: -0.01em;
   line-height: 1.25;
 }
 
@@ -46,8 +46,8 @@ p, span, label, input, button, select, textarea {
 
 /* Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -61,21 +61,22 @@ p, span, label, input, button, select, textarea {
 }
 
 /* ==========================================================================
-   Buttons
+   Buttons - Compact Invenaro Scale (h-7 to h-8)
    ========================================================================== */
 .yz-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--yz-space-2);
-  padding: 0.5rem 1rem;
-  font-size: var(--yz-text-sm);
+  gap: 5px;
+  padding: 0 9px;
+  height: 28px;
+  font-size: 12px;
   font-weight: 500;
-  line-height: 1.2;
-  border-radius: var(--yz-radius-md);
+  line-height: 1;
+  border-radius: var(--yz-radius-sm);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.15s ease-in-out;
+  transition: all 0.12s ease-in-out;
   user-select: none;
   text-decoration: none;
   white-space: nowrap;
@@ -83,11 +84,11 @@ p, span, label, input, button, select, textarea {
 
 .yz-btn:focus-visible {
   outline: 2px solid var(--yz-border-focus);
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
 .yz-btn:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
 }
@@ -105,18 +106,20 @@ p, span, label, input, button, select, textarea {
 }
 
 .yz-btn-secondary {
-  background-color: var(--yz-bg-subtle);
+  background-color: #FFFFFF;
   color: var(--yz-text-primary);
   border-color: var(--yz-border);
+  box-shadow: var(--yz-shadow-xs);
 }
 .yz-btn-secondary:hover:not(:disabled) {
-  background-color: var(--yz-bg-subtle-hover);
+  background-color: var(--yz-bg-subtle);
   border-color: var(--yz-border-strong);
 }
 
 .yz-btn-gold {
   background-color: var(--yz-gold);
   color: #FFFFFF;
+  box-shadow: var(--yz-shadow-xs);
 }
 .yz-btn-gold:hover:not(:disabled) {
   background-color: var(--yz-gold-hover);
@@ -125,6 +128,7 @@ p, span, label, input, button, select, textarea {
 .yz-btn-ghost {
   background: transparent;
   color: var(--yz-text-secondary);
+  border-color: transparent;
 }
 .yz-btn-ghost:hover:not(:disabled) {
   background-color: var(--yz-bg-subtle);
@@ -137,41 +141,47 @@ p, span, label, input, button, select, textarea {
   border-color: var(--yz-status-out-stock-border);
 }
 .yz-btn-danger:hover:not(:disabled) {
-  background-color: #FCA5A5;
+  background-color: #FEE2E2;
 }
 
 .yz-btn-sm {
-  padding: 0.35rem 0.65rem;
-  font-size: var(--yz-text-xs);
-  border-radius: var(--yz-radius-sm);
+  height: 24px;
+  padding: 0 6px;
+  font-size: 11px;
+  border-radius: var(--yz-radius-xs);
+  gap: 4px;
 }
 
 .yz-btn-lg {
-  padding: 0.75rem 1.25rem;
-  font-size: var(--yz-text-base);
+  height: 34px;
+  padding: 0 14px;
+  font-size: 13px;
   font-weight: 600;
-  border-radius: var(--yz-radius-lg);
+  border-radius: var(--yz-radius-md);
 }
 
 /* ==========================================================================
-   Badges & Status Tags
+   Badges & Status Tags - Compact Proportions
    ========================================================================== */
 .yz-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.2rem 0.6rem;
-  font-size: var(--yz-text-xs);
-  font-weight: 600;
-  border-radius: var(--yz-radius-full);
+  gap: 4px;
+  padding: 1px 6px;
+  height: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--yz-radius-sm);
   border: 1px solid transparent;
   white-space: nowrap;
+  line-height: 1;
 }
 
 .yz-badge-dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .yz-badge-in-stock {
@@ -220,17 +230,17 @@ p, span, label, input, button, select, textarea {
 }
 
 /* ==========================================================================
-   Form Controls
+   Form Controls - Compact Height 28px - 30px
    ========================================================================== */
 .yz-field {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: var(--yz-space-4);
+  gap: 3px;
+  margin-bottom: 8px;
 }
 
 .yz-label {
-  font-size: var(--yz-text-xs);
+  font-size: 11px;
   font-weight: 600;
   color: var(--yz-text-secondary);
   text-transform: uppercase;
@@ -239,19 +249,37 @@ p, span, label, input, button, select, textarea {
 
 .yz-input, .yz-select, .yz-textarea {
   width: 100%;
-  padding: 0.6rem 0.85rem;
-  font-size: var(--yz-text-base);
+  padding: 4px 8px;
+  font-size: 12px;
+  height: 30px;
   color: var(--yz-text-primary);
   background-color: var(--yz-bg-surface);
   border: 1px solid var(--yz-border);
-  border-radius: var(--yz-radius-md);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  border-radius: var(--yz-radius-sm);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
   outline: none;
+}
+
+.yz-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+  padding-right: 24px;
+  cursor: pointer;
+}
+
+.yz-textarea {
+  height: auto;
+  min-height: 52px;
+  padding: 6px 8px;
 }
 
 .yz-input:focus, .yz-select:focus, .yz-textarea:focus {
   border-color: var(--yz-border-focus);
-  box-shadow: 0 0 0 3px var(--yz-primary-subtle);
+  box-shadow: 0 0 0 2px var(--yz-primary-subtle);
 }
 
 .yz-input::placeholder, .yz-textarea::placeholder {
@@ -259,24 +287,24 @@ p, span, label, input, button, select, textarea {
 }
 
 .yz-hint {
-  font-size: var(--yz-text-xs);
+  font-size: 10px;
   color: var(--yz-text-muted);
 }
 
 .yz-error-text {
-  font-size: var(--yz-text-xs);
+  font-size: 11px;
   color: var(--yz-status-out-stock);
   font-weight: 500;
 }
 
 /* ==========================================================================
-   Table Styles
+   Table Styles - Information-Dense Single-Line Invenaro Rows
    ========================================================================== */
 .yz-table-container {
   background: var(--yz-bg-surface);
   border: 1px solid var(--yz-border);
-  border-radius: var(--yz-radius-lg);
-  box-shadow: var(--yz-shadow-sm);
+  border-radius: var(--yz-radius-sm);
+  box-shadow: none;
   overflow-x: auto;
   position: relative;
 }
@@ -285,26 +313,30 @@ p, span, label, input, button, select, textarea {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: var(--yz-text-base);
+  font-size: 12px;
 }
 
 .yz-table th {
-  background-color: var(--yz-bg-subtle);
-  padding: 0.75rem 1rem;
-  font-size: var(--yz-text-xs);
+  background-color: #F8FAFC;
+  padding: 5px 10px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--yz-text-secondary);
+  letter-spacing: 0.04em;
+  color: var(--yz-text-muted);
   border-bottom: 1px solid var(--yz-border);
   white-space: nowrap;
+  height: 32px;
+  user-select: none;
 }
 
 .yz-table td {
-  padding: 0.85rem 1rem;
+  padding: 5px 10px;
   border-bottom: 1px solid var(--yz-border-subtle);
   color: var(--yz-text-primary);
   vertical-align: middle;
+  white-space: nowrap;
+  height: 35px;
 }
 
 .yz-table tr:last-child td {
@@ -312,84 +344,95 @@ p, span, label, input, button, select, textarea {
 }
 
 .yz-table tbody tr {
-  transition: background-color 0.12s ease;
+  transition: background-color 0.1s ease;
+  cursor: pointer;
 }
 
 .yz-table tbody tr:hover {
-  background-color: var(--yz-bg-surface-hover);
+  background-color: #F8FAFC;
+}
+
+/* Ellipsis helper for long text in compact tables */
+.yz-cell-truncate {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ==========================================================================
-   Cards & Content Blocks
+   Cards & Purposeful Compact Containers
    ========================================================================== */
 .yz-card {
   background: var(--yz-bg-surface);
   border: 1px solid var(--yz-border);
-  border-radius: var(--yz-radius-lg);
-  padding: var(--yz-space-5);
-  box-shadow: var(--yz-shadow-sm);
+  border-radius: var(--yz-radius-md);
+  padding: 12px;
+  box-shadow: none;
 }
 
 .yz-stat-card {
   background: var(--yz-bg-surface);
   border: 1px solid var(--yz-border);
-  border-radius: var(--yz-radius-lg);
-  padding: var(--yz-space-4) var(--yz-space-5);
-  box-shadow: var(--yz-shadow-sm);
+  border-radius: var(--yz-radius-sm);
+  padding: 8px 12px;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
-  gap: var(--yz-space-1);
+  gap: 2px;
 }
 .yz-stat-label {
-  font-size: var(--yz-text-xs);
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--yz-text-muted);
   font-weight: 600;
 }
 .yz-stat-value {
-  font-size: var(--yz-text-2xl);
+  font-size: 18px;
   font-family: var(--yz-font-display);
   font-weight: 700;
   color: var(--yz-text-primary);
-  line-height: 1.1;
+  line-height: 1.15;
 }
 .yz-stat-subtext {
-  font-size: var(--yz-text-xs);
-  color: var(--yz-text-secondary);
+  font-size: 11px;
+  color: var(--yz-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Modals */
+/* Modals - Clean Compact Dialog */
 .yz-modal-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(23, 19, 18, 0.65);
-  backdrop-filter: blur(2px);
+  background-color: rgba(15, 23, 42, 0.45);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 0.75rem;
 }
 
 .yz-modal {
   background: var(--yz-bg-surface);
-  border-radius: var(--yz-radius-xl);
+  border-radius: var(--yz-radius-md);
   box-shadow: var(--yz-shadow-modal);
   border: 1px solid var(--yz-border);
   width: 100%;
-  max-width: 580px;
-  max-height: 90vh;
+  max-width: 520px;
+  max-height: 88vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: modalPop 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes modalPop {
   0% {
     opacity: 0;
-    transform: scale(0.97) translateY(8px);
+    transform: scale(0.98) translateY(4px);
   }
   100% {
     opacity: 1;

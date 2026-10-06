@@ -2,13 +2,25 @@ import type { YaazhiProduct, StockStatus } from './product';
 
 export type MovementType = 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER';
 
-export type AdjustmentReasonCode = 'audit' | 'damage' | 'loss' | 'miscount' | 'return';
+export type AdjustmentReasonCode =
+  | 'audit'
+  | 'damage'
+  | 'loss'
+  | 'miscount'
+  | 'return'
+  | 'AUDIT'
+  | 'DAMAGED'
+  | 'EXPIRED'
+  | 'DISCREPANCY'
+  | 'OTHER'
+  | string;
 
 export interface BoutiqueLocation {
   id: string;
   name: string;
   code: string;
-  type: 'SHOWROOM' | 'VAULT' | 'STORE_ROOM' | 'WORKSHOP';
+  type?: 'SHOWROOM' | 'VAULT' | 'STORE_ROOM' | 'WORKSHOP' | string;
+  address?: string;
   isDefault: boolean;
 }
 
@@ -44,11 +56,14 @@ export interface StockAdjustmentInput {
 
 export interface StockSummary {
   totalSkus: number;
+  totalSKUs?: number;
   totalUnits: number;
   lowStockCount: number;
   outOfStockCount: number;
   inventoryValuationCost: number;
   inventoryValuationRetail: number;
+  totalValuationCost?: number;
+  totalValuationRetail?: number;
 }
 
 export interface InventoryItemRow {

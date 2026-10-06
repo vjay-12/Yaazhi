@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Yaazhi App Shell & Layout Styles
+   Yaazhi App Shell & Layout Styles - Invenaro-aligned Compact Enterprise UI
    ========================================================================== */
 
 .yz-app-layout {
@@ -10,16 +10,16 @@
 }
 
 /* ==========================================================================
-   Sidebar
+   Sidebar - Clean, Compact Invenaro Light Slate Aesthetic
    ========================================================================== */
 .yz-sidebar {
   width: var(--yz-sidebar-width);
   background-color: var(--yz-bg-sidebar);
-  color: var(--yz-text-inverse);
+  color: var(--yz-text-primary);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   border-right: 1px solid var(--yz-border-sidebar);
   position: sticky;
   top: 0;
@@ -37,33 +37,33 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--yz-space-4);
+  padding: 0 10px;
   border-bottom: 1px solid var(--yz-border-sidebar);
+  background-color: var(--yz-bg-sidebar);
 }
 
 .yz-brand-link {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 8px;
   text-decoration: none;
-  color: var(--yz-text-inverse);
+  color: var(--yz-text-primary);
+  overflow: hidden;
 }
 
 .yz-brand-name {
   font-family: var(--yz-font-display);
   font-weight: 700;
-  font-size: 1.25rem;
-  letter-spacing: 0.04em;
-  background: linear-gradient(135deg, #FFFFFF 40%, var(--yz-gold) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  color: var(--yz-text-primary);
 }
 
 .yz-brand-sub {
-  font-size: 0.65rem;
+  font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--yz-gold);
+  letter-spacing: 0.08em;
+  color: var(--yz-primary);
   font-weight: 600;
   display: block;
   line-height: 1;
@@ -72,94 +72,101 @@
 .yz-sidebar-nav {
   flex: 1;
   overflow-y: auto;
-  padding: var(--yz-space-3) var(--yz-space-2);
+  padding: 6px 6px;
   display: flex;
   flex-direction: column;
-  gap: var(--yz-space-1);
+  gap: 2px;
 }
 
 .yz-nav-group-title {
-  font-size: 0.6875rem;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--yz-text-sidebar-muted);
-  padding: 0.75rem 0.75rem 0.25rem;
+  letter-spacing: 0.06em;
+  color: var(--yz-text-muted);
+  padding: 10px 8px 3px 8px;
+  margin-top: 2px;
 }
 
 .yz-nav-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.65rem 0.75rem;
-  border-radius: var(--yz-radius-md);
-  color: var(--yz-text-sidebar-muted);
+  gap: 8px;
+  padding: 0 8px;
+  height: 30px;
+  border-radius: var(--yz-radius-sm);
+  color: var(--yz-text-secondary);
   text-decoration: none;
-  font-size: var(--yz-text-sm);
+  font-size: 12px;
   font-weight: 500;
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
   position: relative;
   cursor: pointer;
   border: 1px solid transparent;
+  background: transparent;
+  width: 100%;
+  text-align: left;
 }
 
 .yz-nav-item:hover {
   background-color: var(--yz-bg-sidebar-hover);
-  color: #FFFFFF;
+  color: var(--yz-text-primary);
 }
 
 .yz-nav-item.active {
   background-color: var(--yz-bg-sidebar-active);
-  color: #FFFFFF;
-  border-color: rgba(189, 141, 57, 0.25);
-  box-shadow: inset 3px 0 0 var(--yz-gold);
+  color: var(--yz-primary);
+  font-weight: 600;
+  border-color: #D8DFE9;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .yz-nav-item .yz-nav-icon {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
-  transition: transform 0.15s ease;
+  color: var(--yz-text-muted);
 }
 
 .yz-nav-item.active .yz-nav-icon {
-  color: var(--yz-gold);
+  color: var(--yz-primary);
 }
 
 .yz-nav-badge {
   margin-left: auto;
   background-color: var(--yz-primary);
   color: #FFFFFF;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 0.1rem 0.45rem;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
   border-radius: var(--yz-radius-full);
 }
 
 .yz-sidebar-footer {
-  padding: var(--yz-space-3);
+  padding: 8px 10px;
   border-top: 1px solid var(--yz-border-sidebar);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  background-color: var(--yz-bg-sidebar);
 }
 
 .yz-store-pill {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: var(--yz-text-xs);
-  color: var(--yz-text-sidebar-muted);
+  gap: 6px;
+  font-size: 11px;
+  color: var(--yz-text-secondary);
 }
 .yz-store-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background-color: #22C55E;
+  background-color: #16A34A;
 }
 
 /* ==========================================================================
-   Main Content Area & Header
+   Main Content Area & Header - Compact Invenaro Topbar (44px)
    ========================================================================== */
 .yz-main-wrapper {
   flex: 1;
@@ -175,38 +182,39 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--yz-space-6);
+  padding: 0 16px;
   position: sticky;
   top: 0;
   z-index: 90;
-  box-shadow: var(--yz-shadow-xs);
+  box-shadow: none;
 }
 
 .yz-header-left {
   display: flex;
   align-items: center;
-  gap: var(--yz-space-3);
+  gap: 10px;
 }
 
 .yz-header-right {
   display: flex;
   align-items: center;
-  gap: var(--yz-space-3);
+  gap: 8px;
 }
 
 .yz-quick-search-btn {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.45rem 0.85rem;
+  gap: 6px;
+  padding: 0 8px;
+  height: 28px;
   background-color: var(--yz-bg-subtle);
   border: 1px solid var(--yz-border);
-  border-radius: var(--yz-radius-md);
+  border-radius: var(--yz-radius-sm);
   color: var(--yz-text-muted);
-  font-size: var(--yz-text-sm);
+  font-size: 11px;
   cursor: pointer;
-  transition: all 0.15s ease;
-  min-width: 220px;
+  transition: all 0.12s ease;
+  min-width: 170px;
 }
 .yz-quick-search-btn:hover {
   background-color: var(--yz-bg-subtle-hover);
@@ -218,59 +226,59 @@
   margin-left: auto;
   background: var(--yz-bg-surface);
   border: 1px solid var(--yz-border);
-  padding: 0.1rem 0.35rem;
-  font-size: 0.65rem;
+  padding: 0 4px;
+  font-size: 10px;
   font-family: var(--yz-font-mono);
-  border-radius: 4px;
+  border-radius: 3px;
   color: var(--yz-text-secondary);
+  line-height: 16px;
 }
 
 .yz-content-container {
   flex: 1;
-  padding: var(--yz-space-6);
-  max-width: 1440px;
+  padding: 14px 18px;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
 }
 
-/* Page Header */
+/* Page Header - Compact */
 .yz-page-header {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: var(--yz-space-6);
+  gap: 2px;
+  margin-bottom: 12px;
 }
 
 .yz-page-title-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--yz-space-4);
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .yz-page-title {
-  font-size: var(--yz-text-2xl);
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--yz-text-primary);
 }
 
 .yz-page-subtitle {
-  font-size: var(--yz-text-sm);
-  color: var(--yz-text-secondary);
+  font-size: 11px;
+  color: var(--yz-text-muted);
 }
 
 /* ==========================================================================
-   Toasts Notification
+   Toasts Notification - Compact
    ========================================================================== */
 .yz-toast-container {
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
+  bottom: 16px;
+  right: 16px;
   z-index: 2000;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 6px;
   pointer-events: none;
 }
 
@@ -278,19 +286,19 @@
   pointer-events: auto;
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: 8px;
   background: var(--yz-bg-surface);
   border: 1px solid var(--yz-border);
-  border-radius: var(--yz-radius-lg);
-  padding: 0.85rem 1.15rem;
-  box-shadow: var(--yz-shadow-lg);
-  max-width: 380px;
-  animation: toastSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: var(--yz-radius-sm);
+  padding: 8px 12px;
+  box-shadow: var(--yz-shadow-md);
+  max-width: 340px;
+  animation: toastSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes toastSlide {
   from {
-    transform: translateY(16px) scale(0.96);
+    transform: translateY(10px) scale(0.98);
     opacity: 0;
   }
   to {
@@ -312,9 +320,9 @@
     transform: translateX(0);
   }
   .yz-content-container {
-    padding: var(--yz-space-4);
+    padding: 10px 12px;
   }
   .yz-quick-search-btn {
-    min-width: 140px;
+    min-width: 120px;
   }
 }

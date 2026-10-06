@@ -1,31 +1,29 @@
 import React from 'react';
 import {
   LayoutDashboard,
-  Package,
-  Layers,
+  Receipt,
   ShoppingBag,
+  Users,
+  Package,
+  ScrollText,
   ShoppingCart,
   Truck,
-  Users,
   BarChart3,
   Settings,
   ChevronLeft,
   ChevronRight,
-  Receipt,
-  Scissors,
 } from 'lucide-react';
 import { YaazhiLogo } from '../icons/YaazhiLogo';
 
 export type NavTabId =
   | 'overview'
   | 'billing'
-  | 'products'
-  | 'inventory'
-  | 'movements'
   | 'orders'
+  | 'customers'
+  | 'products'
+  | 'movements'
   | 'purchases'
   | 'vendors'
-  | 'customers'
   | 'reports'
   | 'settings';
 
@@ -62,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(23, 19, 18, 0.6)',
+            backgroundColor: 'rgba(15, 23, 42, 0.5)',
             zIndex: 95,
           }}
         />
@@ -78,6 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div
             onClick={() => handleNavClick('overview')}
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            title="Yaazhi Boutique"
           >
             <YaazhiLogo collapsed={isCollapsed} size={isCollapsed ? 'sm' : 'md'} />
           </div>
@@ -91,150 +90,137 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 borderRadius: 'var(--yz-radius-sm)',
                 color: 'var(--yz-text-sidebar-muted)',
                 cursor: 'pointer',
-                padding: '0.3rem',
+                padding: '3px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                width: '22px',
+                height: '22px',
               }}
               title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              {isCollapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
             </button>
           )}
         </div>
 
         {/* Navigation List */}
         <nav className="yz-sidebar-nav">
-          {/* Main POS / Counter Action Highlight */}
-          <button
-            className={`yz-nav-item ${currentTab === 'billing' ? 'active' : ''}`}
-            onClick={() => handleNavClick('billing')}
-            style={{
-              backgroundColor: currentTab === 'billing' ? 'var(--yz-primary)' : 'rgba(133, 34, 55, 0.18)',
-              color: '#FFFFFF',
-              borderColor: 'rgba(189, 141, 57, 0.4)',
-              marginBottom: '0.5rem',
-            }}
-          >
-            <Receipt className="yz-nav-icon" size={18} color="var(--yz-gold)" />
-            {!isCollapsed && (
-              <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                POS / Billing
-                <span
-                  style={{
-                    fontSize: '0.625rem',
-                    backgroundColor: 'var(--yz-gold)',
-                    color: '#1C1817',
-                    fontWeight: 800,
-                    padding: '1px 5px',
-                    borderRadius: '4px',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Fast
-                </span>
-              </span>
-            )}
-          </button>
-
-          {!isCollapsed && <div className="yz-nav-group-title">Operations</div>}
-
+          {/* Overview */}
           <button
             className={`yz-nav-item ${currentTab === 'overview' ? 'active' : ''}`}
             onClick={() => handleNavClick('overview')}
+            title="Overview"
           >
-            <LayoutDashboard className="yz-nav-icon" size={18} />
+            <LayoutDashboard className="yz-nav-icon" size={15} />
             {!isCollapsed && <span>Overview</span>}
+          </button>
+
+          {/* SALES Section */}
+          {!isCollapsed && <div className="yz-nav-group-title">Sales</div>}
+
+          <button
+            className={`yz-nav-item ${currentTab === 'billing' ? 'active' : ''}`}
+            onClick={() => handleNavClick('billing')}
+            title="Billing"
+          >
+            <Receipt className="yz-nav-icon" size={15} />
+            {!isCollapsed && <span>Billing</span>}
           </button>
 
           <button
             className={`yz-nav-item ${currentTab === 'orders' ? 'active' : ''}`}
             onClick={() => handleNavClick('orders')}
+            title="Sales Orders"
           >
-            <ShoppingBag className="yz-nav-icon" size={18} />
+            <ShoppingBag className="yz-nav-icon" size={15} />
             {!isCollapsed && <span>Sales Orders</span>}
-          </button>
-
-          {!isCollapsed && <div className="yz-nav-group-title">Catalog & Stock</div>}
-
-          <button
-            className={`yz-nav-item ${currentTab === 'products' ? 'active' : ''}`}
-            onClick={() => handleNavClick('products')}
-          >
-            <Package className="yz-nav-icon" size={18} />
-            {!isCollapsed && <span>Products Catalog</span>}
-          </button>
-
-          <button
-            className={`yz-nav-item ${currentTab === 'inventory' ? 'active' : ''}`}
-            onClick={() => handleNavClick('inventory')}
-          >
-            <Layers className="yz-nav-icon" size={18} />
-            {!isCollapsed && <span>Stock & Valuation</span>}
-          </button>
-
-          <button
-            className={`yz-nav-item ${currentTab === 'movements' ? 'active' : ''}`}
-            onClick={() => handleNavClick('movements')}
-          >
-            <Scissors className="yz-nav-icon" size={18} />
-            {!isCollapsed && <span>Stock Audit Log</span>}
-          </button>
-
-          {!isCollapsed && <div className="yz-nav-group-title">Commercial</div>}
-
-          <button
-            className={`yz-nav-item ${currentTab === 'purchases' ? 'active' : ''}`}
-            onClick={() => handleNavClick('purchases')}
-          >
-            <ShoppingCart className="yz-nav-icon" size={18} />
-            {!isCollapsed && <span>Purchases & POs</span>}
-          </button>
-
-          <button
-            className={`yz-nav-item ${currentTab === 'vendors' ? 'active' : ''}`}
-            onClick={() => handleNavClick('vendors')}
-          >
-            <Truck className="yz-nav-icon" size={18} />
-            {!isCollapsed && <span>Weavers & Vendors</span>}
           </button>
 
           <button
             className={`yz-nav-item ${currentTab === 'customers' ? 'active' : ''}`}
             onClick={() => handleNavClick('customers')}
+            title="Customers"
           >
-            <Users className="yz-nav-icon" size={18} />
-            {!isCollapsed && <span>Boutique Clients</span>}
+            <Users className="yz-nav-icon" size={15} />
+            {!isCollapsed && <span>Customers</span>}
           </button>
 
-          {!isCollapsed && <div className="yz-nav-group-title">Administration</div>}
+          {/* INVENTORY Section */}
+          {!isCollapsed && <div className="yz-nav-group-title">Inventory</div>}
+
+          <button
+            className={`yz-nav-item ${currentTab === 'products' ? 'active' : ''}`}
+            onClick={() => handleNavClick('products')}
+            title="Products & Stock"
+          >
+            <Package className="yz-nav-icon" size={15} />
+            {!isCollapsed && <span>Products & Stock</span>}
+          </button>
+
+          <button
+            className={`yz-nav-item ${currentTab === 'movements' ? 'active' : ''}`}
+            onClick={() => handleNavClick('movements')}
+            title="Stock Audit Log"
+          >
+            <ScrollText className="yz-nav-icon" size={15} />
+            {!isCollapsed && <span>Stock Audit Log</span>}
+          </button>
+
+          {/* PURCHASING Section */}
+          {!isCollapsed && <div className="yz-nav-group-title">Purchasing</div>}
+
+          <button
+            className={`yz-nav-item ${currentTab === 'purchases' ? 'active' : ''}`}
+            onClick={() => handleNavClick('purchases')}
+            title="Purchase Orders"
+          >
+            <ShoppingCart className="yz-nav-icon" size={15} />
+            {!isCollapsed && <span>Purchase Orders</span>}
+          </button>
+
+          <button
+            className={`yz-nav-item ${currentTab === 'vendors' ? 'active' : ''}`}
+            onClick={() => handleNavClick('vendors')}
+            title="Vendors"
+          >
+            <Truck className="yz-nav-icon" size={15} />
+            {!isCollapsed && <span>Vendors</span>}
+          </button>
+
+          {/* Reports */}
+          <div style={{ margin: '4px 0' }} />
 
           <button
             className={`yz-nav-item ${currentTab === 'reports' ? 'active' : ''}`}
             onClick={() => handleNavClick('reports')}
+            title="Reports"
           >
-            <BarChart3 className="yz-nav-icon" size={18} />
-            {!isCollapsed && <span>Reports & GST</span>}
+            <BarChart3 className="yz-nav-icon" size={15} />
+            {!isCollapsed && <span>Reports</span>}
           </button>
 
+          {/* Settings */}
           <button
             className={`yz-nav-item ${currentTab === 'settings' ? 'active' : ''}`}
             onClick={() => handleNavClick('settings')}
+            title="Settings"
           >
-            <Settings className="yz-nav-icon" size={18} />
+            <Settings className="yz-nav-icon" size={15} />
             {!isCollapsed && <span>Settings</span>}
           </button>
         </nav>
 
-        {/* Sidebar Footer with Boutique Location Status */}
+        {/* Sidebar Footer */}
         <div className="yz-sidebar-footer">
           <div className="yz-store-pill">
             <span className="yz-store-dot" />
-            {!isCollapsed && <span>Main Counter • Active</span>}
+            {!isCollapsed && <span>Showroom (Vellore) • Active</span>}
           </div>
         </div>
       </aside>
     </>
   );
 };
+

@@ -1,142 +1,157 @@
+import { api } from './apiClient';
 import type {
   StockMovement,
   StockAdjustmentInput,
   StockSummary,
   BoutiqueLocation,
 } from '../types/inventory';
-import type { YaazhiProduct } from '../types/product';
-import { INITIAL_LOCATIONS, INITIAL_MOVEMENTS } from '../mocks/seedData';
 import { productService } from './productService';
 
-const STORAGE_KEY_MOVEMENTS = 'yaazhi_movements_v1';
-const STORAGE_KEY_LOCATIONS = 'yaazhi_locations_v1';
-
 class InventoryService {
-  private getStoredMovements(): StockMovement[] {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_MOVEMENTS);
-      if (stored) return JSON.parse(stored);
-    } catch (e) {
-      console.warn('Could not read movements from localStorage, using initial movements', e);
-    }
-    this.saveMovements(INITIAL_MOVEMENTS);
-    return INITIAL_MOVEMENTS;
-  }
-
-  private saveMovements(movements: StockMovement[]): void {
-    try {
-      localStorage.setItem(STORAGE_KEY_MOVEMENTS, JSON.stringify(movements));
-    } catch (e) {
-      console.warn('Failed to save movements to localStorage', e);
-    }
-  }
-
   public async getLocations(): Promise<BoutiqueLocation[]> {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY_LOCATIONS);
-      if (stored) return JSON.parse(stored);
-    } catch (e) {
-      console.warn('Could not read locations', e);
+      const data = await api.get<any[]>('/godowns');
+      return data.map((g) => ({
+        id: g.id,
+        name: g.name,
+        code: g.code,
+        type: g.type || 'SHOWROOM',
+        address: g.address || '',
+        isDefault: g.isDefault,
+      }));
+    } catch {
+      return [
+        { id: 'sr-01', name: 'Main Showroom Counter', code: 'SR-01', type: 'SHOWROOM', address: 'Ground Floor', isDefault: true },
+        { id: 'sv-02', name: 'Silk Vault & Bridal Salon', code: 'SV-02', type: 'VAULT', address: '1st Floor', isDefault: false },
+      ];
     }
-    return INITIAL_LOCATIONS;
   }
 
   public async getMovements(productId?: string): Promise<StockMovement[]> {
-    const movements = this.getStoredMovements();
-    if (productId) {
-      return movements.filter((m) => m.productId === productId);
-    }
-    return movements.sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
+    const endpoint = productId ? `/movements?search=${productId}` : '/movements';
+    const data = await api.get<any[]>(endpoint);
+
+    return data.map((m) => ({
+      id: m.id,
+      timestamp: m.createdAt || m.timestamp,
+      productId: m.productId,
+      sku: m.sku,
+      productName: m.productName,
+      movementType: m.type as any, // 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER'
+      quantity: Math.abs(m.qtyChange),
+      locationId: m.locationCode,
+      locationName: m.location,
+      referenceType: m.referenceType,
+      referenceId: m.reference,
+      reasonCode: 'AUDIT',
+      notes: m.notes,
+      performedBy: m.performedBy,
+      unitCost: 0,
+      runningBalance: m.balanceAfter,
+    }));
   }
 
   public async adjustStock(input: StockAdjustmentInput): Promise<StockMovement> {
-    const product = await productService.getById(input.productId);
-    if (!product) {
-      throw new Error(`Product with ID ${input.productId} not found.`);
-    }
+    const res = await api.post<any>('/adjustments', {
+      product_id: input.productId,
+      godown_id: input.locationId,
+      new_stock: input.newStock,
+      reason: input.reasonCode,
+      notes: input.notes,
+    });
 
-    const locations = await this.getLocations();
-    const loc = locations.find((l) => l.id === input.locationId) || locations[0];
-
-    const prevLocationStock = product.locationStock[loc.id] || 0;
-    const delta = input.newStock - prevLocationStock;
-
-    if (delta === 0) {
-      throw new Error('New stock count is identical to existing recorded stock.');
-    }
-
-    const newCurrentStock = Math.max(0, product.currentStock + delta);
-    const updatedLocationStock = {
-      ...product.locationStock,
-      [loc.id]: Math.max(0, input.newStock),
-    };
-
-    // Update product stock
-    await productService.update(product.id, {
-      currentStock: newCurrentStock,
-      locationStock: updatedLocationStock,
-    } as any);
-
-    // Record audit movement
-    const movement: StockMovement = {
-      id: `mov-${Date.now().toString(36)}`,
+    const movements = await this.getMovements(input.productId);
+    return movements[0] || {
+      id: res.adjustmentNumber,
       timestamp: new Date().toISOString(),
-      productId: product.id,
-      sku: product.sku,
-      productName: product.name,
+      productId: input.productId,
+      sku: '',
+      productName: '',
       movementType: 'ADJUST',
-      quantity: Math.abs(delta),
-      locationId: loc.id,
-      locationName: loc.name,
+      quantity: 1,
+      locationId: input.locationId,
+      locationName: '',
       referenceType: 'ADJUST',
-      referenceId: `ADJ-${Date.now().toString().slice(-6)}`,
+      referenceId: res.adjustmentNumber,
       reasonCode: input.reasonCode,
-      notes: input.notes.trim(),
+      notes: input.notes,
       performedBy: input.performedBy || 'Store Manager',
-      unitCost: product.costPrice,
-      runningBalance: newCurrentStock,
+      unitCost: 0,
+      runningBalance: res.newStock,
     };
-
-    const movements = this.getStoredMovements();
-    movements.unshift(movement);
-    this.saveMovements(movements);
-
-    return movement;
   }
 
   public async getStockSummary(): Promise<StockSummary> {
-    const products: YaazhiProduct[] = await productService.list();
+    try {
+      const data = await api.get<any>('/reports/dashboard');
+      const sum = data.summary;
+      return {
+        totalSkus: sum.totalProducts,
+        totalSKUs: sum.totalProducts,
+        totalUnits: sum.totalStockUnits,
+        inventoryValuationCost: sum.valuationCost,
+        inventoryValuationRetail: sum.valuationRetail,
+        totalValuationCost: sum.valuationCost,
+        totalValuationRetail: sum.valuationRetail,
+        lowStockCount: sum.lowStockCount,
+        outOfStockCount: sum.outOfStockCount,
+      };
+    } catch {
+      const products = await productService.list();
+      let totalUnits = 0;
+      let totalValuationCost = 0;
+      let totalValuationRetail = 0;
+      let lowStockCount = 0;
+      let outOfStockCount = 0;
 
-    let totalSkus = products.length;
-    let totalUnits = 0;
-    let lowStockCount = 0;
-    let outOfStockCount = 0;
-    let inventoryValuationCost = 0;
-    let inventoryValuationRetail = 0;
+      products.forEach((p) => {
+        const retailPrice = p.salePrice ?? p.sellPrice ?? 0;
+        totalUnits += p.currentStock;
+        totalValuationCost += p.currentStock * p.costPrice;
+        totalValuationRetail += p.currentStock * retailPrice;
+        if (p.currentStock <= 0) outOfStockCount++;
+        else if (p.currentStock <= p.reorderPoint) lowStockCount++;
+      });
 
-    for (const p of products) {
-      const stock = p.currentStock || 0;
-      totalUnits += stock;
-      inventoryValuationCost += stock * p.costPrice;
-      inventoryValuationRetail += stock * p.sellPrice;
-
-      if (stock <= 0) {
-        outOfStockCount++;
-      } else if (stock <= p.reorderPoint) {
-        lowStockCount++;
-      }
+      return {
+        totalSkus: products.length,
+        totalSKUs: products.length,
+        totalUnits,
+        inventoryValuationCost: totalValuationCost,
+        inventoryValuationRetail: totalValuationRetail,
+        totalValuationCost,
+        totalValuationRetail,
+        lowStockCount,
+        outOfStockCount,
+      };
     }
+  }
 
-    return {
-      totalSkus,
-      totalUnits,
-      lowStockCount,
-      outOfStockCount,
-      inventoryValuationCost,
-      inventoryValuationRetail,
-    };
+  public async getValuationBreakdown(): Promise<
+    { category: string; units: number; costValue: number; retailValue: number }[]
+  > {
+    const products = await productService.list();
+    const map = new Map<
+      string,
+      { category: string; units: number; costValue: number; retailValue: number }
+    >();
+
+    products.forEach((p) => {
+      const cat = p.category || 'General';
+      const retailPrice = p.salePrice ?? p.sellPrice ?? 0;
+      const existing = map.get(cat) || {
+        category: cat,
+        units: 0,
+        costValue: 0,
+        retailValue: 0,
+      };
+      existing.units += p.currentStock;
+      existing.costValue += p.currentStock * p.costPrice;
+      existing.retailValue += p.currentStock * retailPrice;
+      map.set(cat, existing);
+    });
+
+    return Array.from(map.values());
   }
 }
 

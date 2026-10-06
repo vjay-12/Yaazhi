@@ -4,6 +4,7 @@ import { Button } from '../../components/common/Button';
 import type { YaazhiProduct } from '../../types/product';
 import type { AdjustmentReasonCode, BoutiqueLocation } from '../../types/inventory';
 import { inventoryService } from '../../services/inventoryService';
+import { CustomDropdown } from '../../components/common/CustomDropdown';
 
 interface StockAdjustmentModalProps {
   isOpen: boolean;
@@ -98,32 +99,33 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
       onClose={onClose}
       title="Adjust Inventory Stock"
       subtitle={`Product: ${product.name} (SKU: ${product.sku})`}
-      maxWidth="540px"
+      maxWidth="460px"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+          <Button variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button
             variant="primary"
+            size="sm"
             onClick={handleSubmit}
             isLoading={isSubmitting}
-            loadingText="Saving Adjustment..."
+            loadingText="Saving..."
           >
             Confirm Adjustment
           </Button>
         </>
       }
     >
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {error && (
           <div
             style={{
-              padding: '0.75rem',
+              padding: '6px 10px',
               backgroundColor: 'var(--yz-status-out-stock-bg)',
               color: 'var(--yz-status-out-stock)',
-              borderRadius: 'var(--yz-radius-md)',
-              fontSize: '0.85rem',
+              borderRadius: 'var(--yz-radius-sm)',
+              fontSize: '11px',
             }}
           >
             {error}
@@ -132,21 +134,21 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
 
         <div className="yz-field">
           <label className="yz-label">Stock Location / Counter *</label>
-          <select
+          <CustomDropdown
             value={selectedLocationId}
-            onChange={(e) => {
-              setSelectedLocationId(e.target.value);
-              const count = product.locationStock[e.target.value] ?? product.currentStock;
+            onChange={(val) => {
+              const locId = String(val);
+              setSelectedLocationId(locId);
+              const count = product.locationStock[locId] ?? product.currentStock;
               setNewStock(String(count));
             }}
-            className="yz-select"
-          >
-            {locations.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.name} ({l.code})
-              </option>
-            ))}
-          </select>
+            options={locations.map((l) => ({
+              value: l.id,
+              label: `${l.name} (${l.code})`,
+            }))}
+            minWidth="100%"
+            style={{ width: '100%' }}
+          />
         </div>
 
         {/* Current vs New Calculation */}
@@ -154,24 +156,24 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr',
-            gap: '0.75rem',
-            padding: '1rem',
+            gap: '8px',
+            padding: '8px 10px',
             backgroundColor: 'var(--yz-bg-subtle)',
-            borderRadius: 'var(--yz-radius-md)',
+            borderRadius: 'var(--yz-radius-sm)',
             textAlign: 'center',
           }}
         >
           <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--yz-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
+            <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
               System Stock
             </div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, fontFamily: 'var(--yz-font-display)' }}>
+            <div style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'var(--yz-font-display)', marginTop: '2px' }}>
               {currentCount}
             </div>
           </div>
 
           <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--yz-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
+            <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
               Physical Count
             </div>
             <input
@@ -180,19 +182,20 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
               value={newStock}
               onChange={(e) => setNewStock(e.target.value)}
               className="yz-input tabular-nums"
-              style={{ textAlign: 'center', fontSize: '1.25rem', fontWeight: 700, padding: '0.3rem' }}
+              style={{ textAlign: 'center', fontSize: '13px', fontWeight: 700, height: '26px', marginTop: '2px' }}
             />
           </div>
 
           <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--yz-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
+            <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
               Net Delta
             </div>
             <div
               style={{
-                fontSize: '1.4rem',
+                fontSize: '15px',
                 fontWeight: 700,
                 fontFamily: 'var(--yz-font-display)',
+                marginTop: '2px',
                 color: delta > 0 ? 'var(--yz-status-in-stock)' : delta < 0 ? 'var(--yz-status-out-stock)' : 'var(--yz-text-muted)',
               }}
             >
@@ -203,24 +206,23 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
 
         <div className="yz-field">
           <label className="yz-label">Adjustment Reason *</label>
-          <select
+          <CustomDropdown
             value={reasonCode}
-            onChange={(e) => setReasonCode(e.target.value as AdjustmentReasonCode)}
-            className="yz-select"
-          >
-            {REASON_OPTIONS.map((r) => (
-              <option key={r.code} value={r.code}>
-                {r.label}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setReasonCode(val as AdjustmentReasonCode)}
+            options={REASON_OPTIONS.map((r) => ({
+              value: r.code,
+              label: r.label,
+            }))}
+            minWidth="100%"
+            style={{ width: '100%' }}
+          />
         </div>
 
         <div className="yz-field">
           <label className="yz-label">Reason Notes & Justification *</label>
           <textarea
             rows={2}
-            placeholder="Explain why this adjustment is being made..."
+            placeholder="Explain reason for stock difference..."
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             className="yz-textarea"

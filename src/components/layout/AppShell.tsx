@@ -4,9 +4,8 @@ import type { NavTabId } from './Sidebar';
 import { Header } from './Header';
 import { QuickSearchModal } from './QuickSearchModal';
 import { OverviewPage } from '../../features/overview/OverviewPage';
-import { ProductListPage } from '../../features/products/ProductListPage';
+import { ProductsStockPage } from '../../features/products/ProductsStockPage';
 import { ProductDetailPage } from '../../features/products/ProductDetailPage';
-import { InventoryPage } from '../../features/inventory/InventoryPage';
 import { StockMovementsPage } from '../../features/inventory/StockMovementsPage';
 import { BillingPage } from '../../features/billing/BillingPage';
 import { SalesOrdersPage } from '../../features/commercial/SalesOrdersPage';
@@ -22,16 +21,15 @@ import { useToast } from '../common/Toast';
 
 const TAB_PAGE_TITLES: Record<NavTabId, string> = {
   overview: 'Yaazhi | Boutique Overview',
-  billing: 'Yaazhi | POS & Counter Billing',
-  products: 'Yaazhi | Product Catalog',
-  inventory: 'Yaazhi | Stock & Valuation',
-  movements: 'Yaazhi | Stock Audit Ledger',
+  billing: 'Yaazhi | Billing',
   orders: 'Yaazhi | Sales Orders',
+  customers: 'Yaazhi | Customers',
+  products: 'Yaazhi | Products & Stock',
+  movements: 'Yaazhi | Stock Audit Log',
   purchases: 'Yaazhi | Purchase Orders',
-  vendors: 'Yaazhi | Weavers & Suppliers',
-  customers: 'Yaazhi | Clients & Measurements',
-  reports: 'Yaazhi | Boutique Reports & GST',
-  settings: 'Yaazhi | Boutique Settings',
+  vendors: 'Yaazhi | Vendors',
+  reports: 'Yaazhi | Reports',
+  settings: 'Yaazhi | Settings',
 };
 
 export const AppShell: React.FC = () => {
@@ -40,16 +38,16 @@ export const AppShell: React.FC = () => {
   // Route / Tab State from URL hash
   const getInitialTab = (): NavTabId => {
     const hash = window.location.hash.replace('#', '').split('?')[0];
+    if (hash === 'inventory') return 'products';
     const validTabs: NavTabId[] = [
       'overview',
       'billing',
-      'products',
-      'inventory',
-      'movements',
       'orders',
+      'customers',
+      'products',
+      'movements',
       'purchases',
       'vendors',
-      'customers',
       'reports',
       'settings',
     ];
@@ -77,7 +75,7 @@ export const AppShell: React.FC = () => {
     }
   }, [currentTab, selectedProductId]);
 
-  // Global Keyboard Shortcuts (⌘K or / for quick search)
+  // Global Keyboard Shortcuts (⌘K or ctrl+k for quick search)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -134,7 +132,6 @@ export const AppShell: React.FC = () => {
       <div className="yz-main-wrapper">
         <Header
           currentTab={currentTab}
-          onOpenMobileSidebar={() => setIsMobileOpen(true)}
           onOpenQuickSearch={() => setIsQuickSearchOpen(true)}
           onNewBillClick={() => {
             setCurrentTab('billing');
@@ -155,6 +152,10 @@ export const AppShell: React.FC = () => {
 
           {currentTab === 'billing' && <BillingPage />}
 
+          {currentTab === 'orders' && <SalesOrdersPage />}
+
+          {currentTab === 'customers' && <CustomersPage />}
+
           {currentTab === 'products' && (
             <>
               {selectedProductId ? (
@@ -163,8 +164,9 @@ export const AppShell: React.FC = () => {
                   onBack={() => setSelectedProductId(null)}
                 />
               ) : (
-                <ProductListPage
+                <ProductsStockPage
                   onViewProductDetail={handleViewProductDetail}
+                  onNavigateToAuditLog={() => setCurrentTab('movements')}
                   isAddModalOpenInitially={isAddProductModalOpen}
                   onCloseInitialAddModal={() => setIsAddProductModalOpen(false)}
                 />
@@ -172,22 +174,11 @@ export const AppShell: React.FC = () => {
             </>
           )}
 
-          {currentTab === 'inventory' && (
-            <InventoryPage
-              onViewProductDetail={handleViewProductDetail}
-              onNavigateToMovements={() => setCurrentTab('movements')}
-            />
-          )}
-
           {currentTab === 'movements' && <StockMovementsPage />}
-
-          {currentTab === 'orders' && <SalesOrdersPage />}
 
           {currentTab === 'purchases' && <PurchasesPage />}
 
           {currentTab === 'vendors' && <VendorsPage />}
-
-          {currentTab === 'customers' && <CustomersPage />}
 
           {currentTab === 'reports' && <ReportsPage />}
 

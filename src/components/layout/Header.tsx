@@ -1,68 +1,61 @@
 import React from 'react';
-import { Menu, Search, Plus, MapPin, Receipt } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import type { NavTabId } from './Sidebar';
 import { Button } from '../common/Button';
 
 interface HeaderProps {
   currentTab: NavTabId;
-  onOpenMobileSidebar: () => void;
   onOpenQuickSearch: () => void;
-  onNewBillClick: () => void;
+  onNewBillClick?: () => void;
   onNewProductClick: () => void;
 }
 
 const TAB_TITLES: Record<NavTabId, { title: string; subtitle: string }> = {
   overview: {
     title: 'Boutique Overview',
-    subtitle: 'Daily operational summary and inventory health',
+    subtitle: 'Daily summary and showroom register health',
   },
   billing: {
-    title: 'Point of Sale & Billing',
-    subtitle: 'Fast counter sales, barcode scanning, and invoice generation',
-  },
-  products: {
-    title: 'Product Catalog',
-    subtitle: 'Manage boutique weaves, silks, garments, prices, and GST rates',
-  },
-  inventory: {
-    title: 'Stock & Inventory Valuation',
-    subtitle: 'Live stock balances across showroom and storage counters',
-  },
-  movements: {
-    title: 'Stock Movements & Audit Ledger',
-    subtitle: 'Immutable record of inventory adjustments, receipts, and sales',
+    title: 'Billing',
+    subtitle: 'Counter sales, barcode scanning, and instant invoices',
   },
   orders: {
     title: 'Sales Orders',
-    subtitle: 'Client bridal reservations, custom tailoring, and deliveries',
+    subtitle: 'Bridal client reservations and deliveries',
+  },
+  customers: {
+    title: 'Customers',
+    subtitle: 'Client profiles, loyalty, and tailoring measurements',
+  },
+  products: {
+    title: 'Products & Stock',
+    subtitle: 'Boutique catalog, physical stock, and valuation',
+  },
+  movements: {
+    title: 'Stock Audit Log',
+    subtitle: 'Immutable record of adjustments, receipts, and counter sales',
   },
   purchases: {
     title: 'Purchase Orders',
     subtitle: 'Procurement from weaver cooperatives and textile mills',
   },
   vendors: {
-    title: 'Master Weavers & Suppliers',
-    subtitle: 'Vendor directory, GSTINs, and purchase histories',
-  },
-  customers: {
-    title: 'Boutique Clients & Measurements',
-    subtitle: 'Customer profiles, purchase loyalty, and custom tailoring specs',
+    title: 'Vendors',
+    subtitle: 'Master weavers, cooperative societies, and suppliers',
   },
   reports: {
-    title: 'Boutique Analytics & GST Reports',
-    subtitle: 'Revenue, stock velocity, and tax breakdowns',
+    title: 'Reports',
+    subtitle: 'Sales analytics, weave velocity, and GST breakdowns',
   },
   settings: {
-    title: 'Boutique Configuration',
-    subtitle: 'Store profile, GSTIN, invoice series, and user roles',
+    title: 'Settings',
+    subtitle: 'Store profile, GSTIN, invoice prefix, and test data',
   },
 };
 
 export const Header: React.FC<HeaderProps> = ({
   currentTab,
-  onOpenMobileSidebar,
   onOpenQuickSearch,
-  onNewBillClick,
   onNewProductClick,
 }) => {
   const currentInfo = TAB_TITLES[currentTab] || {
@@ -73,28 +66,11 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="yz-header">
       <div className="yz-header-left">
-        <button
-          onClick={onOpenMobileSidebar}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '0.4rem',
-            display: 'flex',
-            alignItems: 'center',
-            color: 'var(--yz-text-primary)',
-          }}
-          className="md:hidden"
-          aria-label="Open navigation menu"
-        >
-          <Menu size={22} />
-        </button>
-
         <div>
-          <h1 style={{ fontSize: '1.18rem', fontWeight: 700, color: 'var(--yz-text-primary)' }}>
+          <h1 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--yz-text-primary)', lineHeight: 1.2 }}>
             {currentInfo.title}
           </h1>
-          <span style={{ fontSize: '0.75rem', color: 'var(--yz-text-secondary)', display: 'block' }}>
+          <span style={{ fontSize: '10px', color: 'var(--yz-text-muted)', display: 'block', lineHeight: 1.2 }}>
             {currentInfo.subtitle}
           </span>
         </div>
@@ -105,51 +81,22 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           className="yz-quick-search-btn"
           onClick={onOpenQuickSearch}
-          title="Search products by SKU, name, or barcode"
+          title="Search products by SKU, name, or barcode (⌘K)"
         >
-          <Search size={15} />
-          <span>Search products, SKUs...</span>
+          <Search size={13} />
+          <span>Search catalog, SKUs...</span>
           <kbd className="yz-kbd">⌘K</kbd>
         </button>
 
-        {/* Counter Location Indicator */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            padding: '0.4rem 0.75rem',
-            backgroundColor: 'var(--yz-bg-subtle)',
-            borderRadius: 'var(--yz-radius-md)',
-            border: '1px solid var(--yz-border)',
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            color: 'var(--yz-text-secondary)',
-          }}
-          title="Active Showroom Counter Location"
-        >
-          <MapPin size={13} color="var(--yz-primary)" />
-          <span>Main Showroom (SR-01)</span>
-        </div>
-
         {/* Contextual primary action */}
-        {currentTab === 'products' ? (
+        {currentTab === 'products' && (
           <Button
             variant="primary"
-            icon={<Plus size={16} />}
+            icon={<Plus size={13} />}
             onClick={onNewProductClick}
             size="sm"
           >
             Add Product
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            icon={<Receipt size={16} />}
-            onClick={onNewBillClick}
-            size="sm"
-          >
-            New Bill
           </Button>
         )}
       </div>

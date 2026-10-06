@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Package, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import type { YaazhiProduct } from '../../types/product';
 import { productService } from '../../services/productService';
 import { StockBadge } from '../common/Badge';
+import { ProductImage } from '../common/ProductImage';
 
 interface QuickSearchModalProps {
   isOpen: boolean;
@@ -123,20 +124,16 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div
-                      style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: 'var(--yz-radius-sm)',
-                        backgroundColor: 'var(--yz-bg-subtle)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--yz-primary)',
-                      }}
-                    >
-                      <Package size={18} />
-                    </div>
+                    <ProductImage
+                      src={product.imageUrl}
+                      alt={product.name}
+                      productName={product.name}
+                      category={product.category}
+                      width={36}
+                      height={36}
+                      rounded="sm"
+                      iconSize={16}
+                    />
                     <div>
                       <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{product.name}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--yz-text-secondary)', display: 'flex', gap: '0.5rem' }}>

@@ -31,28 +31,28 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
       onClose={onClose}
       title="Print Boutique Hangtags & Barcodes"
       subtitle={`Generate thermal/shelf labels for ${product.name}`}
-      maxWidth="620px"
+      maxWidth="520px"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" size="sm" onClick={onClose}>
             Close
           </Button>
-          <Button variant="primary" icon={<Printer size={16} />} onClick={handlePrint}>
+          <Button variant="primary" size="sm" icon={<Printer size={13} />} onClick={handlePrint}>
             Print {copies} Labels
           </Button>
         </>
       }
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {/* Controls */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: '1rem',
-            padding: '1rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+            gap: '8px',
+            padding: '8px 10px',
             backgroundColor: 'var(--yz-bg-subtle)',
-            borderRadius: 'var(--yz-radius-md)',
+            borderRadius: 'var(--yz-radius-sm)',
           }}
         >
           <div className="yz-field" style={{ margin: 0 }}>
@@ -64,11 +64,12 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
               value={copies}
               onChange={(e) => setCopies(Math.max(1, parseInt(e.target.value) || 1))}
               className="yz-input"
+              style={{ height: '26px' }}
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.4rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '2px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', cursor: 'pointer' }}>
               <input
                 type="checkbox"
                 checked={showPrice}
@@ -76,7 +77,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
               />
               Include Retail Price
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', cursor: 'pointer' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', cursor: 'pointer' }}>
               <input
                 type="checkbox"
                 checked={includeHsn}

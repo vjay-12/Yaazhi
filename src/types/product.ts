@@ -39,6 +39,7 @@ export interface YaazhiProduct {
   description?: string;
   costPrice: number;
   sellPrice: number;
+  salePrice?: number;
   mrp?: number;
   currentStock: number;
   reorderPoint: number;
@@ -46,10 +47,13 @@ export interface YaazhiProduct {
   unitOfMeasure: UnitOfMeasure;
   hsnCode: string;
   gstRate: number; // 0, 5, 12, 18, 28
+  taxRate?: number;
+  imageUrl?: string | null;
   locationStock: Record<string, number>;
   variants: ProductVariant[];
   tags: string[];
   isActive: boolean;
+  isArchived?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -64,6 +68,7 @@ export interface CreateProductInput {
   description?: string;
   costPrice: number;
   sellPrice: number;
+  salePrice?: number;
   mrp?: number;
   openingStock: number;
   reorderPoint: number;
@@ -71,6 +76,8 @@ export interface CreateProductInput {
   unitOfMeasure: UnitOfMeasure;
   hsnCode: string;
   gstRate: number;
+  taxRate?: number;
+  imageUrl?: string | null;
   variants?: Omit<ProductVariant, 'id'>[];
   tags?: string[];
 }
@@ -82,7 +89,7 @@ export interface UpdateProductInput extends Partial<CreateProductInput> {
 export interface ProductFilterOptions {
   search?: string;
   category?: BoutiqueCategory | 'ALL';
-  stockStatus?: StockStatus | 'ALL';
+  stockStatus?: StockStatus | 'ARCHIVED' | 'ALL';
   fabric?: string;
   sortBy?: 'name' | 'sellPrice' | 'currentStock' | 'createdAt';
   sortOrder?: 'asc' | 'desc';

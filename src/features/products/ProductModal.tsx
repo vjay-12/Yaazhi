@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { UploadCloud, Trash2 } from 'lucide-react';
 import { Modal } from '../../components/common/Modal';
 import { Button } from '../../components/common/Button';
+import { getValidatedProductImage } from '../../components/common/ProductImage';
+import { CustomDropdown } from '../../components/common/CustomDropdown';
 import type {
   YaazhiProduct,
   CreateProductInput,
@@ -59,7 +62,10 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const [hsnCode, setHsnCode] = useState('5007');
   const [gstRate, setGstRate] = useState(5);
   const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -80,6 +86,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       setHsnCode(productToEdit.hsnCode);
       setGstRate(productToEdit.gstRate);
       setDescription(productToEdit.description || '');
+      setImageUrl(productToEdit.imageUrl || '');
     } else {
       setName('');
       setSku(`YZ-${Math.floor(100 + Math.random() * 900)}`);
@@ -96,9 +103,60 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       setHsnCode('5007');
       setGstRate(5);
       setDescription('');
+      setImageUrl('');
     }
+    setImageUploadError(null);
     setErrors({});
   }, [productToEdit, isOpen]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setImageUploadError('Please select a valid image file (PNG, JPG, WebP).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setImageUploadError('Image size should be under 5MB.');
+      return;
+    }
+
+    setImageUploadError(null);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setImageUrl(String(event.target.result));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setImageUploadError('Please drop an image file (PNG, JPG, WebP).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setImageUploadError('Image size should be under 5MB.');
+      return;
+    }
+
+    setImageUploadError(null);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setImageUrl(String(event.target.result));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
@@ -140,6 +198,9 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         unitOfMeasure,
         hsnCode,
         gstRate,
+        imageUrl: imageUrl.trim()
+          ? imageUrl.trim()
+          : getValidatedProductImage(name, category, undefined),
       });
       onClose();
     } catch (err: any) {
@@ -155,14 +216,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       onClose={onClose}
       title={productToEdit ? 'Edit Boutique Product' : 'Add New Boutique Item'}
       subtitle="Configure weave details, retail pricing, GST category, and inventory levels"
-      maxWidth="680px"
+      maxWidth="600px"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+          <Button variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button
             variant="primary"
+            size="sm"
             onClick={handleSubmit}
             isLoading={isSubmitting}
             loadingText={productToEdit ? 'Updating Product...' : 'Saving Product...'}
@@ -172,15 +234,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         </>
       }
     >
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {errors.form && (
           <div
             style={{
-              padding: '0.75rem',
+              padding: '6px 10px',
               backgroundColor: 'var(--yz-status-out-stock-bg)',
               color: 'var(--yz-status-out-stock)',
-              borderRadius: 'var(--yz-radius-md)',
-              fontSize: '0.85rem',
+              borderRadius: 'var(--yz-radius-sm)',
+              fontSize: '11px',
             }}
           >
             {errors.form}
@@ -188,7 +250,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         )}
 
         {/* Section 1: Basic Information */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px' }}>
           <div className="yz-field">
             <label className="yz-label">Product Title / Weave Name *</label>
             <input
@@ -214,27 +276,23 @@ export const ProductModal: React.FC<ProductModalProps> = ({
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
           <div className="yz-field">
             <label className="yz-label">Category *</label>
-            <select
+            <CustomDropdown
               value={category}
-              onChange={(e) => setCategory(e.target.value as BoutiqueCategory)}
-              className="yz-select"
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setCategory(val as BoutiqueCategory)}
+              options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+              minWidth="100%"
+              style={{ width: '100%' }}
+            />
           </div>
 
           <div className="yz-field">
             <label className="yz-label">Fabric / Material</label>
             <input
               type="text"
-              placeholder="e.g. Mulberry Silk, Linen, Cotton"
+              placeholder="e.g. Mulberry Silk, Cotton"
               value={fabric}
               onChange={(e) => setFabric(e.target.value)}
               className="yz-input"
@@ -245,7 +303,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             <label className="yz-label">Craft / Technique</label>
             <input
               type="text"
-              placeholder="e.g. Handloom, Zari, Aari Work"
+              placeholder="e.g. Handloom, Zari"
               value={craft}
               onChange={(e) => setCraft(e.target.value)}
               className="yz-input"
@@ -256,24 +314,24 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         {/* Section 2: Pricing & GST */}
         <div
           style={{
-            padding: '1rem',
+            padding: '8px 10px',
             backgroundColor: 'var(--yz-bg-subtle)',
-            borderRadius: 'var(--yz-radius-md)',
+            borderRadius: 'var(--yz-radius-sm)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.75rem',
+            gap: '6px',
           }}
         >
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--yz-text-secondary)', letterSpacing: '0.05em' }}>
+          <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--yz-text-secondary)', letterSpacing: '0.04em' }}>
             Pricing & Tax Compliance (GST)
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
             <div className="yz-field" style={{ margin: 0 }}>
               <label className="yz-label">Cost Price (₹) *</label>
               <input
                 type="number"
-                placeholder="₹ Weaver purchase price"
+                placeholder="₹ Weaver cost"
                 value={costPrice}
                 onChange={(e) => setCostPrice(e.target.value)}
                 className="yz-input tabular-nums"
@@ -285,7 +343,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               <label className="yz-label">Selling Price (₹) *</label>
               <input
                 type="number"
-                placeholder="₹ Retail tag price"
+                placeholder="₹ Retail price"
                 value={sellPrice}
                 onChange={(e) => setSellPrice(e.target.value)}
                 className="yz-input tabular-nums"
@@ -294,7 +352,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             </div>
 
             <div className="yz-field" style={{ margin: 0 }}>
-              <label className="yz-label">Max Retail Price (MRP)</label>
+              <label className="yz-label">Max Retail (MRP)</label>
               <input
                 type="number"
                 placeholder="₹ Printed MRP"
@@ -305,12 +363,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '8px' }}>
             <div className="yz-field" style={{ margin: 0 }}>
               <label className="yz-label">HSN Code *</label>
               <input
                 type="text"
-                placeholder="e.g. 5007 or 6204"
+                placeholder="e.g. 5007"
                 value={hsnCode}
                 onChange={(e) => setHsnCode(e.target.value)}
                 className="yz-input"
@@ -320,23 +378,19 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
             <div className="yz-field" style={{ margin: 0 }}>
               <label className="yz-label">GST Tax Slab *</label>
-              <select
+              <CustomDropdown
                 value={gstRate}
-                onChange={(e) => setGstRate(Number(e.target.value))}
-                className="yz-select"
-              >
-                {GST_SLABS.map((s) => (
-                  <option key={s.rate} value={s.rate}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setGstRate(Number(val))}
+                options={GST_SLABS.map((s) => ({ value: s.rate, label: s.label }))}
+                minWidth="100%"
+                style={{ width: '100%' }}
+              />
             </div>
           </div>
         </div>
 
         {/* Section 3: Stock Levels */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
           <div className="yz-field">
             <label className="yz-label">Initial Stock Count *</label>
             <input
@@ -348,7 +402,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               disabled={!!productToEdit}
             />
             {productToEdit && (
-              <span className="yz-hint">Use Stock Adjustment to change active stock</span>
+              <span className="yz-hint">Use Stock Adjustment to change</span>
             )}
             {errors.openingStock && <span className="yz-error-text">{errors.openingStock}</span>}
           </div>
@@ -362,27 +416,28 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               onChange={(e) => setReorderPoint(e.target.value)}
               className="yz-input tabular-nums"
             />
-            <span className="yz-hint">Triggers low-stock warning tag</span>
           </div>
 
           <div className="yz-field">
             <label className="yz-label">Unit of Measure</label>
-            <select
+            <CustomDropdown
               value={unitOfMeasure}
-              onChange={(e) => setUnitOfMeasure(e.target.value as UnitOfMeasure)}
-              className="yz-select"
-            >
-              <option value="pcs">Pieces (pcs)</option>
-              <option value="meters">Meters (m)</option>
-              <option value="sets">Sets (3-piece)</option>
-              <option value="pairs">Pairs</option>
-              <option value="box">Box</option>
-            </select>
+              onChange={(val) => setUnitOfMeasure(val as UnitOfMeasure)}
+              options={[
+                { value: 'pcs', label: 'Pieces (pcs)' },
+                { value: 'meters', label: 'Meters (m)' },
+                { value: 'sets', label: 'Sets (3-piece)' },
+                { value: 'pairs', label: 'Pairs' },
+                { value: 'box', label: 'Box' },
+              ]}
+              minWidth="100%"
+              style={{ width: '100%' }}
+            />
           </div>
         </div>
 
         <div className="yz-field">
-          <label className="yz-label">Boutique Notes / Styling Advice</label>
+          <label className="yz-label">Boutique Notes / Pedigree</label>
           <textarea
             rows={2}
             placeholder="Special care instructions, dry clean notes, weaving pedigree..."
@@ -390,6 +445,142 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             onChange={(e) => setDescription(e.target.value)}
             className="yz-textarea"
           />
+        </div>
+
+        {/* Product Image Upload, Preview, Replace, and Clear */}
+        <div className="yz-field">
+          <label className="yz-label">Product Photography</label>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/png, image/jpeg, image/webp"
+            style={{ display: 'none' }}
+          />
+
+          {imageUrl ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 10px',
+                border: '1px solid var(--yz-border)',
+                borderRadius: 'var(--yz-radius-sm)',
+                backgroundColor: 'var(--yz-bg-surface)',
+                gap: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                <img
+                  src={imageUrl}
+                  alt="Product preview"
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    objectFit: 'cover',
+                    borderRadius: '4px',
+                    border: '1px solid var(--yz-border)',
+                    flexShrink: 0,
+                  }}
+                />
+                <div style={{ minWidth: 0 }}>
+                  <span
+                    style={{
+                      fontSize: '11.5px',
+                      fontWeight: 600,
+                      color: 'var(--yz-text-primary)',
+                      display: 'block',
+                    }}
+                  >
+                    {productToEdit && productToEdit.imageUrl === imageUrl
+                      ? 'Current Catalog Photo'
+                      : 'Photo Uploaded'}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      color: 'var(--yz-text-muted)',
+                      display: 'block',
+                    }}
+                  >
+                    Storage-agnostic local preview
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{ height: '26px', fontSize: '11px', padding: '0 8px' }}
+                >
+                  Replace Image
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageUrl('');
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  }}
+                  className="yz-btn yz-btn-ghost yz-btn-sm"
+                  style={{ height: '26px', padding: '0 6px', color: 'var(--yz-error, #DC2626)' }}
+                  title="Remove image"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDrop}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                padding: '12px 14px',
+                border: '1.5px dashed var(--yz-border)',
+                borderRadius: 'var(--yz-radius-sm)',
+                backgroundColor: 'var(--yz-bg-subtle)',
+                cursor: 'pointer',
+                transition: 'border-color 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--yz-primary, #832729)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--yz-border)';
+              }}
+            >
+              <UploadCloud size={20} style={{ color: 'var(--yz-primary, #832729)', flexShrink: 0 }} />
+              <div>
+                <span
+                  style={{
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    color: 'var(--yz-text-primary)',
+                    display: 'block',
+                  }}
+                >
+                  Click or drag photo here to upload
+                </span>
+                <span style={{ fontSize: '10px', color: 'var(--yz-text-muted)', display: 'block' }}>
+                  Supports PNG, JPG, or WebP up to 5MB (storage-agnostic)
+                </span>
+              </div>
+            </div>
+          )}
+
+          {imageUploadError && (
+            <span className="yz-error-text" style={{ marginTop: '4px', display: 'block' }}>
+              {imageUploadError}
+            </span>
+          )}
         </div>
       </form>
     </Modal>

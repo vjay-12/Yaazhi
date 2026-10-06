@@ -18,6 +18,7 @@ import { BarcodeLabelModal } from '../../components/common/BarcodeLabelModal';
 import { StockAdjustmentModal } from '../inventory/StockAdjustmentModal';
 import { ProductModal } from './ProductModal';
 import { useToast } from '../../components/common/Toast';
+import { ProductImage } from '../../components/common/ProductImage';
 
 interface ProductDetailPageProps {
   productId: string;
@@ -67,7 +68,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
   if (isLoading || !product) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--yz-text-secondary)' }}>
+      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--yz-text-secondary)', fontSize: '12px' }}>
         Loading boutique product details...
       </div>
     );
@@ -80,22 +81,23 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
       : 0;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
       {/* Top Navigation & Action Row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
         <button
           onClick={onBack}
           className="yz-btn yz-btn-ghost yz-btn-sm"
-          style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--yz-text-secondary)' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--yz-text-secondary)' }}
         >
-          <ArrowLeft size={16} />
-          <span>Back to Product Catalog</span>
+          <ArrowLeft size={13} />
+          <span>Back to Products & Stock</span>
         </button>
 
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '6px' }}>
           <Button
             variant="secondary"
-            icon={<Barcode size={16} />}
+            size="sm"
+            icon={<Barcode size={13} />}
             onClick={() => setIsBarcodeOpen(true)}
           >
             Print Labels
@@ -103,7 +105,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
           <Button
             variant="secondary"
-            icon={<SlidersHorizontal size={16} />}
+            size="sm"
+            icon={<SlidersHorizontal size={13} />}
             onClick={() => setIsAdjustOpen(true)}
           >
             Adjust Stock
@@ -111,7 +114,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
           <Button
             variant="primary"
-            icon={<Edit2 size={16} />}
+            size="sm"
+            icon={<Edit2 size={13} />}
             onClick={() => setIsEditOpen(true)}
           >
             Edit Product
@@ -120,54 +124,66 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
       </div>
 
       {/* Main Header Card */}
-      <div className="yz-card" style={{ padding: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
-              <CategoryBadge category={product.category} />
-              <StockBadge status={status} stockCount={product.currentStock} />
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  fontFamily: 'var(--yz-font-mono)',
-                  color: 'var(--yz-text-muted)',
-                }}
-              >
-                SKU: {product.sku}
-              </span>
+      <div className="yz-card" style={{ padding: '12px 14px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+            <ProductImage
+              src={product.imageUrl}
+              alt={product.name}
+              productName={product.name}
+              category={product.category}
+              width={68}
+              height={68}
+              rounded="md"
+              iconSize={24}
+            />
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                <CategoryBadge category={product.category} />
+                <StockBadge status={status} stockCount={product.currentStock} />
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontFamily: 'var(--yz-font-mono)',
+                    color: 'var(--yz-text-muted)',
+                  }}
+                >
+                  SKU: {product.sku}
+                </span>
+              </div>
+              <h2 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--yz-text-primary)' }}>
+                {product.name}
+              </h2>
+              {product.craft && (
+                <p style={{ fontSize: '11px', color: 'var(--yz-text-secondary)', marginTop: '2px' }}>
+                  {product.craft} • {product.fabric}
+                </p>
+              )}
             </div>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 700, color: 'var(--yz-text-primary)' }}>
-              {product.name}
-            </h2>
-            {product.craft && (
-              <p style={{ fontSize: '0.85rem', color: 'var(--yz-text-secondary)', marginTop: '0.2rem' }}>
-                {product.craft} • {product.fabric}
-              </p>
-            )}
           </div>
 
           {/* Quick Metrics */}
-          <div style={{ display: 'flex', gap: '1.5rem', textAlign: 'right' }}>
+          <div style={{ display: 'flex', gap: '14px', textAlign: 'right' }}>
             <div>
-              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--yz-text-muted)', fontWeight: 600 }}>
+              <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--yz-text-muted)', fontWeight: 600 }}>
                 Selling Price
               </div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--yz-text-primary)' }} className="tabular-nums">
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--yz-text-primary)' }} className="tabular-nums">
                 ₹{product.sellPrice.toLocaleString('en-IN')}
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--yz-status-in-stock)', fontWeight: 600 }}>
+              <div style={{ fontSize: '11px', color: 'var(--yz-status-in-stock)', fontWeight: 600 }}>
                 {profitMargin}% Gross Margin
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--yz-text-muted)', fontWeight: 600 }}>
-                Total Physical Stock
+              <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--yz-text-muted)', fontWeight: 600 }}>
+                Physical Stock
               </div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--yz-text-primary)' }} className="tabular-nums">
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--yz-text-primary)' }} className="tabular-nums">
                 {product.currentStock} {product.unitOfMeasure}
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--yz-text-muted)' }}>
+              <div style={{ fontSize: '11px', color: 'var(--yz-text-muted)' }}>
                 Reorder at {product.reorderPoint}
               </div>
             </div>
@@ -175,22 +191,22 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
         </div>
 
         {product.description && (
-          <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--yz-border-subtle)', fontSize: '0.875rem', color: 'var(--yz-text-secondary)' }}>
+          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--yz-border-subtle)', fontSize: '12px', color: 'var(--yz-text-secondary)' }}>
             {product.description}
           </div>
         )}
       </div>
 
       {/* Two Column Layout: Stock Locations & Pricing Compliance */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
         {/* Location Stock Breakdown */}
-        <div className="yz-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <MapPin size={18} color="var(--yz-primary)" />
-            <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Stock by Location</h3>
+        <div className="yz-card" style={{ padding: '10px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
+            <MapPin size={14} color="var(--yz-primary)" />
+            <h3 style={{ fontSize: '12px', fontWeight: 600 }}>Stock by Location</h3>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {locations.map((loc) => {
               const count = product.locationStock[loc.id] || 0;
               return (
@@ -200,16 +216,16 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    padding: '0.75rem 1rem',
+                    padding: '5px 8px',
                     backgroundColor: 'var(--yz-bg-subtle)',
-                    borderRadius: 'var(--yz-radius-md)',
+                    borderRadius: 'var(--yz-radius-sm)',
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{loc.name}</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--yz-text-muted)' }}>Code: {loc.code}</div>
+                    <div style={{ fontSize: '12px', fontWeight: 600 }}>{loc.name}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)' }}>Code: {loc.code}</div>
                   </div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: 'var(--yz-font-mono)' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)' }}>
                     {count} {product.unitOfMeasure}
                   </div>
                 </div>
@@ -219,31 +235,31 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
         </div>
 
         {/* GST & Regulatory Details */}
-        <div className="yz-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <ShieldCheck size={18} color="var(--yz-gold)" />
-            <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Pricing & GST Specs</h3>
+        <div className="yz-card" style={{ padding: '10px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
+            <ShieldCheck size={14} color="var(--yz-gold)" />
+            <h3 style={{ fontSize: '12px', fontWeight: 600 }}>Pricing & GST Specs</h3>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.85rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid var(--yz-border-subtle)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid var(--yz-border-subtle)' }}>
               <span style={{ color: 'var(--yz-text-secondary)' }}>Weaver Cost Price</span>
               <span style={{ fontWeight: 600, fontFamily: 'var(--yz-font-mono)' }}>₹{product.costPrice.toLocaleString('en-IN')}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid var(--yz-border-subtle)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid var(--yz-border-subtle)' }}>
               <span style={{ color: 'var(--yz-text-secondary)' }}>Retail MRP</span>
               <span style={{ fontWeight: 600, fontFamily: 'var(--yz-font-mono)' }}>₹{(product.mrp || product.sellPrice).toLocaleString('en-IN')}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid var(--yz-border-subtle)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid var(--yz-border-subtle)' }}>
               <span style={{ color: 'var(--yz-text-secondary)' }}>HSN / SAC Code</span>
               <span style={{ fontWeight: 600, fontFamily: 'var(--yz-font-mono)' }}>{product.hsnCode}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid var(--yz-border-subtle)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid var(--yz-border-subtle)' }}>
               <span style={{ color: 'var(--yz-text-secondary)' }}>GST Rate Applied</span>
-              <span style={{ fontWeight: 600, color: 'var(--yz-primary)' }}>{product.gstRate}% (CGST {product.gstRate / 2}% + SGST {product.gstRate / 2}%)</span>
+              <span style={{ fontWeight: 600, color: 'var(--yz-primary)' }}>{product.gstRate}%</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0' }}>
-              <span style={{ color: 'var(--yz-text-secondary)' }}>Barcode EAN-13</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0' }}>
+              <span style={{ color: 'var(--yz-text-secondary)' }}>Barcode</span>
               <span style={{ fontWeight: 600, fontFamily: 'var(--yz-font-mono)' }}>{product.barcode}</span>
             </div>
           </div>
@@ -251,18 +267,18 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
       </div>
 
       {/* Audit Movements History */}
-      <div className="yz-card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <Clock size={18} color="var(--yz-text-secondary)" />
-          <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Stock Movement & Audit History</h3>
+      <div className="yz-card" style={{ padding: '10px 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
+          <Clock size={14} color="var(--yz-text-secondary)" />
+          <h3 style={{ fontSize: '12px', fontWeight: 600 }}>Stock Movement & Audit History</h3>
         </div>
 
         {movements.length === 0 ? (
-          <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--yz-text-muted)', fontSize: '0.85rem' }}>
+          <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--yz-text-muted)', fontSize: '12px' }}>
             No recorded movements for this item yet.
           </div>
         ) : (
-          <div className="yz-table-container" style={{ border: 'none', boxShadow: 'none' }}>
+          <div className="yz-table-container">
             <table className="yz-table">
               <thead>
                 <tr>
@@ -278,7 +294,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               <tbody>
                 {movements.map((m) => (
                   <tr key={m.id}>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--yz-text-secondary)' }}>
+                    <td style={{ fontSize: '11px', color: 'var(--yz-text-secondary)' }}>
                       {new Date(m.timestamp).toLocaleString('en-IN', {
                         day: '2-digit',
                         month: 'short',
@@ -303,8 +319,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     <td style={{ fontWeight: 700, fontFamily: 'var(--yz-font-mono)' }}>
                       {m.movementType === 'IN' ? `+${m.quantity}` : `-${m.quantity}`}
                     </td>
-                    <td style={{ fontSize: '0.85rem' }}>{m.locationName}</td>
-                    <td style={{ fontSize: '0.8rem' }}>
+                    <td style={{ fontSize: '11px' }}>{m.locationName}</td>
+                    <td style={{ fontSize: '11px' }}>
                       {m.reasonCode ? (
                         <span style={{ textTransform: 'uppercase', fontWeight: 600, color: 'var(--yz-text-secondary)' }}>
                           [{m.reasonCode}] {m.notes}
@@ -313,7 +329,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                         <span>{m.referenceType}: {m.referenceId}</span>
                       )}
                     </td>
-                    <td style={{ fontSize: '0.85rem', color: 'var(--yz-text-secondary)' }}>{m.performedBy}</td>
+                    <td style={{ fontSize: '11px', color: 'var(--yz-text-secondary)' }}>{m.performedBy}</td>
                     <td style={{ textAlign: 'right', fontWeight: 700, fontFamily: 'var(--yz-font-mono)' }}>
                       {m.runningBalance}
                     </td>

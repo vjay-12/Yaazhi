@@ -5,6 +5,9 @@ import {
   ArrowRight,
   Plus,
   Clock,
+  ArrowDownLeft,
+  ArrowUpRight,
+  SlidersHorizontal,
 } from 'lucide-react';
 import type { YaazhiProduct } from '../../types/product';
 import type { StockMovement, StockSummary } from '../../types/inventory';
@@ -38,7 +41,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
       .then(([prods, sum, movs]) => {
         setProducts(prods);
         setSummary(sum);
-        setRecentMovements(movs.slice(0, 5));
+        setRecentMovements(movs.slice(0, 6));
       });
   }, []);
 
@@ -47,64 +50,57 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-      {/* Welcome Banner with Operational Context */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {/* Clean Invenaro Top Overview Bar */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #241C1B 0%, #171312 100%)',
-          borderRadius: 'var(--yz-radius-xl)',
-          padding: '1.75rem 2rem',
-          color: '#FFFFFF',
+          backgroundColor: 'var(--yz-bg-surface)',
+          borderRadius: 'var(--yz-radius-sm)',
+          padding: '10px 14px',
+          border: '1px solid var(--yz-border)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: '1.5rem',
-          border: '1px solid #3A2F2E',
-          boxShadow: 'var(--yz-shadow-md)',
+          gap: '10px',
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span
               style={{
-                fontSize: '0.7rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.12em',
-                color: 'var(--yz-gold)',
-                fontWeight: 700,
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: '#16A34A',
               }}
-            >
-              Main Boutique Floor • Counter 01
+            />
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--yz-text-secondary)' }}>
+              Main Showroom Counter 01 • Active Store Register
             </span>
           </div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
-            Good afternoon, Yaazhi Atelier
-          </h2>
-          <p style={{ fontSize: '0.875rem', color: '#B3AAA6', marginTop: '0.25rem', maxWidth: '520px' }}>
-            Showroom registers are synchronized. You have {lowStockItems.length} items flagged for attention and {summary?.totalUnits || 0} pieces active in inventory.
-          </p>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--yz-text-primary)', marginTop: '2px' }}>
+            Yaazhi Atelier Daily Summary
+          </div>
         </div>
 
-        {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
           <Button
-            variant="gold"
-            icon={<Receipt size={16} />}
-            onClick={() => onNavigate('billing')}
-            size="lg"
+            variant="secondary"
+            size="sm"
+            icon={<Plus size={13} />}
+            onClick={onOpenAddProduct}
           >
-            Launch POS Counter
+            Add Product
           </Button>
 
           <Button
-            variant="secondary"
-            icon={<Plus size={16} />}
-            onClick={onOpenAddProduct}
-            size="lg"
-            style={{ backgroundColor: '#2E2423', color: '#FFFFFF', borderColor: '#453836' }}
+            variant="primary"
+            size="sm"
+            icon={<Receipt size={13} />}
+            onClick={() => onNavigate('billing')}
           >
-            Add Weave / Item
+            Launch Billing
           </Button>
         </div>
       </div>
@@ -113,8 +109,8 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '1rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '8px',
         }}
       >
         <div className="yz-stat-card">
@@ -122,11 +118,11 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
           <span className="yz-stat-value tabular-nums" style={{ color: 'var(--yz-primary)' }}>
             ₹{(summary?.inventoryValuationCost || 0).toLocaleString('en-IN')}
           </span>
-          <span className="yz-stat-subtext">Acquisition value in catalog</span>
+          <span className="yz-stat-subtext">Acquisition value in active stock</span>
         </div>
 
         <div className="yz-stat-card">
-          <span className="yz-stat-label">Retail Potential Gross</span>
+          <span className="yz-stat-label">Retail Gross Value</span>
           <span className="yz-stat-value tabular-nums" style={{ color: 'var(--yz-gold)' }}>
             ₹{(summary?.inventoryValuationRetail || 0).toLocaleString('en-IN')}
           </span>
@@ -134,58 +130,63 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         </div>
 
         <div className="yz-stat-card">
-          <span className="yz-stat-label">Active Boutique SKUs</span>
-          <span className="yz-stat-value tabular-nums">{summary?.totalSkus || 0}</span>
-          <span className="yz-stat-subtext">Across {products.length > 0 ? 8 : 0} distinct categories</span>
+          <span className="yz-stat-label">Active SKUs & Units</span>
+          <span className="yz-stat-value tabular-nums">
+            {summary?.totalUnits || 0}{' '}
+            <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--yz-text-muted)' }}>
+              ({products.length} designs)
+            </span>
+          </span>
+          <span className="yz-stat-subtext">Across boutique counters</span>
         </div>
 
         <div className="yz-stat-card">
-          <span className="yz-stat-label">Stock Warnings</span>
+          <span className="yz-stat-label">Attention Alerts</span>
           <span
             className="yz-stat-value tabular-nums"
             style={{ color: lowStockItems.length > 0 ? 'var(--yz-status-low-stock)' : 'inherit' }}
           >
             {lowStockItems.length}
           </span>
-          <span className="yz-stat-subtext">Requires replenishment</span>
+          <span className="yz-stat-subtext">Items at or below reorder threshold</span>
         </div>
       </div>
 
       {/* Two Column Layout: Urgent Stock Warnings & Recent Audit Movements */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '10px' }}>
         {/* Urgent Stock Watchlist */}
-        <div className="yz-card" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="yz-card" style={{ display: 'flex', flexDirection: 'column', padding: '10px' }}>
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '1rem',
-              paddingBottom: '0.75rem',
+              marginBottom: '8px',
+              paddingBottom: '6px',
               borderBottom: '1px solid var(--yz-border-subtle)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <AlertTriangle size={18} color="var(--yz-status-low-stock)" />
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Stock Depletion Alerts</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <AlertTriangle size={14} color="var(--yz-status-low-stock)" />
+              <h3 style={{ fontSize: '12px', fontWeight: 600 }}>Stock Depletion Alerts</h3>
             </div>
             <button
-              onClick={() => onNavigate('inventory')}
+              onClick={() => onNavigate('products')}
               className="yz-btn yz-btn-ghost yz-btn-sm"
-              style={{ fontSize: '0.75rem', color: 'var(--yz-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}
+              style={{ fontSize: '11px', color: 'var(--yz-primary)', padding: '0 4px', height: '20px' }}
             >
               <span>Manage Stock</span>
-              <ArrowRight size={13} />
+              <ArrowRight size={11} />
             </button>
           </div>
 
           {lowStockItems.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--yz-status-in-stock)', fontSize: '0.875rem' }}>
-              All boutique items have healthy stock levels above reorder thresholds.
+            <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--yz-status-in-stock)', fontSize: '12px' }}>
+              All boutique items have healthy stock levels.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
-              {lowStockItems.slice(0, 4).map((p) => {
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+              {lowStockItems.slice(0, 5).map((p) => {
                 const status = productService.getStockStatus(p);
                 return (
                   <div
@@ -195,19 +196,19 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      padding: '0.75rem 0.85rem',
+                      padding: '5px 8px',
                       backgroundColor: 'var(--yz-bg-subtle)',
-                      borderRadius: 'var(--yz-radius-md)',
+                      borderRadius: 'var(--yz-radius-sm)',
                       cursor: 'pointer',
-                      transition: 'background-color 0.12s ease',
+                      transition: 'background-color 0.1s ease',
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--yz-bg-subtle-hover)')}
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--yz-bg-subtle)')}
                   >
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{p.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--yz-text-secondary)', display: 'flex', gap: '0.5rem' }}>
-                        <span>SKU: {p.sku}</span>
+                      <div style={{ fontWeight: 600, fontSize: '12px' }}>{p.name}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--yz-text-secondary)', display: 'flex', gap: '6px' }}>
+                        <span style={{ fontFamily: 'var(--yz-font-mono)' }}>{p.sku}</span>
                         <span>•</span>
                         <span>{p.category}</span>
                       </div>
@@ -215,9 +216,6 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
 
                     <div style={{ textAlign: 'right' }}>
                       <StockBadge status={status} stockCount={p.currentStock} />
-                      <div style={{ fontSize: '0.7rem', color: 'var(--yz-text-muted)', marginTop: '2px' }}>
-                        Threshold: {p.reorderPoint}
-                      </div>
                     </div>
                   </div>
                 );
@@ -227,68 +225,77 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         </div>
 
         {/* Recent Audit Ledger */}
-        <div className="yz-card" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="yz-card" style={{ display: 'flex', flexDirection: 'column', padding: '10px' }}>
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '1rem',
-              paddingBottom: '0.75rem',
+              marginBottom: '8px',
+              paddingBottom: '6px',
               borderBottom: '1px solid var(--yz-border-subtle)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Clock size={18} color="var(--yz-text-secondary)" />
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Recent Stock Movements</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <Clock size={14} color="var(--yz-text-secondary)" />
+              <h3 style={{ fontSize: '12px', fontWeight: 600 }}>Recent Stock Movements</h3>
             </div>
             <button
               onClick={() => onNavigate('movements')}
               className="yz-btn yz-btn-ghost yz-btn-sm"
-              style={{ fontSize: '0.75rem', color: 'var(--yz-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}
+              style={{ fontSize: '11px', color: 'var(--yz-primary)', padding: '0 4px', height: '20px' }}
             >
-              <span>Full Ledger</span>
-              <ArrowRight size={13} />
+              <span>Full Audit Log</span>
+              <ArrowRight size={11} />
             </button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', flex: 1 }}>
-            {recentMovements.map((m) => (
-              <div
-                key={m.id}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '0.65rem 0.85rem',
-                  borderBottom: '1px solid var(--yz-border-subtle)',
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{m.productName}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--yz-text-muted)' }}>
-                    {m.locationName} • {m.performedBy}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+            {recentMovements.map((m) => {
+              const isIn = m.movementType === 'IN';
+              const isOut = m.movementType === 'OUT';
+              return (
+                <div
+                  key={m.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '4px 6px',
+                    borderBottom: '1px solid var(--yz-border-subtle)',
+                  }}
+                >
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div className="yz-cell-truncate" style={{ fontWeight: 600, fontSize: '12px', maxWidth: '240px' }}>
+                      {m.productName}
+                    </div>
+                    <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)' }}>
+                      {m.locationName} • {m.performedBy}
+                    </div>
                   </div>
-                </div>
 
-                <div style={{ textAlign: 'right' }}>
-                  <span
-                    className={`yz-badge ${
-                      m.movementType === 'IN'
-                        ? 'yz-badge-in-stock'
-                        : m.movementType === 'OUT'
-                        ? 'yz-badge-out-stock'
-                        : 'yz-badge-gold'
-                    }`}
-                  >
-                    {m.movementType === 'IN' ? `+${m.quantity}` : `-${m.quantity}`}
-                  </span>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--yz-text-secondary)', marginTop: '2px' }}>
-                    Bal: {m.runningBalance}
+                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span
+                      className={`yz-badge ${
+                        isIn
+                          ? 'yz-badge-in-stock'
+                          : isOut
+                          ? 'yz-badge-out-stock'
+                          : 'yz-badge-gold'
+                      }`}
+                    >
+                      {isIn && <ArrowDownLeft size={10} />}
+                      {isOut && <ArrowUpRight size={10} />}
+                      {!isIn && !isOut && <SlidersHorizontal size={10} />}
+                      {isIn ? `+${m.quantity}` : isOut ? `-${m.quantity}` : `Δ ${m.quantity}`}
+                    </span>
+                    <span style={{ fontSize: '11px', fontFamily: 'var(--yz-font-mono)', fontWeight: 600 }}>
+                      Bal: {m.runningBalance}
+                    </span>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

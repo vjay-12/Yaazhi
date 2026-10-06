@@ -1,226 +1,730 @@
-import React, { useState } from 'react';
-import { Search, Plus, Phone, Scissors } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  Search,
+  Scissors,
+  Loader2,
+  SlidersHorizontal,
+  Edit,
+  Trash2,
+  Archive,
+  RotateCcw,
+  ChevronDown,
+  Check,
+} from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
+import { Pagination } from '../../components/common/Pagination';
+import { usePagination } from '../../hooks/usePagination';
+import { customerService, type CustomerData } from '../../services/customerService';
+import { useToast } from '../../components/common/Toast';
+import { AddCustomerModal } from './AddCustomerModal';
+import { TemplateManagerModal } from './TemplateManagerModal';
+import { CustomerDetailModal } from './CustomerDetailModal';
 
-interface CustomerProfile {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  city: string;
-  totalVisits: number;
-  totalSpend: number;
-  measurementProfile?: {
-    template: 'Bridal Blouse' | 'Chudidar / Kurti' | 'Lehenga';
-    updatedAt: string;
-    specs: Record<string, string>;
-  };
-}
+type CustomerStatusFilter = 'ALL' | 'ACTIVE' | 'ARCHIVED';
 
-const INITIAL_CUSTOMERS: CustomerProfile[] = [
-  {
-    id: 'c-1',
-    name: 'Anitha Sundaram',
-    phone: '+91 98401 23456',
-    email: 'anitha.sundaram@gmail.com',
-    city: 'Alwarpet, Chennai',
-    totalVisits: 8,
-    totalSpend: 142500,
-    measurementProfile: {
-      template: 'Bridal Blouse',
-      updatedAt: '2026-09-24',
-      specs: {
-        'Bust / Chest': '36 in',
-        'Under Bust': '31 in',
-        'Blouse Length': '14.5 in',
-        'Shoulder Width': '14 in',
-        'Front Neck Depth': '7 in (Sweetheart)',
-        'Back Neck Depth': '9.5 in (Deep U)',
-        'Sleeve Length': '11 in (Elbow)',
-        'Arm Round': '12 in',
-      },
-    },
-  },
-  {
-    id: 'c-2',
-    name: 'Priya Narayanan (Bridal Client)',
-    phone: '+91 94440 98765',
-    email: 'priya.narayanan@yahoo.co.in',
-    city: 'Besant Nagar, Chennai',
-    totalVisits: 3,
-    totalSpend: 86400,
-    measurementProfile: {
-      template: 'Bridal Blouse',
-      updatedAt: '2026-10-01',
-      specs: {
-        'Bust / Chest': '38 in',
-        'Under Bust': '32.5 in',
-        'Blouse Length': '15 in',
-        'Shoulder Width': '14.5 in',
-        'Front Neck Depth': '7.5 in (Boat Neck)',
-        'Back Neck Depth': '10 in (Cutwork Window)',
-        'Sleeve Length': '12 in',
-        'Arm Round': '13 in',
-      },
-    },
-  },
-  {
-    id: 'c-3',
-    name: 'Meenakshi Raman',
-    phone: '+91 98842 11223',
-    email: 'meenakshi.r@outlook.com',
-    city: 'T. Nagar, Chennai',
-    totalVisits: 12,
-    totalSpend: 215000,
-  },
+const STATUS_FILTER_OPTIONS: { id: CustomerStatusFilter; label: string }[] = [
+  { id: 'ALL', label: 'All' },
+  { id: 'ACTIVE', label: 'Active' },
+  { id: 'ARCHIVED', label: 'Archived' },
 ];
 
 export const CustomersPage: React.FC = () => {
-  const [customers] = useState<CustomerProfile[]>(INITIAL_CUSTOMERS);
+  const [customers, setCustomers] = useState<CustomerData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerProfile | null>(null);
+  const [statusFilter, setStatusFilter] = useState<CustomerStatusFilter>('ALL');
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
 
-  const filtered = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.phone.includes(search) ||
-      c.city.toLowerCase().includes(search.toLowerCase())
-  );
+  // Modals state
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerData | null>(null);
+  const [customerToEdit, setCustomerToEdit] = useState<CustomerData | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+
+  // Archive & Permanent Delete confirmation states
+  const [customerToArchive, setCustomerToArchive] = useState<CustomerData | null>(null);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [customerToDeletePermanently, setCustomerToDeletePermanently] = useState<CustomerData | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+  const { showToast } = useToast();
+
+  const loadCustomers = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const data = await customerService.list(search);
+      setCustomers(data);
+    } catch {
+      showToast({ type: 'error', title: 'Load Error', message: 'Could not load boutique customers' });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [search, showToast]);
+
+  useEffect(() => {
+    loadCustomers();
+  }, [loadCustomers]);
+
+  // Close custom dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
+        setIsStatusDropdownOpen(false);
+      }
+    };
+    if (isStatusDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isStatusDropdownOpen]);
+
+  // Archive action
+  const handleConfirmArchive = async () => {
+    if (!customerToArchive) return;
+    try {
+      setIsArchiving(true);
+      await customerService.archive(customerToArchive.id);
+      showToast({
+        type: 'info',
+        title: 'Customer Archived',
+        message: `${customerToArchive.name} moved to archive. All history, orders, and measurements preserved.`,
+      });
+      setCustomerToArchive(null);
+      await loadCustomers();
+      if (selectedCustomer?.id === customerToArchive.id) {
+        setSelectedCustomer((prev) => (prev ? { ...prev, isArchived: true } : null));
+      }
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Archive Failed',
+        message: err.message || 'Could not archive customer',
+      });
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  // Restore action
+  const handleRestoreCustomer = async (c: CustomerData, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await customerService.unarchive(c.id);
+      showToast({
+        type: 'success',
+        title: 'Customer Restored',
+        message: `${c.name} restored to active directory.`,
+      });
+      await loadCustomers();
+      if (selectedCustomer?.id === c.id) {
+        setSelectedCustomer((prev) => (prev ? { ...prev, isArchived: false } : null));
+      }
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Restore Failed',
+        message: err.message || 'Could not restore customer',
+      });
+    }
+  };
+
+  // Permanent Delete action
+  const handleConfirmPermanentDelete = async () => {
+    if (!customerToDeletePermanently) return;
+    try {
+      setIsDeleting(true);
+      await customerService.delete(customerToDeletePermanently.id);
+      showToast({
+        type: 'info',
+        title: 'Customer Deleted',
+        message: `Permanently removed ${customerToDeletePermanently.name}`,
+      });
+      if (selectedCustomer?.id === customerToDeletePermanently.id) {
+        setSelectedCustomer(null);
+      }
+      setCustomerToDeletePermanently(null);
+      await loadCustomers();
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Delete Failed',
+        message: err.message || 'Could not delete customer',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleOpenEdit = (c: CustomerData, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setCustomerToEdit(c);
+    setIsAddModalOpen(true);
+  };
+
+  // Filter customers by status
+  const filtered = customers.filter((c) => {
+    if (statusFilter === 'ACTIVE' && c.isArchived) return false;
+    if (statusFilter === 'ARCHIVED' && !c.isArchived) return false;
+    return true;
+  });
+
+  const {
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    totalItems,
+    paginatedItems,
+  } = usePagination({
+    items: filtered,
+    resetDependencies: [search, statusFilter],
+  });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {/* Compact Toolbar */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           backgroundColor: 'var(--yz-bg-surface)',
-          padding: '1rem',
-          borderRadius: 'var(--yz-radius-lg)',
+          padding: '8px 10px',
+          borderRadius: 'var(--yz-radius-sm)',
           border: '1px solid var(--yz-border)',
+          gap: '8px',
+          flexWrap: 'wrap',
         }}
       >
-        <div style={{ position: 'relative', width: '320px' }}>
-          <Search
-            size={16}
-            style={{
-              position: 'absolute',
-              left: '10px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--yz-text-muted)',
-            }}
-          />
-          <input
-            type="text"
-            placeholder="Search clients by name, phone, or neighborhood..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="yz-input"
-            style={{ paddingLeft: '2rem' }}
-          />
-        </div>
-
-        <Button variant="primary" icon={<Plus size={16} />}>
-          Add Client & Measurements
-        </Button>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
-        {filtered.map((c) => (
-          <div key={c.id} className="yz-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{c.name}</h3>
-                <div style={{ fontSize: '0.8125rem', color: 'var(--yz-text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '2px' }}>
-                  <Phone size={13} />
-                  <span>{c.phone}</span>
-                </div>
-              </div>
-
-              <span className="yz-badge yz-badge-gold">
-                {c.totalVisits} Visits
-              </span>
-            </div>
-
-            <div style={{ fontSize: '0.8125rem', color: 'var(--yz-text-secondary)' }}>
-              <div>{c.city}</div>
-              <div style={{ marginTop: '0.25rem', fontWeight: 600, color: 'var(--yz-primary)' }}>
-                Lifetime Spend: ₹{c.totalSpend.toLocaleString('en-IN')}
-              </div>
-            </div>
-
-            <div style={{ borderTop: '1px solid var(--yz-border-subtle)', paddingTop: '0.75rem', marginTop: '0.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              {c.measurementProfile ? (
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    color: 'var(--yz-text-primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    fontWeight: 600,
-                  }}
-                >
-                  <Scissors size={14} color="var(--yz-primary)" />
-                  {c.measurementProfile.template} Active
-                </span>
-              ) : (
-                <span style={{ fontSize: '0.75rem', color: 'var(--yz-text-muted)' }}>
-                  No tailoring specs recorded
-                </span>
-              )}
-
-              {c.measurementProfile && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setSelectedCustomer(c)}
-                >
-                  View Fitting Card
-                </Button>
-              )}
-            </div>
+        {/* Left: Search Input & Status Filter Dropdown */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ position: 'relative', width: '270px' }}>
+            <Search
+              size={13}
+              style={{
+                position: 'absolute',
+                left: '8px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--yz-text-muted)',
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Search customers by name, phone, or location..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="yz-input"
+              style={{ paddingLeft: '26px', height: '28px', fontSize: '11px', width: '100%' }}
+            />
           </div>
-        ))}
-      </div>
 
-      {/* Measurement Fitting Card Modal */}
-      {selectedCustomer && selectedCustomer.measurementProfile && (
-        <Modal
-          isOpen={!!selectedCustomer}
-          onClose={() => setSelectedCustomer(null)}
-          title={`Tailoring Specs: ${selectedCustomer.name}`}
-          subtitle={`Fitting Template: ${selectedCustomer.measurementProfile.template} (Last recorded ${selectedCustomer.measurementProfile.updatedAt})`}
-          maxWidth="520px"
-          footer={
-            <Button variant="primary" onClick={() => setSelectedCustomer(null)}>
-              Close Card
-            </Button>
-          }
-        >
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
-            {Object.entries(selectedCustomer.measurementProfile.specs).map(([key, val]) => (
-              <div
-                key={key}
+          {/* Status Filter Dropdown */}
+          <div style={{ position: 'relative' }} ref={statusDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+              className="yz-input"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px',
+                height: '28px',
+                padding: '0 8px',
+                fontSize: '11px',
+                cursor: 'pointer',
+                backgroundColor: 'var(--yz-bg-surface)',
+                border: '1px solid var(--yz-border)',
+                borderRadius: 'var(--yz-radius-sm)',
+                color: 'var(--yz-text-primary)',
+                minWidth: '105px',
+                userSelect: 'none',
+              }}
+            >
+              <span>
+                <span style={{ color: 'var(--yz-text-muted)', marginRight: '4px' }}>Status:</span>
+                <strong>{STATUS_FILTER_OPTIONS.find((s) => s.id === statusFilter)?.label || 'All'}</strong>
+              </span>
+              <ChevronDown
+                size={12}
                 style={{
-                  padding: '0.65rem 0.85rem',
-                  backgroundColor: 'var(--yz-bg-subtle)',
-                  borderRadius: 'var(--yz-radius-md)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.2rem',
+                  color: 'var(--yz-text-muted)',
+                  transform: isStatusDropdownOpen ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 0.15s ease',
+                }}
+              />
+            </button>
+
+            {isStatusDropdownOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 4px)',
+                  left: 0,
+                  backgroundColor: 'var(--yz-bg-surface)',
+                  border: '1px solid var(--yz-border)',
+                  borderRadius: 'var(--yz-radius-sm)',
+                  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.08)',
+                  zIndex: 50,
+                  minWidth: '120px',
+                  padding: '4px 0',
                 }}
               >
-                <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--yz-text-muted)', fontWeight: 600 }}>
-                  {key}
-                </span>
-                <span style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--yz-text-primary)', fontFamily: 'var(--yz-font-mono)' }}>
-                  {val}
-                </span>
+                <div
+                  style={{
+                    padding: '4px 10px 3px 10px',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    color: 'var(--yz-text-muted)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.4px',
+                  }}
+                >
+                  Filter Status
+                </div>
+                <div style={{ height: '1px', backgroundColor: 'var(--yz-border)', margin: '2px 0 4px 0' }} />
+                {STATUS_FILTER_OPTIONS.map((opt) => {
+                  const isSelected = statusFilter === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        setStatusFilter(opt.id);
+                        setIsStatusDropdownOpen(false);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        padding: '5px 10px',
+                        fontSize: '11px',
+                        border: 'none',
+                        background: isSelected ? 'var(--yz-primary-50, #FDF2F2)' : 'transparent',
+                        color: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-text-primary)',
+                        fontWeight: isSelected ? 600 : 400,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        gap: '6px',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) e.currentTarget.style.backgroundColor = '#F1F5F9';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: '12px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {isSelected ? <Check size={12} style={{ color: 'var(--yz-primary, #832729)' }} /> : null}
+                      </span>
+                      <span>{opt.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-            ))}
+            )}
+          </div>
+        </div>
+
+        {/* Right: Action Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<SlidersHorizontal size={13} />}
+            onClick={() => setIsTemplateModalOpen(true)}
+            style={{ height: '28px', fontSize: '11px', fontWeight: 600 }}
+            title="Manage garment templates and measurement parameters"
+          >
+            Measurement Templates
+          </Button>
+
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => {
+              setCustomerToEdit(null);
+              setIsAddModalOpen(true);
+            }}
+            style={{ height: '28px', fontSize: '11px', fontWeight: 600 }}
+          >
+            + Add Customer
+          </Button>
+        </div>
+      </div>
+
+      {/* Clean Compact Customers Table */}
+      <div className="yz-table-container">
+        <table className="yz-table" style={{ width: '100%' }}>
+          <thead>
+            <tr>
+              <th style={{ minWidth: '180px', paddingLeft: '12px' }}>CUSTOMER</th>
+              <th style={{ width: '135px' }}>PHONE</th>
+              <th style={{ width: '140px' }}>CITY/LOCATION</th>
+              <th style={{ width: '75px', textAlign: 'center' }}>VISITS</th>
+              <th style={{ width: '120px', textAlign: 'right' }}>TOTAL SPEND</th>
+              <th style={{ minWidth: '220px' }}>TAILORING / MEASUREMENT PROFILE</th>
+              <th style={{ width: '85px', textAlign: 'center', paddingRight: '12px' }}>ACTION</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Loading customers from database...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: 'var(--yz-text-muted)' }}>
+                  {statusFilter === 'ARCHIVED'
+                    ? 'No archived customers found.'
+                    : 'No customers found matching search criteria.'}
+                </td>
+              </tr>
+            ) : (
+              paginatedItems.map((c) => (
+                <tr
+                  key={c.id}
+                  onClick={() => setSelectedCustomer(c)}
+                  style={{ cursor: 'pointer' }}
+                  title="Click customer row to view measurements & orders history"
+                >
+                  <td style={{ fontWeight: 600, paddingLeft: '12px', whiteSpace: 'nowrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div className="yz-cell-truncate" style={{ maxWidth: '200px' }} title={c.name}>
+                        {c.name}
+                      </div>
+                      {c.isArchived && (
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            fontSize: '9.5px',
+                            fontWeight: 600,
+                            padding: '1px 5px',
+                            borderRadius: '3px',
+                            backgroundColor: '#F1F5F9',
+                            color: '#64748B',
+                            border: '1px solid #CBD5E1',
+                            lineHeight: 1.2,
+                            flexShrink: 0,
+                          }}
+                        >
+                          ARCHIVED
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
+                  <td style={{ fontFamily: 'var(--yz-font-mono)', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                    {c.phone || '—'}
+                  </td>
+
+                  <td style={{ fontSize: '11px', color: 'var(--yz-text-secondary)', whiteSpace: 'nowrap' }}>
+                    <div className="yz-cell-truncate" style={{ maxWidth: '135px' }} title={c.city || 'Chennai'}>
+                      {c.city || 'Chennai'}
+                    </div>
+                  </td>
+
+                  <td style={{ textAlign: 'center', fontFamily: 'var(--yz-font-mono)', fontSize: '11.5px', whiteSpace: 'nowrap' }}>
+                    {c.visitsCount}
+                  </td>
+
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      fontWeight: 600,
+                      fontFamily: 'var(--yz-font-mono)',
+                      whiteSpace: 'nowrap',
+                    }}
+                    className="tabular-nums"
+                  >
+                    ₹{c.totalSpend.toLocaleString('en-IN')}
+                  </td>
+
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '10.5px',
+                        color: 'var(--yz-primary, #832729)',
+                        backgroundColor: '#FEF2F2',
+                        border: '1px solid #FECACA',
+                        padding: '2px 6px',
+                        borderRadius: 'var(--yz-radius-sm)',
+                        maxWidth: '220px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        fontWeight: 500,
+                      }}
+                      title={c.fittingProfile}
+                    >
+                      <Scissors size={10} style={{ flexShrink: 0 }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {c.fittingProfile}
+                      </span>
+                    </span>
+                  </td>
+
+                  {/* ACTION COLUMN: Edit & Archive for active; Restore & Delete for archived */}
+                  <td style={{ textAlign: 'center', paddingRight: '12px', whiteSpace: 'nowrap' }}>
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px',
+                        width: '56px',
+                        height: '22px',
+                      }}
+                    >
+                      {!c.isArchived ? (
+                        <>
+                          <button
+                            type="button"
+                            className="yz-btn yz-btn-ghost yz-btn-sm"
+                            style={{
+                              width: '24px',
+                              height: '22px',
+                              padding: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'var(--yz-text-secondary)',
+                              flexShrink: 0,
+                            }}
+                            onClick={(e) => handleOpenEdit(c, e)}
+                            title="Edit customer details"
+                          >
+                            <Edit size={12} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className="yz-btn yz-btn-ghost yz-btn-sm"
+                            style={{
+                              width: '24px',
+                              height: '22px',
+                              padding: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'var(--yz-text-muted, #64748B)',
+                              flexShrink: 0,
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCustomerToArchive(c);
+                            }}
+                            title="Archive customer"
+                          >
+                            <Archive size={12} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="yz-btn yz-btn-ghost yz-btn-sm"
+                            style={{
+                              width: '24px',
+                              height: '22px',
+                              padding: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#166534',
+                              flexShrink: 0,
+                            }}
+                            onClick={(e) => handleRestoreCustomer(c, e)}
+                            title="Restore customer to active directory"
+                          >
+                            <RotateCcw size={12} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className="yz-btn yz-btn-ghost yz-btn-sm"
+                            style={{
+                              width: '24px',
+                              height: '22px',
+                              padding: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'var(--yz-error, #DC2626)',
+                              flexShrink: 0,
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCustomerToDeletePermanently(c);
+                            }}
+                            title="Permanently delete customer"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+
+        {/* Compact Shared Pagination Bar */}
+        <Pagination
+          currentPage={currentPage}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          itemLabel="customers"
+        />
+      </div>
+
+      {/* Customer Details Modal (Opened when clicking entire row) */}
+      {selectedCustomer && (
+        <CustomerDetailModal
+          isOpen={Boolean(selectedCustomer)}
+          onClose={() => setSelectedCustomer(null)}
+          customer={selectedCustomer}
+          onEditCustomer={(c) => {
+            setSelectedCustomer(null);
+            handleOpenEdit(c);
+          }}
+          onCustomerUpdated={loadCustomers}
+        />
+      )}
+
+      {/* Add / Edit Customer Modal */}
+      {isAddModalOpen && (
+        <AddCustomerModal
+          isOpen={isAddModalOpen}
+          onClose={() => {
+            setIsAddModalOpen(false);
+            setCustomerToEdit(null);
+          }}
+          customerToEdit={customerToEdit}
+          onCustomerSaved={loadCustomers}
+        />
+      )}
+
+      {/* Measurement Templates Manager Modal */}
+      {isTemplateModalOpen && (
+        <TemplateManagerModal
+          isOpen={isTemplateModalOpen}
+          onClose={() => setIsTemplateModalOpen(false)}
+          onTemplatesUpdated={loadCustomers}
+        />
+      )}
+
+      {/* Archive Customer Confirmation Modal */}
+      {customerToArchive && (
+        <Modal
+          isOpen={Boolean(customerToArchive)}
+          onClose={() => !isArchiving && setCustomerToArchive(null)}
+          title="Archive Customer"
+          maxWidth="460px"
+          footer={
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setCustomerToArchive(null)}
+                disabled={isArchiving}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleConfirmArchive}
+                disabled={isArchiving}
+              >
+                {isArchiving ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Loader2 size={13} className="animate-spin" /> Archiving...
+                  </span>
+                ) : (
+                  'Archive Customer'
+                )}
+              </Button>
+            </>
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
+            <p style={{ margin: 0, color: 'var(--yz-text-primary)' }}>
+              Are you sure you want to archive <strong>{customerToArchive.name}</strong>?
+            </p>
+            <p style={{ margin: 0, color: 'var(--yz-text-secondary)', fontSize: '11px', lineHeight: 1.4 }}>
+              The customer will be moved to the <strong>Archived</strong> tab. Their entire profile, tailoring
+              measurement profiles, sales orders, payments, and notes will be safely preserved and never deleted.
+            </p>
+          </div>
+        </Modal>
+      )}
+
+      {/* Permanent Delete Customer Confirmation Modal (Archived customers only) */}
+      {customerToDeletePermanently && (
+        <Modal
+          isOpen={Boolean(customerToDeletePermanently)}
+          onClose={() => !isDeleting && setCustomerToDeletePermanently(null)}
+          title="Permanently Delete Customer"
+          maxWidth="460px"
+          footer={
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setCustomerToDeletePermanently(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={handleConfirmPermanentDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Loader2 size={13} className="animate-spin" /> Deleting...
+                  </span>
+                ) : (
+                  'Delete Permanently'
+                )}
+              </Button>
+            </>
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
+            <p style={{ margin: 0, color: 'var(--yz-text-primary)' }}>
+              Are you sure you want to permanently delete <strong>{customerToDeletePermanently.name}</strong>?
+            </p>
+            <p style={{ margin: 0, color: 'var(--yz-error, #DC2626)', fontSize: '11px', lineHeight: 1.4, fontWeight: 500 }}>
+              ⚠️ This action cannot be undone. All tailoring measurements associated with this customer will be removed. Past invoices and sales orders will retain customer records for accounting compliance.
+            </p>
           </div>
         </Modal>
       )}

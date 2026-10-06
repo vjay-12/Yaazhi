@@ -2,11 +2,31 @@ import React from 'react';
 import type { StockStatus } from '../../types/product';
 
 interface StockBadgeProps {
-  status: StockStatus;
+  status: StockStatus | 'ARCHIVED';
   stockCount?: number;
 }
 
 export const StockBadge: React.FC<StockBadgeProps> = ({ status, stockCount }) => {
+  if (status === 'ARCHIVED') {
+    return (
+      <span
+        className="yz-badge"
+        style={{
+          backgroundColor: '#F1F5F9',
+          color: '#64748B',
+          border: '1px solid #CBD5E1',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+        }}
+        title="Product archived from active catalog"
+      >
+        <span className="yz-badge-dot" style={{ backgroundColor: '#94A3B8' }} />
+        Archived
+      </span>
+    );
+  }
+
   if (status === 'OUT_OF_STOCK') {
     return (
       <span className="yz-badge yz-badge-out-stock" title="Inventory depleted">

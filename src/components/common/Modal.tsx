@@ -10,6 +10,7 @@ interface ModalProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   maxWidth?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -19,8 +20,16 @@ export const Modal: React.FC<ModalProps> = ({
   subtitle,
   children,
   footer,
-  maxWidth = '580px',
+  maxWidth,
+  size = 'md',
 }) => {
+  const sizeMap: Record<string, string> = {
+    sm: '440px',
+    md: '580px',
+    lg: '760px',
+    xl: '960px',
+  };
+  const effectiveMaxWidth = maxWidth || sizeMap[size] || '580px';
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -49,7 +58,7 @@ export const Modal: React.FC<ModalProps> = ({
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      <div className="yz-modal" style={{ maxWidth }} onClick={(e) => e.stopPropagation()}>
+      <div className="yz-modal" style={{ maxWidth: effectiveMaxWidth }} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div
           style={{

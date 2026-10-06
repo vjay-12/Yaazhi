@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: yaazhi_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: yaazhi_admin
+      POSTGRES_PASSWORD: yaazhi_secret_pass
+      POSTGRES_DB: yaazhi_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - yaazhi_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yaazhi_admin -d yaazhi_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  yaazhi_pgdata:
+    driver: local

@@ -1,3 +1,4 @@
+import { api } from './apiClient';
 import type {
   YaazhiProduct,
   CreateProductInput,
@@ -5,40 +6,45 @@ import type {
   ProductFilterOptions,
   StockStatus,
 } from '../types/product';
-import { INITIAL_PRODUCTS } from '../mocks/seedData';
-
-const STORAGE_KEY_PRODUCTS = 'yaazhi_products_v1';
 
 class ProductService {
-  private getStoredProducts(): YaazhiProduct[] {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_PRODUCTS);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (e) {
-      console.warn('Could not read products from localStorage, using seed data', e);
-    }
-    this.saveProducts(INITIAL_PRODUCTS);
-    return INITIAL_PRODUCTS;
-  }
-
-  private saveProducts(products: YaazhiProduct[]): void {
-    try {
-      localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(products));
-    } catch (e) {
-      console.warn('Failed to save products to localStorage', e);
-    }
-  }
-
-  public getStockStatus(product: YaazhiProduct): StockStatus {
+  public getStockStatus(product: YaazhiProduct): StockStatus | 'ARCHIVED' {
+    if (product.isArchived || !product.isActive) return 'ARCHIVED';
     if (product.currentStock <= 0) return 'OUT_OF_STOCK';
     if (product.currentStock <= product.reorderPoint) return 'LOW_STOCK';
     return 'IN_STOCK';
   }
 
   public async list(filters?: ProductFilterOptions): Promise<YaazhiProduct[]> {
-    let products = this.getStoredProducts();
+    const data = await api.get<any[]>('/products?status=all');
+
+    let products: YaazhiProduct[] = data.map((p) => ({
+      id: p.id,
+      sku: p.sku,
+      barcode: p.sku, // barcode generated from SKU
+      name: p.name,
+      description: p.description || '',
+      fabric: p.fabric || 'Pure Silk',
+      craft: p.craft || 'Handloom',
+      category: p.category || 'Sarees',
+      unitOfMeasure: p.unitOfMeasure || 'PCS',
+      costPrice: p.purchasePrice ?? p.costPrice ?? 0,
+      salePrice: p.salePrice ?? p.sellPrice ?? 0,
+      sellPrice: p.salePrice ?? p.sellPrice ?? 0,
+      taxRate: p.taxRate ?? p.gstRate ?? 5.0,
+      gstRate: p.taxRate ?? p.gstRate ?? 5.0,
+      hsnCode: p.hsnCode || '5007',
+      currentStock: p.currentStock ?? p.totalStock ?? 0,
+      reorderPoint: p.reorderPoint || 3,
+      imageUrl: p.imageUrl || p.image_url || null,
+      locationStock: p.locationStock || {},
+      variants: [],
+      tags: [],
+      isActive: Boolean(p.isActive ?? p.is_active ?? true),
+      isArchived: Boolean(p.isArchived ?? (p.is_active !== undefined ? !p.is_active : false)),
+      createdAt: p.createdAt || new Date().toISOString(),
+      updatedAt: p.updatedAt || new Date().toISOString(),
+    }));
 
     if (filters) {
       if (filters.search && filters.search.trim() !== '') {
@@ -47,7 +53,7 @@ class ProductService {
           (p) =>
             p.name.toLowerCase().includes(query) ||
             p.sku.toLowerCase().includes(query) ||
-            p.barcode.includes(query) ||
+            p.barcode.toLowerCase().includes(query) ||
             p.category.toLowerCase().includes(query) ||
             (p.fabric && p.fabric.toLowerCase().includes(query)) ||
             (p.craft && p.craft.toLowerCase().includes(query))
@@ -58,14 +64,21 @@ class ProductService {
         products = products.filter((p) => p.category === filters.category);
       }
 
-      if (filters.stockStatus && filters.stockStatus !== 'ALL') {
-        products = products.filter((p) => this.getStockStatus(p) === filters.stockStatus);
+      if (filters.stockStatus === 'ARCHIVED') {
+        products = products.filter((p) => p.isArchived || !p.isActive);
+      } else {
+        // By default, exclude archived products from active stock views
+        products = products.filter((p) => !p.isArchived && p.isActive !== false);
+
+        if (filters.stockStatus && filters.stockStatus !== 'ALL') {
+          products = products.filter((p) => this.getStockStatus(p) === filters.stockStatus);
+        }
       }
 
       if (filters.sortBy) {
         products = [...products].sort((a, b) => {
-          let valA: any = a[filters.sortBy!];
-          let valB: any = b[filters.sortBy!];
+          const valA: any = a[filters.sortBy!];
+          const valB: any = b[filters.sortBy!];
           if (typeof valA === 'string') {
             return filters.sortOrder === 'desc'
               ? valB.localeCompare(valA)
@@ -80,13 +93,42 @@ class ProductService {
   }
 
   public async getById(id: string): Promise<YaazhiProduct | null> {
-    const products = this.getStoredProducts();
-    return products.find((p) => p.id === id) || null;
+    try {
+      const p = await api.get<any>(`/products/${id}`);
+      return {
+        id: p.id,
+        sku: p.sku,
+        barcode: p.sku,
+        name: p.name,
+        description: p.description || '',
+        fabric: p.fabric || 'Pure Silk',
+        craft: p.craft || 'Handloom',
+        category: p.category || 'Sarees',
+        unitOfMeasure: p.unit || 'PCS',
+        costPrice: p.purchasePrice || 0,
+        salePrice: p.salePrice || 0,
+        sellPrice: p.salePrice || 0,
+        taxRate: p.taxRate || 5.0,
+        gstRate: p.taxRate || 5.0,
+        hsnCode: p.hsnCode || '5007',
+        currentStock: p.currentStock ?? p.totalStock ?? 0,
+        reorderPoint: p.reorderPoint || 3,
+        imageUrl: p.imageUrl || p.image_url || null,
+        locationStock: p.locationStock || {},
+        variants: [],
+        tags: [],
+        isActive: true,
+        createdAt: p.createdAt || new Date().toISOString(),
+        updatedAt: p.createdAt || new Date().toISOString(),
+      };
+    } catch {
+      return null;
+    }
   }
 
   public async getByBarcodeOrSku(code: string): Promise<YaazhiProduct | null> {
+    const products = await this.list();
     const clean = code.trim().toLowerCase();
-    const products = this.getStoredProducts();
     return (
       products.find(
         (p) => p.barcode.toLowerCase() === clean || p.sku.toLowerCase() === clean
@@ -94,95 +136,105 @@ class ProductService {
     );
   }
 
-  public async create(input: CreateProductInput): Promise<YaazhiProduct> {
-    const products = this.getStoredProducts();
+  public async create(input: CreateProductInput | any): Promise<YaazhiProduct> {
+    const salePrice = input.salePrice !== undefined ? input.salePrice : input.sellPrice || 0;
+    const initialStock = input.initialStock !== undefined ? input.initialStock : input.openingStock || 0;
+    const taxRate = input.taxRate !== undefined ? input.taxRate : input.gstRate || 5.0;
 
-    // Check SKU duplicate
-    const existing = products.find(
-      (p) => p.sku.toLowerCase() === input.sku.trim().toLowerCase()
-    );
-    if (existing) {
-      throw new Error(`A product with SKU "${input.sku}" already exists.`);
-    }
-
-    const newProduct: YaazhiProduct = {
-      id: `prod-${Date.now().toString(36)}`,
-      name: input.name.trim(),
-      sku: input.sku.trim().toUpperCase(),
-      barcode: input.barcode?.trim() || `890${Math.floor(100000000 + Math.random() * 900000000)}`,
+    const created = await api.post<any>('/products', {
+      sku: input.sku,
+      name: input.name,
+      description: input.description,
+      fabric: input.fabric,
+      craft: input.craft,
       category: input.category,
-      fabric: input.fabric?.trim(),
-      craft: input.craft?.trim(),
-      description: input.description?.trim(),
-      costPrice: Number(input.costPrice),
-      sellPrice: Number(input.sellPrice),
-      mrp: input.mrp ? Number(input.mrp) : Number(input.sellPrice) * 1.1,
-      currentStock: Number(input.openingStock || 0),
-      reorderPoint: Number(input.reorderPoint || 3),
-      maxStock: input.maxStock ? Number(input.maxStock) : undefined,
-      unitOfMeasure: input.unitOfMeasure,
-      hsnCode: input.hsnCode.trim(),
-      gstRate: Number(input.gstRate),
-      locationStock: {
-        'loc-showroom': Number(input.openingStock || 0),
-      },
-      variants: (input.variants || []).map((v, i) => ({
-        ...v,
-        id: `var-${Date.now().toString(36)}-${i}`,
-      })),
-      tags: input.tags || [],
+      unit: input.unitOfMeasure || 'PCS',
+      sale_price: salePrice,
+      purchase_price: input.costPrice || 0,
+      hsn_code: input.hsnCode,
+      tax_rate: taxRate,
+      min_stock_level: input.reorderPoint || 3,
+      initial_stock: initialStock,
+      godown_id: input.locationId,
+      image_url: input.imageUrl,
+    });
+
+    return {
+      id: created.id,
+      sku: created.sku,
+      barcode: created.sku,
+      name: created.name,
+      description: created.description || '',
+      fabric: created.fabric || '',
+      craft: created.craft || '',
+      category: created.category || 'General',
+      unitOfMeasure: created.unit || 'PCS',
+      costPrice: created.purchasePrice || 0,
+      salePrice: created.salePrice || 0,
+      sellPrice: created.salePrice || 0,
+      taxRate: created.taxRate || 5.0,
+      gstRate: created.taxRate || 5.0,
+      hsnCode: created.hsnCode || '',
+      currentStock: created.currentStock || 0,
+      reorderPoint: created.reorderPoint || 3,
+      imageUrl: created.imageUrl || input.imageUrl || null,
+      locationStock: {},
+      variants: [],
+      tags: [],
       isActive: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-
-    products.unshift(newProduct);
-    this.saveProducts(products);
-    return newProduct;
   }
 
-  public async update(id: string, input: UpdateProductInput): Promise<YaazhiProduct> {
-    const products = this.getStoredProducts();
-    const index = products.findIndex((p) => p.id === id);
-    if (index === -1) {
-      throw new Error(`Product with ID "${id}" not found.`);
+  public async update(id: string, input: UpdateProductInput | any): Promise<YaazhiProduct> {
+    const salePrice = input.salePrice !== undefined ? input.salePrice : input.sellPrice;
+    const taxRate = input.taxRate !== undefined ? input.taxRate : input.gstRate;
+
+    await api.put<any>(`/products/${id}`, {
+      name: input.name,
+      description: input.description,
+      fabric: input.fabric,
+      craft: input.craft,
+      category: input.category,
+      unit: input.unitOfMeasure,
+      sale_price: salePrice,
+      purchase_price: input.costPrice,
+      hsn_code: input.hsnCode,
+      tax_rate: taxRate,
+      min_stock_level: input.reorderPoint,
+      image_url: input.imageUrl,
+    });
+
+    return this.getById(id) as Promise<YaazhiProduct>;
+  }
+
+  public async archive(id: string): Promise<boolean> {
+    await api.post(`/products/${id}/archive`);
+    return true;
+  }
+
+  public async unarchive(id: string): Promise<boolean> {
+    await api.post(`/products/${id}/unarchive`);
+    return true;
+  }
+
+  public async delete(id: string): Promise<boolean> {
+    return this.archive(id);
+  }
+
+  public async getCategories(): Promise<string[]> {
+    try {
+      const cats = await api.get<any[]>('/products/categories');
+      return cats.map((c) => c.name);
+    } catch {
+      return ['Sarees', 'Churidars & Salwars', 'Kurtis & Tunics', 'Dupattas & Stoles', 'Blouses & Corsets'];
     }
-
-    // Check SKU uniqueness if changed
-    if (input.sku && input.sku.trim().toLowerCase() !== products[index].sku.toLowerCase()) {
-      const duplicate = products.find(
-        (p) => p.sku.toLowerCase() === input.sku!.trim().toLowerCase() && p.id !== id
-      );
-      if (duplicate) {
-        throw new Error(`A product with SKU "${input.sku}" already exists.`);
-      }
-    }
-
-    const updated: YaazhiProduct = {
-      ...products[index],
-      ...input,
-      variants: input.variants
-        ? input.variants.map((v, i) => ({
-            ...v,
-            id: (v as any).id || `var-${Date.now().toString(36)}-${i}`,
-          }))
-        : products[index].variants,
-      updatedAt: new Date().toISOString(),
-    };
-
-    products[index] = updated;
-    this.saveProducts(products);
-    return updated;
   }
 
-  public async delete(id: string): Promise<void> {
-    const products = this.getStoredProducts();
-    const filtered = products.filter((p) => p.id !== id);
-    this.saveProducts(filtered);
-  }
-
-  public async resetToSeedData(): Promise<void> {
-    this.saveProducts(INITIAL_PRODUCTS);
+  public async createCategory(name: string): Promise<string> {
+    const cat = await api.post<any>('/products/categories', { name });
+    return cat.name;
   }
 }
 
