@@ -709,7 +709,7 @@ export const CustomersPage: React.FC = () => {
                 Are you sure you want to permanently delete <strong>{customerToDeletePermanently.name}</strong>?
               </p>
               <p style={{ margin: '8px 0 0', color: 'var(--yz-error, #DC2626)', fontSize: '11.5px', lineHeight: 1.45, fontWeight: 500 }}>
-                ⚠️ This action cannot be undone. All tailoring measurements associated with this customer will be removed. Past invoices and sales orders will retain customer records for accounting compliance.
+                This action cannot be undone. All tailoring measurements associated with this customer will be removed. Past invoices and sales orders will retain customer records for accounting compliance.
               </p>
             </div>
           ) : null

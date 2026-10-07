@@ -1,24 +1,39 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Store, Check, Loader2, QrCode, Upload, Trash2 } from 'lucide-react';
+import { Store, Check, Loader2, QrCode, Upload, Trash2, RotateCcw } from 'lucide-react';
 import { Button } from '../../components/common/Button';
+import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { settingsService } from '../../services/settingsService';
 import { useToast } from '../../components/common/Toast';
 
+const DEFAULT_SETTINGS = {
+  storeName: 'Yaazhi Boutique & Atelier',
+  legalName: 'Yaazhi Silks & Couture Pvt Ltd',
+  address: '42 Weaver Colony, Little Kanchipuram',
+  phone: '+91 94440 12890',
+  email: 'atelier@yaazhi.in',
+  gstin: '33AABCY1234A1Z5',
+  enableGst: true,
+  upiId: 'yaazhi@oksbi',
+  upiQrUrl: '/images/payment/yaazhi-upi-qr.png',
+};
+
 export const SettingsPage: React.FC = () => {
   const { showToast } = useToast();
-  const [storeName, setStoreName] = useState('Yaazhi Boutique & Atelier');
-  const [legalName, setLegalName] = useState('Yaazhi Silks & Couture Pvt Ltd');
-  const [address, setAddress] = useState('42 Weaver Colony, Little Kanchipuram');
-  const [phone, setPhone] = useState('+91 94440 12890');
-  const [email, setEmail] = useState('atelier@yaazhi.in');
-  const [gstin, setGstin] = useState('33AABCY1234A1Z5');
-  const [enableGst, setEnableGst] = useState(true);
-  const [upiId, setUpiId] = useState('yaazhi@oksbi');
-  const [upiQrUrl, setUpiQrUrl] = useState('/images/payment/yaazhi-upi-qr.png');
+  const [storeName, setStoreName] = useState(DEFAULT_SETTINGS.storeName);
+  const [legalName, setLegalName] = useState(DEFAULT_SETTINGS.legalName);
+  const [address, setAddress] = useState(DEFAULT_SETTINGS.address);
+  const [phone, setPhone] = useState(DEFAULT_SETTINGS.phone);
+  const [email, setEmail] = useState(DEFAULT_SETTINGS.email);
+  const [gstin, setGstin] = useState(DEFAULT_SETTINGS.gstin);
+  const [enableGst, setEnableGst] = useState(DEFAULT_SETTINGS.enableGst);
+  const [upiId, setUpiId] = useState(DEFAULT_SETTINGS.upiId);
+  const [upiQrUrl, setUpiQrUrl] = useState(DEFAULT_SETTINGS.upiQrUrl);
   const qrInputRef = useRef<HTMLInputElement>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     settingsService
@@ -104,6 +119,48 @@ export const SettingsPage: React.FC = () => {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleResetConfirm = async () => {
+    try {
+      setIsResetting(true);
+      await settingsService.updateSettings({
+        company_name: DEFAULT_SETTINGS.storeName,
+        legal_name: DEFAULT_SETTINGS.legalName,
+        address: DEFAULT_SETTINGS.address,
+        phone: DEFAULT_SETTINGS.phone,
+        email: DEFAULT_SETTINGS.email,
+        gstin: DEFAULT_SETTINGS.gstin,
+        enable_gst: DEFAULT_SETTINGS.enableGst,
+        upi_id: DEFAULT_SETTINGS.upiId,
+        upi_qr_url: DEFAULT_SETTINGS.upiQrUrl,
+      });
+
+      setStoreName(DEFAULT_SETTINGS.storeName);
+      setLegalName(DEFAULT_SETTINGS.legalName);
+      setAddress(DEFAULT_SETTINGS.address);
+      setPhone(DEFAULT_SETTINGS.phone);
+      setEmail(DEFAULT_SETTINGS.email);
+      setGstin(DEFAULT_SETTINGS.gstin);
+      setEnableGst(DEFAULT_SETTINGS.enableGst);
+      setUpiId(DEFAULT_SETTINGS.upiId);
+      setUpiQrUrl(DEFAULT_SETTINGS.upiQrUrl);
+
+      setIsResetDialogOpen(false);
+      showToast({
+        type: 'success',
+        title: 'Settings Reset',
+        message: 'Boutique settings restored to default Yaazhi configuration.',
+      });
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Reset Error',
+        message: err.message || 'Could not reset settings to defaults',
+      });
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -315,13 +372,36 @@ export const SettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Form Submission */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-          <Button variant="primary" size="md" type="submit" icon={<Check size={14} />} disabled={isSaving}>
+        {/* Form Actions */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="md"
+            icon={<RotateCcw size={14} />}
+            onClick={() => setIsResetDialogOpen(true)}
+            disabled={isSaving || isResetting}
+          >
+            Reset to Defaults
+          </Button>
+
+          <Button variant="primary" size="md" type="submit" icon={<Check size={14} />} disabled={isSaving || isResetting}>
             {isSaving ? 'Saving...' : 'Save Settings'}
           </Button>
         </div>
       </form>
+
+      <ConfirmDialog
+        isOpen={isResetDialogOpen}
+        onClose={() => setIsResetDialogOpen(false)}
+        onConfirm={handleResetConfirm}
+        title="Reset Boutique Settings?"
+        description="Are you sure you want to revert all boutique profile and UPI payment settings to the Yaazhi default configuration? Any custom store details and uploaded QR code will be replaced."
+        confirmLabel="Reset to Defaults"
+        cancelLabel="Cancel"
+        variant="warning"
+        isLoading={isResetting}
+      />
     </div>
   );
 };

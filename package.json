@@ -10,6 +10,7 @@
     "dev:all": "concurrently -n \"api,web\" -c \"blue,magenta\" \"tsx backend/src/server.ts\" \"vite\"",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "test": "tsx backend/src/test_workflows.ts",
     "preview": "vite preview",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
