@@ -161,7 +161,7 @@ router.post('/', async (req, res): Promise<void> => {
           quantity: Number(it.quantity || it.qty || 1),
           unit_price: Number(it.unit_price || it.unitPrice || it.price || 0),
           discount: Number(it.discount || 0),
-          tax_rate: Number(it.tax_rate || it.taxRate || 5.0),
+          tax_rate: it.tax_rate !== undefined ? Number(it.tax_rate) : it.taxRate !== undefined ? Number(it.taxRate) : it.gstRate !== undefined ? Number(it.gstRate) : undefined,
         }))
       : [];
 
@@ -223,26 +223,36 @@ router.post('/', async (req, res): Promise<void> => {
     // Calculate totals
     let subtotal = 0;
     let discountTotal = 0;
+    for (const it of items) {
+      if (it.tax_rate === undefined) {
+        const prod = await prisma.product.findUnique({ where: { id: it.product_id } });
+        it.tax_rate = prod ? Number(prod.tax_rate) : 5.0;
+      }
+      subtotal += it.quantity * it.unit_price;
+      discountTotal += it.discount;
+    }
+
+    const netTaxableTotal = Math.max(0, subtotal - discountTotal);
+    const discountRatio = subtotal > 0 ? netTaxableTotal / subtotal : 1;
     let taxTotal = 0;
 
     const itemsData = items.map((it) => {
       const lineSubtotal = it.quantity * it.unit_price;
-      const lineTax = (lineSubtotal * it.tax_rate) / 100;
-      subtotal += lineSubtotal;
-      discountTotal += it.discount;
+      const lineTaxable = lineSubtotal * discountRatio;
+      const lineTax = (lineTaxable * (it.tax_rate ?? 0)) / 100;
       taxTotal += lineTax;
       return {
         product_id: it.product_id,
         quantity: it.quantity,
         unit_price: it.unit_price,
         discount: it.discount,
-        tax_rate: it.tax_rate,
+        tax_rate: it.tax_rate ?? 0,
         tax_amount: lineTax,
         total: lineSubtotal - it.discount + lineTax,
       };
     });
 
-    const grandTotal = subtotal - discountTotal + taxTotal;
+    const grandTotal = Math.round(netTaxableTotal + taxTotal);
 
     const order = await prisma.salesOrder.create({
       data: {

@@ -79,7 +79,7 @@ export const salesOrderItemSchema = z.object({
   quantity: z.number().positive('Quantity must be greater than 0'),
   unit_price: z.number().min(0, 'Unit price must be non-negative'),
   discount: z.number().min(0).default(0),
-  tax_rate: z.number().min(0).default(0),
+  tax_rate: z.number().min(0).optional(),
 });
 
 export const salesOrderSchema = z.object({
@@ -99,7 +99,7 @@ export const billingCheckoutItemSchema = z.object({
   quantity: z.number().positive('Quantity must be at least 1'),
   unit_price: z.number().min(0, 'Unit price must be non-negative'),
   discount: z.number().min(0).default(0),
-  tax_rate: z.number().min(0).default(0),
+  tax_rate: z.number().min(0).optional(),
 });
 
 export const billingCheckoutSchema = z.object({

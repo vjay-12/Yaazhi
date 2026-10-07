@@ -11,7 +11,6 @@ import {
   BarChart3,
   Settings,
   ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 import { YaazhiLogo } from '../icons/YaazhiLogo';
 
@@ -73,35 +72,59 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         {/* Brand Header */}
         <div className="yz-sidebar-brand">
-          <div
-            onClick={() => handleNavClick('overview')}
-            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-            title="Yaazhi Boutique"
-          >
-            <YaazhiLogo collapsed={isCollapsed} size={isCollapsed ? 'sm' : 'md'} />
-          </div>
-
-          {!isMobileOpen && (
+          {isCollapsed ? (
             <button
               onClick={onToggleCollapse}
               style={{
                 background: 'transparent',
-                border: '1px solid var(--yz-border-sidebar)',
-                borderRadius: 'var(--yz-radius-sm)',
-                color: 'var(--yz-text-sidebar-muted)',
+                border: 'none',
                 cursor: 'pointer',
-                padding: '3px',
+                padding: '0',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '22px',
-                height: '22px',
+                width: '100%',
+                height: '100%',
               }}
-              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title="Expand sidebar"
+              aria-label="Expand sidebar"
             >
-              {isCollapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+              <YaazhiLogo collapsed={true} size="sm" />
             </button>
+          ) : (
+            <>
+              <div
+                onClick={() => handleNavClick('overview')}
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                title="Yaazhi Boutique"
+              >
+                <YaazhiLogo collapsed={false} size="md" />
+              </div>
+
+              {!isMobileOpen && (
+                <button
+                  onClick={onToggleCollapse}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid var(--yz-border-sidebar)',
+                    borderRadius: 'var(--yz-radius-sm)',
+                    color: 'var(--yz-text-sidebar-muted)',
+                    cursor: 'pointer',
+                    padding: '3px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '24px',
+                    height: '24px',
+                    boxSizing: 'border-box',
+                  }}
+                  title="Collapse sidebar"
+                  aria-label="Collapse sidebar"
+                >
+                  <ChevronLeft size={13} />
+                </button>
+              )}
+            </>
           )}
         </div>
 

@@ -129,7 +129,7 @@ export const AppShell: React.FC = () => {
   };
 
   return (
-    <div className="yz-app-layout">
+    <div className={`yz-app-layout ${isCollapsed ? 'yz-sidebar-collapsed' : ''}`}>
       {/* Sidebar Navigation */}
       <Sidebar
         currentTab={currentTab}
@@ -149,6 +149,7 @@ export const AppShell: React.FC = () => {
             setSelectedProductId(null);
           }}
           onNewProductClick={() => setIsAddProductModalOpen(true)}
+          onNewPurchaseOrderClick={() => handleSelectTab('purchases')}
         />
 
         {/* Content View */}

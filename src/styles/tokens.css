@@ -97,8 +97,9 @@
   --yz-space-6: 1rem;      /* 16px */
   --yz-space-8: 1.25rem;   /* 20px */
 
-  /* Compact Invenaro Layout Dimensions */
+  /* Compact Layout Dimensions */
   --yz-sidebar-width: 228px;
   --yz-sidebar-collapsed-width: 52px;
-  --yz-header-height: 44px;
+  --yz-header-height: 50px;
+  --yz-billing-panel-width: 380px;
 }

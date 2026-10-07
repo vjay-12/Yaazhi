@@ -304,10 +304,11 @@ export async function downloadSalesOrderPdf(
   ];
 
   const tableBody = (order.items && order.items.length > 0 ? order.items : []).map((it, index) => {
-    const lineTotal = Number(it.total ?? it.quantity * it.unitPrice);
-    const taxRate = Number(it.taxRate || 5);
-    const lineSubtotal = lineTotal / (1 + taxRate / 100);
-    const lineTax = lineTotal - lineSubtotal;
+    const taxRate = Number(it.taxRate !== undefined ? it.taxRate : ((it as any).tax_rate !== undefined ? (it as any).tax_rate : 0));
+    const lineDiscount = Number(it.discount || 0);
+    const lineSubtotal = it.quantity * it.unitPrice - lineDiscount;
+    const lineTax = Number((it as any).taxAmount !== undefined ? (it as any).taxAmount : ((it as any).tax_amount !== undefined ? (it as any).tax_amount : (lineSubtotal * taxRate) / 100));
+    const lineTotal = Number(it.total !== undefined ? it.total : lineSubtotal + lineTax);
 
     return [
       (index + 1).toString(),

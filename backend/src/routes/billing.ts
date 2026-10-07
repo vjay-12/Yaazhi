@@ -15,7 +15,7 @@ router.post('/checkout', async (req, res): Promise<void> => {
           quantity: Number(it.quantity || it.qty || 1),
           unit_price: Number(it.unit_price || it.unitPrice || it.price || it.salePrice || 0),
           discount: Number(it.discount || 0),
-          tax_rate: Number(it.tax_rate || it.taxRate || it.gstRate || 5.0),
+          tax_rate: it.tax_rate !== undefined ? Number(it.tax_rate) : it.taxRate !== undefined ? Number(it.taxRate) : it.gstRate !== undefined ? Number(it.gstRate) : undefined,
         }))
       : [];
 
@@ -79,6 +79,10 @@ router.post('/checkout', async (req, res): Promise<void> => {
             throw new Error(`Product not found (ID: ${item.product_id})`);
           }
 
+          if (item.tax_rate === undefined) {
+            item.tax_rate = Number(product.tax_rate);
+          }
+
           const balance = await tx.stockBalance.findUnique({
             where: {
               product_id_godown_id: {
@@ -106,26 +110,33 @@ router.post('/checkout', async (req, res): Promise<void> => {
         const payCount = await tx.payment.count();
         const paymentNumber = `PAY-${new Date().getFullYear()}-${String(payCount + 1).padStart(4, '0')}`;
 
-        // 3. Compute item totals
+        // 3. Compute item totals with proportional discount allocation
         let subtotal = 0;
+        for (const it of items) {
+          subtotal += it.quantity * it.unit_price;
+        }
+
+        const netTaxableTotal = Math.max(0, subtotal - discount_total);
+        const discountRatio = subtotal > 0 ? netTaxableTotal / subtotal : 1;
         let taxTotal = 0;
+
         const lineItemsData = items.map((it) => {
           const lineSubtotal = it.quantity * it.unit_price;
-          const lineTax = (lineSubtotal * it.tax_rate) / 100;
-          subtotal += lineSubtotal;
+          const lineTaxable = lineSubtotal * discountRatio;
+          const lineTax = (lineTaxable * (it.tax_rate ?? 0)) / 100;
           taxTotal += lineTax;
           return {
             product_id: it.product_id,
             quantity: it.quantity,
             unit_price: it.unit_price,
             discount: it.discount,
-            tax_rate: it.tax_rate,
+            tax_rate: it.tax_rate ?? 0,
             tax_amount: lineTax,
             total: lineSubtotal - it.discount + lineTax,
           };
         });
 
-        const grandTotal = Math.max(0, subtotal - discount_total + taxTotal);
+        const grandTotal = Math.round(netTaxableTotal + taxTotal);
 
         // Determine actual payment breakdown
         let actualPaidAmount = grandTotal;

@@ -195,13 +195,18 @@ router.get('/:id', async (req, res): Promise<void> => {
 // POST /api/products - create product with opening stock
 router.post('/', async (req, res): Promise<void> => {
   try {
+    const categoryName = req.body.category || '';
+    const defaultTax = categoryName.includes('Churidar') || categoryName.includes('Anarkali') ? 12 : 5;
+    const defaultHsn = categoryName.includes('Churidar') || categoryName.includes('Anarkali') || categoryName.includes('Kids') ? '6204' : '5007';
+
     const rawBody = {
       ...req.body,
-      sale_price: typeof req.body.sale_price === 'number' ? req.body.sale_price : Number(req.body.salePrice || req.body.sell_price || 0),
-      purchase_price: typeof req.body.purchase_price === 'number' ? req.body.purchase_price : Number(req.body.purchasePrice || req.body.costPrice || 0),
-      tax_rate: typeof req.body.tax_rate === 'number' ? req.body.tax_rate : Number(req.body.taxRate || req.body.gstRate || 0),
-      min_stock_level: typeof req.body.min_stock_level === 'number' ? req.body.min_stock_level : Number(req.body.minStockLevel || req.body.reorderPoint || 0),
-      initial_stock: typeof req.body.initial_stock === 'number' ? req.body.initial_stock : Number(req.body.initialStock || req.body.currentStock || 0),
+      sale_price: typeof req.body.sale_price === 'number' ? req.body.sale_price : Number(req.body.salePrice ?? req.body.sell_price ?? 0),
+      purchase_price: typeof req.body.purchase_price === 'number' ? req.body.purchase_price : Number(req.body.purchasePrice ?? req.body.costPrice ?? 0),
+      tax_rate: typeof req.body.tax_rate === 'number' ? req.body.tax_rate : (req.body.taxRate !== undefined ? Number(req.body.taxRate) : req.body.gstRate !== undefined ? Number(req.body.gstRate) : defaultTax),
+      hsn_code: req.body.hsn_code || req.body.hsnCode || defaultHsn,
+      min_stock_level: typeof req.body.min_stock_level === 'number' ? req.body.min_stock_level : Number(req.body.minStockLevel ?? req.body.reorderPoint ?? 0),
+      initial_stock: typeof req.body.initial_stock === 'number' ? req.body.initial_stock : Number(req.body.initialStock ?? req.body.currentStock ?? 0),
     };
 
     const parsed = productSchema.safeParse(rawBody);
@@ -324,13 +329,22 @@ router.post('/', async (req, res): Promise<void> => {
 // PUT /api/products/:id - edit product
 router.put('/:id', async (req, res): Promise<void> => {
   try {
-    const rawBody = {
-      ...req.body,
-      sale_price: typeof req.body.sale_price === 'number' ? req.body.sale_price : Number(req.body.salePrice || req.body.sell_price || 0),
-      purchase_price: typeof req.body.purchase_price === 'number' ? req.body.purchase_price : Number(req.body.purchasePrice || req.body.costPrice || 0),
-      tax_rate: typeof req.body.tax_rate === 'number' ? req.body.tax_rate : Number(req.body.taxRate || req.body.gstRate || 0),
-      min_stock_level: typeof req.body.min_stock_level === 'number' ? req.body.min_stock_level : Number(req.body.minStockLevel || req.body.reorderPoint || 0),
-    };
+    const rawBody: any = { ...req.body };
+    if (req.body.sale_price !== undefined || req.body.salePrice !== undefined || req.body.sell_price !== undefined) {
+      rawBody.sale_price = Number(req.body.sale_price ?? req.body.salePrice ?? req.body.sell_price);
+    }
+    if (req.body.purchase_price !== undefined || req.body.purchasePrice !== undefined || req.body.costPrice !== undefined) {
+      rawBody.purchase_price = Number(req.body.purchase_price ?? req.body.purchasePrice ?? req.body.costPrice);
+    }
+    if (req.body.tax_rate !== undefined || req.body.taxRate !== undefined || req.body.gstRate !== undefined) {
+      rawBody.tax_rate = Number(req.body.tax_rate ?? req.body.taxRate ?? req.body.gstRate);
+    }
+    if (req.body.hsn_code !== undefined || req.body.hsnCode !== undefined) {
+      rawBody.hsn_code = req.body.hsn_code || req.body.hsnCode;
+    }
+    if (req.body.min_stock_level !== undefined || req.body.minStockLevel !== undefined || req.body.reorderPoint !== undefined) {
+      rawBody.min_stock_level = Number(req.body.min_stock_level ?? req.body.minStockLevel ?? req.body.reorderPoint);
+    }
 
     const parsed = productSchema.partial().safeParse(rawBody);
     if (!parsed.success) {

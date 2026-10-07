@@ -37,6 +37,8 @@ async function runTests() {
       unit: 'PCS',
       purchasePrice: 6000,
       salePrice: 10500,
+      hsnCode: '5007',
+      taxRate: 5.0,
       minStockLevel: 2,
       initialStock: 0,
     }),

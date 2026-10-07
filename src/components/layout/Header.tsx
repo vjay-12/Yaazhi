@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Receipt, ShoppingBag } from 'lucide-react';
 import type { NavTabId } from './Sidebar';
 import { Button } from '../common/Button';
 
@@ -7,12 +7,13 @@ interface HeaderProps {
   currentTab: NavTabId;
   onNewBillClick?: () => void;
   onNewProductClick: () => void;
+  onNewPurchaseOrderClick?: () => void;
 }
 
 const TAB_TITLES: Record<NavTabId, { title: string; subtitle: string }> = {
   overview: {
-    title: 'Boutique Overview',
-    subtitle: 'Daily summary and showroom register health',
+    title: 'Overview',
+    subtitle: 'Your boutique sales, inventory, and daily activity at a glance.',
   },
   billing: {
     title: 'Billing',
@@ -54,7 +55,9 @@ const TAB_TITLES: Record<NavTabId, { title: string; subtitle: string }> = {
 
 export const Header: React.FC<HeaderProps> = ({
   currentTab,
+  onNewBillClick,
   onNewProductClick,
+  onNewPurchaseOrderClick,
 }) => {
   const currentInfo = TAB_TITLES[currentTab] || {
     title: 'Yaazhi Boutique',
@@ -64,18 +67,64 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="yz-header">
       <div className="yz-header-left">
-        <div>
-          <h1 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--yz-text-primary)', lineHeight: 1.2 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <h1
+            style={{
+              fontSize: '15px',
+              fontWeight: 700,
+              color: 'var(--yz-text-primary)',
+              lineHeight: 1.25,
+              letterSpacing: '-0.01em',
+              margin: 0,
+            }}
+          >
             {currentInfo.title}
           </h1>
-          <span style={{ fontSize: '10px', color: 'var(--yz-text-muted)', display: 'block', lineHeight: 1.2 }}>
+          <span
+            style={{
+              fontSize: '11px',
+              color: 'var(--yz-text-muted)',
+              display: 'block',
+              lineHeight: 1.35,
+              marginTop: '2px',
+            }}
+          >
             {currentInfo.subtitle}
           </span>
         </div>
       </div>
 
       <div className="yz-header-right">
-        {/* Contextual primary action */}
+        {/* Contextual primary actions */}
+        {currentTab === 'overview' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Button
+              variant="primary"
+              icon={<Receipt size={13} />}
+              onClick={onNewBillClick}
+              size="sm"
+            >
+              New Bill
+            </Button>
+            <Button
+              variant="secondary"
+              icon={<Plus size={13} />}
+              onClick={onNewProductClick}
+              size="sm"
+            >
+              Add Product
+            </Button>
+            <Button
+              variant="secondary"
+              icon={<ShoppingBag size={13} />}
+              onClick={onNewPurchaseOrderClick}
+              size="sm"
+            >
+              Create Purchase Order
+            </Button>
+          </div>
+        )}
+
         {currentTab === 'products' && (
           <Button
             variant="primary"

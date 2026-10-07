@@ -9,16 +9,16 @@ export const YaazhiLogo: React.FC<YaazhiLogoProps> = ({ collapsed = false, size 
   const iconSize = size === 'sm' ? 24 : size === 'lg' ? 32 : 26;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: collapsed ? 0 : '8px' }}>
       <svg
         width={iconSize}
         height={iconSize}
         viewBox="0 0 48 48"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        style={{ flexShrink: 0 }}
+        style={{ flexShrink: 0, display: 'block' }}
       >
-        <rect width="48" height="48" rx="8" fill="#852237" stroke="#6E1B2D" strokeWidth="1" />
+        <rect x="0.5" y="0.5" width="47" height="47" rx="7.5" fill="#852237" stroke="#6E1B2D" strokeWidth="1" />
         {/* Heritage Yaazhi Arch & Weave motif */}
         <path
           d="M12 36C12 26 17 21 24 21C31 21 36 26 36 36"

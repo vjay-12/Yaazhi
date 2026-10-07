@@ -164,7 +164,7 @@ export const BillingPage: React.FC = () => {
           product,
           quantity: 1,
           unitPrice: product.sellPrice,
-          gstRate: product.gstRate,
+          gstRate: Number(product.gstRate ?? product.taxRate ?? 0),
         },
       ];
     });
@@ -209,12 +209,13 @@ export const BillingPage: React.FC = () => {
   const discountAmount = Math.round((grossSubtotal * discountPercent) / 100);
   const netTaxable = grossSubtotal - discountAmount;
 
-  // Calculate weighted GST
+  // Calculate weighted GST per line item and sum
   const totalTax = cart.reduce((sum, item) => {
     const itemSubtotal = item.unitPrice * item.quantity;
     const itemShare = grossSubtotal > 0 ? itemSubtotal / grossSubtotal : 0;
     const itemTaxable = netTaxable * itemShare;
-    return sum + (itemTaxable * item.gstRate) / 100;
+    const rate = Number(item.gstRate) || 0;
+    return sum + (itemTaxable * rate) / 100;
   }, 0);
 
   const grandTotal = Math.round(netTaxable + totalTax);
@@ -306,7 +307,7 @@ export const BillingPage: React.FC = () => {
           product_id: item.product.id,
           quantity: item.quantity,
           unit_price: item.unitPrice,
-          tax_rate: item.gstRate,
+          tax_rate: Number(item.gstRate) || 0,
         })),
       });
 
@@ -361,238 +362,294 @@ export const BillingPage: React.FC = () => {
   });
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1.6fr) minmax(320px, 1fr)',
-        gap: '10px',
-        alignItems: 'start',
-      }}
-    >
-      {/* Left Column: Product Selection Grid */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {/* Search & Category Pills */}
-        <div className="yz-card" style={{ padding: '8px 10px' }}>
-          <div style={{ position: 'relative', marginBottom: '6px' }}>
-            <Search
-              size={13}
-              style={{
-                position: 'absolute',
-                left: '8px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--yz-text-muted)',
-              }}
-            />
-            <input
-              type="text"
-              placeholder="Search weave name, SKU, or scan barcode..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="yz-input"
-              style={{ paddingLeft: '26px' }}
-              autoFocus
-            />
+    <div className="yz-billing-page">
+      <div className="yz-billing-grid">
+        {/* Left Column: Product Selection Grid */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', height: '100%', minHeight: 0 }}>
+          {/* Search & Category Pills */}
+          <div className="yz-card" style={{ padding: '8px 10px', flexShrink: 0 }}>
+            <div style={{ position: 'relative', marginBottom: '6px' }}>
+              <Search
+                size={13}
+                style={{
+                  position: 'absolute',
+                  left: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--yz-text-muted)',
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Search weave name, SKU, or scan barcode..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="yz-input"
+                style={{ paddingLeft: '26px' }}
+                autoFocus
+              />
+            </div>
+
+            {/* Dynamic Category Quick Pills */}
+            <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '2px' }}>
+              {availableCategories.map((c) => {
+                const isSelected = selectedCategory === c;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setSelectedCategory(c)}
+                    style={{
+                      padding: '2px 9px',
+                      borderRadius: 'var(--yz-radius-full)',
+                      border: '1px solid',
+                      borderColor: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-border)',
+                      backgroundColor: isSelected ? 'var(--yz-primary-subtle, #FDF2F4)' : 'var(--yz-bg-surface)',
+                      color: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-text-secondary)',
+                      fontSize: '11px',
+                      fontWeight: isSelected ? 600 : 500,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.1s ease',
+                      height: '24px',
+                    }}
+                  >
+                    {c === 'ALL' ? 'All' : c}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Dynamic Category Quick Pills */}
-          <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '2px' }}>
-            {availableCategories.map((c) => {
-              const isSelected = selectedCategory === c;
+          {/* Product Cards Grid */}
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+              gap: '8px',
+              overflowY: 'auto',
+              padding: '2px 3px 2px 2px',
+              alignContent: 'start',
+            }}
+          >
+            {filteredProducts.map((p) => {
+              const inStock = p.currentStock > 0;
+              const cartItem = cart.find((i) => i.product.id === p.id);
+              const currentQty = cartItem ? cartItem.quantity : 0;
               return (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setSelectedCategory(c)}
+                <div
+                  key={p.id}
                   style={{
-                    padding: '2px 9px',
-                    borderRadius: 'var(--yz-radius-full)',
+                    backgroundColor: 'var(--yz-bg-surface)',
                     border: '1px solid',
-                    borderColor: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-border)',
-                    backgroundColor: isSelected ? 'var(--yz-primary-subtle, #FDF2F2)' : 'var(--yz-bg-surface)',
-                    color: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-text-secondary)',
-                    fontSize: '11px',
-                    fontWeight: isSelected ? 600 : 500,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    transition: 'all 0.1s ease',
-                    height: '24px',
+                    borderColor: cartItem ? 'var(--yz-primary, #852237)' : 'var(--yz-border)',
+                    borderRadius: 'var(--yz-radius-xl, 8px)',
+                    padding: '5px 7px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '2px',
+                    cursor: 'default',
+                    opacity: inStock ? 1 : 0.55,
+                    transition: 'all 0.12s ease',
+                    boxShadow: cartItem ? 'inset 0 0 0 1px var(--yz-primary, #852237)' : 'none',
+                    position: 'relative',
+                    userSelect: 'none',
                   }}
                 >
-                  {c === 'ALL' ? 'All' : c}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+                  <div>
+                    <ProductImage
+                      src={p.imageUrl}
+                      alt={p.name}
+                      productName={p.name}
+                      category={p.category}
+                      height={88}
+                      width="100%"
+                      rounded="md"
+                      iconSize={18}
+                      style={{ marginBottom: '4px' }}
+                    />
 
-        {/* Product Cards Grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: '8px',
-            maxHeight: 'calc(100vh - 200px)',
-            overflowY: 'auto',
-            paddingRight: '2px',
-          }}
-        >
-          {filteredProducts.map((p) => {
-            const inStock = p.currentStock > 0;
-            const cartItem = cart.find((i) => i.product.id === p.id);
-            return (
-              <div
-                key={p.id}
-                onClick={() => inStock && addToCart(p)}
-                style={{
-                  backgroundColor: 'var(--yz-bg-surface)',
-                  border: '1px solid',
-                  borderColor: cartItem ? 'var(--yz-primary, #832729)' : 'var(--yz-border)',
-                  borderRadius: 'var(--yz-radius-sm)',
-                  padding: '6px 8px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: '4px',
-                  cursor: inStock ? 'pointer' : 'not-allowed',
-                  opacity: inStock ? 1 : 0.55,
-                  transition: 'all 0.12s ease',
-                  boxShadow: cartItem ? '0 0 0 1px var(--yz-primary, #832729)' : 'none',
-                  position: 'relative',
-                  userSelect: 'none',
-                }}
-                onMouseEnter={(e) => {
-                  if (inStock && !cartItem) {
-                    e.currentTarget.style.borderColor = 'var(--yz-border-strong)';
-                    e.currentTarget.style.backgroundColor = 'var(--yz-bg-surface-hover)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (inStock && !cartItem) {
-                    e.currentTarget.style.borderColor = 'var(--yz-border)';
-                    e.currentTarget.style.backgroundColor = 'var(--yz-bg-surface)';
-                  }
-                }}
-              >
-                <div>
-                  <ProductImage
-                    src={p.imageUrl}
-                    alt={p.name}
-                    productName={p.name}
-                    category={p.category}
-                    height={80}
-                    width="100%"
-                    rounded="sm"
-                    iconSize={18}
-                    style={{ marginBottom: '5px' }}
-                  />
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '2px',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '9.5px',
+                          fontFamily: 'var(--yz-font-mono)',
+                          color: 'var(--yz-text-muted)',
+                          letterSpacing: '0.2px',
+                        }}
+                      >
+                        {p.sku}
+                      </span>
+                      <StockBadge
+                        status={productService.getStockStatus(p)}
+                        stockCount={p.currentStock}
+                      />
+                    </div>
+
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: '11.5px',
+                        lineHeight: 1.3,
+                        color: 'var(--yz-text-primary)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        marginBottom: '2px',
+                      }}
+                      title={p.name}
+                    >
+                      {p.name}
+                    </div>
+                  </div>
 
                   <div
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      marginBottom: '3px',
+                      borderTop: '1px solid var(--yz-border-subtle)',
+                      paddingTop: '3px',
+                      marginTop: 'auto',
                     }}
                   >
-                    <span
+                    <div
                       style={{
-                        fontSize: '9.5px',
+                        fontSize: '12px',
+                        fontWeight: 700,
                         fontFamily: 'var(--yz-font-mono)',
-                        color: 'var(--yz-text-muted)',
-                        letterSpacing: '0.2px',
+                        color: 'var(--yz-text-primary)',
                       }}
+                      className="tabular-nums"
                     >
-                      {p.sku}
-                    </span>
-                    <StockBadge
-                      status={productService.getStockStatus(p)}
-                      stockCount={p.currentStock}
-                    />
-                  </div>
+                      ₹{p.sellPrice.toLocaleString('en-IN')}
+                    </div>
 
-                  <div
-                    style={{
-                      fontWeight: 600,
-                      fontSize: '11.5px',
-                      lineHeight: 1.3,
-                      color: 'var(--yz-text-primary)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      marginBottom: '4px',
-                    }}
-                    title={p.name}
-                  >
-                    {p.name}
+                    {/* Compact Quantity Control: [ − ] qty [ + ] */}
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '1px',
+                        backgroundColor: currentQty > 0 ? 'var(--yz-primary-subtle, #FDF2F4)' : 'var(--yz-bg-subtle, #F1F5F9)',
+                        border: '1px solid',
+                        borderColor: currentQty > 0 ? 'var(--yz-primary-border, #F3D2D9)' : 'var(--yz-border, #E2E8F0)',
+                        borderRadius: 'var(--yz-radius-sm, 4px)',
+                        padding: '1px',
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        disabled={currentQty === 0 || !inStock}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (currentQty > 0) {
+                            updateQuantity(p.id, -1);
+                          }
+                        }}
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '3px',
+                          border: '1px solid',
+                          borderColor: currentQty > 0 ? 'var(--yz-primary-border, #F3D2D9)' : 'var(--yz-border, #CBD5E1)',
+                          backgroundColor: currentQty > 0 ? '#FFFFFF' : 'transparent',
+                          color: currentQty > 0 ? 'var(--yz-primary, #852237)' : 'var(--yz-text-muted, #94A3B8)',
+                          cursor: currentQty > 0 && inStock ? 'pointer' : 'not-allowed',
+                          opacity: currentQty > 0 && inStock ? 1 : 0.45,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: 0,
+                          transition: 'all 0.1s ease',
+                        }}
+                        title="Decrease quantity"
+                        aria-label={`Decrease ${p.name} quantity`}
+                      >
+                        <Minus size={10} strokeWidth={2.5} />
+                      </button>
+
+                      <span
+                        style={{
+                          minWidth: '16px',
+                          textAlign: 'center',
+                          fontSize: '10.5px',
+                          fontWeight: 700,
+                          fontFamily: 'var(--yz-font-mono)',
+                          color: currentQty > 0 ? 'var(--yz-primary, #852237)' : 'var(--yz-text-muted, #64748B)',
+                          userSelect: 'none',
+                          padding: '0 1px',
+                        }}
+                        className="tabular-nums"
+                      >
+                        {currentQty}
+                      </span>
+
+                      <button
+                        type="button"
+                        disabled={!inStock || currentQty >= p.currentStock}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (inStock && currentQty < p.currentStock) {
+                            if (currentQty === 0) {
+                              addToCart(p);
+                            } else {
+                              updateQuantity(p.id, 1);
+                            }
+                          }
+                        }}
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '3px',
+                          border: '1px solid',
+                          borderColor: inStock && currentQty < p.currentStock ? 'var(--yz-primary, #852237)' : 'var(--yz-border, #CBD5E1)',
+                          backgroundColor: inStock && currentQty < p.currentStock ? 'var(--yz-primary, #852237)' : 'transparent',
+                          color: inStock && currentQty < p.currentStock ? '#FFFFFF' : 'var(--yz-text-muted, #94A3B8)',
+                          cursor: inStock && currentQty < p.currentStock ? 'pointer' : 'not-allowed',
+                          opacity: inStock && currentQty < p.currentStock ? 1 : 0.45,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: 0,
+                          transition: 'all 0.1s ease',
+                        }}
+                        title="Increase quantity"
+                        aria-label={`Increase ${p.name} quantity`}
+                      >
+                        <Plus size={10} strokeWidth={2.5} />
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    borderTop: '1px solid var(--yz-border-subtle)',
-                    paddingTop: '4px',
-                    marginTop: 'auto',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      fontFamily: 'var(--yz-font-mono)',
-                      color: 'var(--yz-text-primary)',
-                    }}
-                    className="tabular-nums"
-                  >
-                    ₹{p.sellPrice.toLocaleString('en-IN')}
-                  </div>
-
-                  {cartItem ? (
-                    <span
-                      style={{
-                        backgroundColor: 'var(--yz-primary, #832729)',
-                        color: '#FFFFFF',
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        padding: '1px 6px',
-                        borderRadius: 'var(--yz-radius-full)',
-                      }}
-                    >
-                      {cartItem.quantity} in bill
-                    </span>
-                  ) : (
-                    <span
-                      style={{
-                        fontSize: '10.5px',
-                        color: inStock ? 'var(--yz-primary, #832729)' : 'var(--yz-text-muted)',
-                        fontWeight: 600,
-                      }}
-                    >
-                      + Add
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
 
-      {/* Right Column: Active Cart / Bill Summary */}
-      <div
-        className="yz-card"
-        style={{
-          padding: '10px',
-          display: 'flex',
-          flexDirection: 'column',
-          height: 'calc(100vh - 120px)',
-          position: 'sticky',
-          top: '56px',
-        }}
-      >
+        {/* Right Column: Active Cart / Bill Summary */}
+        <div
+          className="yz-card"
+          style={{
+            padding: '10px',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            minHeight: 0,
+            boxSizing: 'border-box',
+          }}
+        >
         {/* Cart Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--yz-border)', paddingBottom: '6px', marginBottom: '6px' }}>
           <div>
@@ -1004,6 +1061,7 @@ export const BillingPage: React.FC = () => {
           </div>
         )}
       </div>
+    </div>
 
       {/* Payment & Invoice Modal */}
       <Modal
