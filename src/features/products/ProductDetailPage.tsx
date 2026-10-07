@@ -198,8 +198,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                 <CategoryBadge category={product.category} />
-                <LifecycleBadge status={product.isArchived ? 'ARCHIVED' : 'ACTIVE'} />
-                <StockBadge status={status} stockCount={product.currentStock} />
+                {product.isArchived ? (
+                  <LifecycleBadge status="ARCHIVED" />
+                ) : (
+                  <StockBadge status={status} stockCount={product.currentStock} />
+                )}
                 <span
                   style={{
                     fontSize: '11px',

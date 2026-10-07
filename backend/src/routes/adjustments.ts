@@ -18,7 +18,8 @@ router.post('/', async (req, res): Promise<void> => {
 
     const parsed = stockAdjustmentSchema.safeParse(rawBody);
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.errors[0]?.message || 'Invalid adjustment data' });
+      const errorMsg = parsed.error.issues?.[0]?.message || (parsed.error as any).errors?.[0]?.message || 'Invalid adjustment data';
+      res.status(400).json({ error: errorMsg });
       return;
     }
 
@@ -46,8 +47,14 @@ router.post('/', async (req, res): Promise<void> => {
     const movementType = diff > 0 ? MovementType.ADJUSTMENT_ADD : MovementType.ADJUSTMENT_REDUCE;
     const unitCost = balance?.product.purchase_price ? Number(balance.product.purchase_price) : 0;
 
+    const adjYear = new Date().getFullYear();
     const count = await prisma.stockAdjustment.count();
-    const adjNumber = `ADJ-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
+    let nextAdjNum = count + 1;
+    let adjNumber = `ADJ-${adjYear}-${String(nextAdjNum).padStart(4, '0')}`;
+    while (await prisma.stockAdjustment.findUnique({ where: { adjustment_number: adjNumber } })) {
+      nextAdjNum++;
+      adjNumber = `ADJ-${adjYear}-${String(nextAdjNum).padStart(4, '0')}`;
+    }
 
     // Execute adjustment inside transaction
     const result = await prisma.$transaction(async (tx) => {

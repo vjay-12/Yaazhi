@@ -384,6 +384,18 @@
   gap: 12px;
 }
 
+.yz-overview-trend,
+.yz-overview-lowstock {
+  height: 220px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.yz-overview-lowstock {
+  display: flex;
+  flex-direction: column;
+}
+
 .yz-overview-recentsales,
 .yz-overview-topselling {
   flex: 1;

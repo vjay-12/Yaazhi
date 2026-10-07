@@ -14,7 +14,7 @@ import { VendorsPage } from '../../features/commercial/VendorsPage';
 import { CustomersPage } from '../../features/commercial/CustomersPage';
 import { ReportsPage } from '../../features/reports/ReportsPage';
 import { SettingsPage } from '../../features/settings/SettingsPage';
-import type { YaazhiProduct } from '../../types/product';
+import type { YaazhiProduct, StockStatusFilter } from '../../types/product';
 import { ProductModal } from '../../features/products/ProductModal';
 import { productService } from '../../services/productService';
 import { useToast } from '../common/Toast';
@@ -40,6 +40,9 @@ export const AppShell: React.FC = () => {
     const hash = window.location.hash.replace('#', '').split('?')[0];
     if (hash === 'inventory') return 'products';
     if (hash === 'sales-orders' || hash === 'sales') return 'orders';
+    if (hash === 'stock-audit' || hash === 'stock-movements' || hash === 'audit') return 'movements';
+    if (hash === 'purchase-orders' || hash === 'purchase') return 'purchases';
+    if (hash === 'suppliers') return 'vendors';
     const validTabs: NavTabId[] = [
       'overview',
       'billing',
@@ -107,9 +110,12 @@ export const AppShell: React.FC = () => {
     });
   };
 
-  const handleSelectTab = (tab: NavTabId) => {
+  const [initialProductStockFilter, setInitialProductStockFilter] = useState<StockStatusFilter | undefined>();
+
+  const handleSelectTab = (tab: NavTabId, stockFilter?: StockStatusFilter) => {
     setCurrentTab(tab);
     setSelectedProductId(null);
+    setInitialProductStockFilter(stockFilter);
   };
 
   const handleViewProductDetail = (product: YaazhiProduct) => {
@@ -181,6 +187,7 @@ export const AppShell: React.FC = () => {
                   onNavigateToAuditLog={() => setCurrentTab('movements')}
                   isAddModalOpenInitially={isAddProductModalOpen}
                   onCloseInitialAddModal={() => setIsAddProductModalOpen(false)}
+                  initialStockFilter={initialProductStockFilter}
                 />
               )}
             </>

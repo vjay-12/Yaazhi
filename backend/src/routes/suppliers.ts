@@ -213,7 +213,8 @@ router.post('/', async (req, res): Promise<void> => {
 
     const parsed = supplierSchema.safeParse(rawBody);
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.errors[0]?.message || 'Invalid vendor data' });
+      const errorMsg = parsed.error.issues?.[0]?.message || (parsed.error as any).errors?.[0]?.message || 'Invalid vendor data';
+      res.status(400).json({ error: errorMsg });
       return;
     }
 
@@ -307,7 +308,8 @@ router.put('/:id', async (req, res): Promise<void> => {
 
     const parsed = supplierSchema.partial().safeParse(rawBody);
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.errors[0]?.message || 'Invalid vendor data' });
+      const errorMsg = parsed.error.issues?.[0]?.message || (parsed.error as any).errors?.[0]?.message || 'Invalid vendor data';
+      res.status(400).json({ error: errorMsg });
       return;
     }
 

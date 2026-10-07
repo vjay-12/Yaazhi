@@ -152,13 +152,13 @@ export const StockMovementsPage: React.FC = () => {
           <table className="yz-table" style={{ width: '100%', tableLayout: 'fixed' }}>
             <thead>
               <tr>
-                <th style={{ width: '140px', paddingLeft: '12px' }}>TIMESTAMP</th>
-                <th style={{ width: '84px', textAlign: 'center' }}>TYPE</th>
-                <th style={{ width: '26%', minWidth: '180px' }}>PRODUCT & WEAVE</th>
-                <th style={{ width: '110px' }}>SKU</th>
-                <th style={{ width: '95px', textAlign: 'right' }}>QTY CHANGE</th>
-                <th style={{ minWidth: '220px' }}>AUDIT JUSTIFICATION / REF</th>
-                <th style={{ width: '90px', textAlign: 'right', paddingRight: '14px' }}>BALANCE</th>
+                <th style={{ width: '135px', paddingLeft: '12px' }}>TIMESTAMP</th>
+                <th style={{ width: '92px', textAlign: 'center', padding: '8px 4px' }}>TYPE</th>
+                <th style={{ width: '25%', minWidth: '170px' }}>PRODUCT & WEAVE</th>
+                <th style={{ width: '105px' }}>SKU</th>
+                <th style={{ width: '90px', textAlign: 'right' }}>QTY CHANGE</th>
+                <th style={{ minWidth: '200px' }}>AUDIT JUSTIFICATION / REF</th>
+                <th style={{ width: '85px', textAlign: 'right', paddingRight: '14px' }}>BALANCE</th>
               </tr>
             </thead>
             <tbody>
@@ -170,16 +170,17 @@ export const StockMovementsPage: React.FC = () => {
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '4px',
-                  width: '72px',
-                  height: '22px',
+                  gap: '3px',
+                  minWidth: '66px',
+                  height: '20px',
                   borderRadius: 'var(--yz-radius-full)',
-                  fontSize: '11px',
+                  fontSize: '10.5px',
                   fontWeight: 700,
                   letterSpacing: '0.02em',
                   textAlign: 'center',
                   boxSizing: 'border-box',
-                  padding: '0 6px',
+                  padding: '0 5px',
+                  whiteSpace: 'nowrap',
                 };
 
                 return (
@@ -201,7 +202,7 @@ export const StockMovementsPage: React.FC = () => {
                     </td>
 
                     {/* 2. TYPE */}
-                    <td style={{ textAlign: 'center' }}>
+                    <td style={{ width: '92px', textAlign: 'center', padding: '6px 4px' }}>
                       {isIn ? (
                         <span
                           style={{
@@ -211,7 +212,7 @@ export const StockMovementsPage: React.FC = () => {
                             border: '1px solid var(--yz-status-in-stock-border, #A7F3D0)',
                           }}
                         >
-                          <ArrowDownLeft size={11} strokeWidth={2.5} />
+                          <ArrowDownLeft size={10} strokeWidth={2.5} />
                           <span>IN</span>
                         </span>
                       ) : isOut ? (
@@ -223,7 +224,7 @@ export const StockMovementsPage: React.FC = () => {
                             border: '1px solid var(--yz-status-out-stock-border, #FECACA)',
                           }}
                         >
-                          <ArrowUpRight size={11} strokeWidth={2.5} />
+                          <ArrowUpRight size={10} strokeWidth={2.5} />
                           <span>OUT</span>
                         </span>
                       ) : (

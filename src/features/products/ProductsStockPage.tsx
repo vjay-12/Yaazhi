@@ -32,6 +32,7 @@ interface ProductsStockPageProps {
   onNavigateToAuditLog?: () => void;
   isAddModalOpenInitially?: boolean;
   onCloseInitialAddModal?: () => void;
+  initialStockFilter?: StockStatusFilter;
 }
 
 const LIFECYCLE_OPTIONS: DropdownOption<ProductLifecycleFilter>[] = [
@@ -61,20 +62,29 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
   onViewProductDetail,
   isAddModalOpenInitially = false,
   onCloseInitialAddModal,
+  initialStockFilter,
 }) => {
   const { showToast } = useToast();
   const [products, setProducts] = useState<YaazhiProduct[]>([]);
   const [summary, setSummary] = useState<StockSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Filters: Lifecycle defaults to ACTIVE, Stock defaults to ALL
+  // Filters: Lifecycle defaults to ACTIVE, Stock defaults to initialStockFilter or ALL
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [lifecycleFilter, setLifecycleFilter] = useState<ProductLifecycleFilter>('ACTIVE');
-  const [stockStatusFilter, setStockStatusFilter] = useState<StockStatusFilter>('ALL');
+  const [stockStatusFilter, setStockStatusFilter] = useState<StockStatusFilter>(
+    initialStockFilter || 'ALL'
+  );
   const [sortBy, setSortBy] = useState<'name' | 'sellPrice' | 'currentStock' | 'createdAt'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [catalogCategories, setCatalogCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (initialStockFilter) {
+      setStockStatusFilter(initialStockFilter);
+    }
+  }, [initialStockFilter]);
 
   // Dynamically derive category options from actual catalog data
   const categoryOptions: DropdownOption[] = React.useMemo(() => [
@@ -494,15 +504,14 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
                       {product.reorderPoint}
                     </td>
 
-                    {/* STATUS: Stock badge + Lifecycle badge */}
+                    {/* STATUS: Stock badge or Lifecycle badge */}
                     <td style={{ textAlign: 'left', whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                        <StockBadge status={status} stockCount={product.currentStock} />
                         {product.isArchived ? (
                           <LifecycleBadge status="ARCHIVED" />
-                        ) : lifecycleFilter === 'ALL' ? (
-                          <LifecycleBadge status="ACTIVE" />
-                        ) : null}
+                        ) : (
+                          <StockBadge status={status} stockCount={product.currentStock} />
+                        )}
                       </div>
                     </td>
 

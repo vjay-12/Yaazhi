@@ -36,7 +36,8 @@ router.post('/checkout', async (req, res): Promise<void> => {
 
     const parsed = billingCheckoutSchema.safeParse(normalizedBody);
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.errors[0]?.message || 'Invalid billing data' });
+      const errorMsg = parsed.error.issues?.[0]?.message || (parsed.error as any).errors?.[0]?.message || 'Invalid billing data';
+      res.status(400).json({ error: errorMsg });
       return;
     }
 
@@ -104,15 +105,31 @@ router.post('/checkout', async (req, res): Promise<void> => {
           }
         }
 
-        // 2. Generate numbers
+        // 2. Generate numbers (guaranteeing uniqueness)
+        const year = new Date().getFullYear();
         const orderCount = await tx.salesOrder.count();
-        const orderNumber = `BILL-${new Date().getFullYear()}-${String(orderCount + 1).padStart(4, '0')}`;
+        let nextOrderNum = orderCount + 1;
+        let orderNumber = `BILL-${year}-${String(nextOrderNum).padStart(4, '0')}`;
+        while (await tx.salesOrder.findUnique({ where: { order_number: orderNumber } })) {
+          nextOrderNum++;
+          orderNumber = `BILL-${year}-${String(nextOrderNum).padStart(4, '0')}`;
+        }
 
         const invCount = await tx.invoice.count();
-        const invoiceNumber = `INV-${new Date().getFullYear()}-${String(invCount + 1).padStart(4, '0')}`;
+        let nextInvNum = invCount + 1;
+        let invoiceNumber = `INV-${year}-${String(nextInvNum).padStart(4, '0')}`;
+        while (await tx.invoice.findUnique({ where: { invoice_number: invoiceNumber } })) {
+          nextInvNum++;
+          invoiceNumber = `INV-${year}-${String(nextInvNum).padStart(4, '0')}`;
+        }
 
         const payCount = await tx.payment.count();
-        const paymentNumber = `PAY-${new Date().getFullYear()}-${String(payCount + 1).padStart(4, '0')}`;
+        let nextPayNum = payCount + 1;
+        let paymentNumber = `PAY-${year}-${String(nextPayNum).padStart(4, '0')}`;
+        while (await tx.payment.findUnique({ where: { payment_number: paymentNumber } })) {
+          nextPayNum++;
+          paymentNumber = `PAY-${year}-${String(nextPayNum).padStart(4, '0')}`;
+        }
 
         // 3. Compute item totals with proportional discount allocation
         let subtotal = 0;

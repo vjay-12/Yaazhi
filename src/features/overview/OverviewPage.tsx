@@ -8,7 +8,7 @@ import {
   TrendingUp,
   CheckCircle2,
 } from 'lucide-react';
-import type { YaazhiProduct } from '../../types/product';
+import type { YaazhiProduct, StockStatusFilter } from '../../types/product';
 import { productService } from '../../services/productService';
 import { salesOrderService, type SalesOrderData } from '../../services/salesOrderService';
 import { OrderDetailModal } from '../commercial/OrderDetailModal';
@@ -16,7 +16,7 @@ import { CardSkeleton } from '../../components/common/LoadingState';
 import type { NavTabId } from '../../components/layout/Sidebar';
 
 interface OverviewPageProps {
-  onNavigate: (tab: NavTabId) => void;
+  onNavigate: (tab: NavTabId, stockFilter?: StockStatusFilter) => void;
   onViewProductDetail: (product: YaazhiProduct) => void;
   onOpenAddProduct?: () => void;
 }
@@ -112,9 +112,11 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
     };
   }, [validOrders]);
 
-  // 2. STOCK METRICS (Strictly active products only)
+  // 2. STOCK METRICS (Strictly active products only, excluding archived)
   const stockStats = useMemo(() => {
-    const activeProducts = products.filter((p) => p.isActive !== false);
+    const activeProducts = products.filter(
+      (p) => !p.isArchived && p.isActive !== false && p.status !== 'ARCHIVED'
+    );
 
     // Stock value at cost: active inventory quantity × product cost
     const stockValuationCost = activeProducts.reduce((sum, p) => {
@@ -429,7 +431,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         {/* KPI 4: LOW STOCK */}
         <div
           className="yz-card"
-          onClick={() => onNavigate('products')}
+          onClick={() => onNavigate('products', 'LOW_STOCK')}
           style={{
             padding: '12px 14px',
             display: 'flex',
@@ -501,6 +503,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
               padding: '12px 14px',
               display: 'flex',
               flexDirection: 'column',
+              boxSizing: 'border-box',
+              height: '220px',
+              overflow: 'hidden',
             }}
           >
             {/* Header: Title + Subtitle on left, [Line] [Bar] toggle on right */}
@@ -996,6 +1001,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
               padding: '12px 14px',
               display: 'flex',
               flexDirection: 'column',
+              boxSizing: 'border-box',
+              height: '220px',
+              overflow: 'hidden',
             }}
           >
             {/* Header */}
@@ -1004,22 +1012,23 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '8px',
-                paddingBottom: '8px',
+                marginBottom: '6px',
+                paddingBottom: '6px',
                 borderBottom: '1px solid var(--yz-border-subtle)',
+                flexShrink: 0,
               }}
             >
               <div>
-                <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--yz-text-primary)', margin: 0 }}>
+                <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--yz-text-primary)', margin: 0, lineHeight: 1.3 }}>
                   Low Stock
                 </h3>
-                <span style={{ fontSize: '11px', color: 'var(--yz-text-muted)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--yz-text-muted)', lineHeight: 1.2 }}>
                   Products needing attention
                 </span>
               </div>
 
               <button
-                onClick={() => onNavigate('products')}
+                onClick={() => onNavigate('products', 'LOW_STOCK')}
                 className="yz-btn yz-btn-ghost yz-btn-sm"
                 style={{
                   fontSize: '11px',
@@ -1042,12 +1051,13 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '6px 10px',
+                padding: '4px 8px',
                 borderRadius: 'var(--yz-radius-md, 10px)',
                 backgroundColor: 'var(--yz-bg-subtle)',
                 border: '1px solid var(--yz-border-subtle)',
                 fontSize: '11px',
-                marginBottom: '8px',
+                marginBottom: '6px',
+                flexShrink: 0,
               }}
             >
               <span style={{ color: 'var(--yz-status-low-stock, #B45309)', fontWeight: 600 }}>
@@ -1073,27 +1083,28 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                   justifyContent: 'center',
                   color: 'var(--yz-status-in-stock, #15803D)',
                   fontSize: '11.5px',
-                  padding: '1.75rem 1rem',
                   textAlign: 'center',
+                  flex: 1,
                 }}
               >
-                <CheckCircle2 size={20} style={{ marginBottom: '6px' }} />
+                <CheckCircle2 size={18} style={{ marginBottom: '4px' }} />
                 <div style={{ fontWeight: 500 }}>All products are above their reorder levels.</div>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
                 {/* Table Header */}
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'minmax(0, 1.8fr) 65px 65px',
-                    padding: '4px 6px',
+                    gridTemplateColumns: 'minmax(0, 1.8fr) 60px 60px',
+                    padding: '3px 6px',
                     fontSize: '10px',
                     fontWeight: 600,
                     color: 'var(--yz-text-muted)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.4px',
                     borderBottom: '1px solid var(--yz-border-subtle)',
+                    flexShrink: 0,
                   }}
                 >
                   <span>Product</span>
@@ -1101,9 +1112,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                   <span style={{ textAlign: 'right' }}>Reorder</span>
                 </div>
 
-                {/* Rows - Max 3 rows as specified */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
-                  {stockStats.attentionProducts.slice(0, 3).map((p) => {
+                {/* Rows - Strictly maximum 2 rows */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px' }}>
+                  {stockStats.attentionProducts.slice(0, 2).map((p) => {
                     const current = Number(p.currentStock) || 0;
                     const reorder = Number(p.reorderPoint ?? 3);
                     const isOut = current <= 0;
@@ -1114,19 +1125,22 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                         onClick={() => onViewProductDetail(p)}
                         style={{
                           display: 'grid',
-                          gridTemplateColumns: 'minmax(0, 1.8fr) 65px 65px',
+                          gridTemplateColumns: 'minmax(0, 1.8fr) 60px 60px',
                           alignItems: 'center',
-                          padding: '5px 6px',
+                          padding: '3px 6px',
                           borderRadius: 'var(--yz-radius-sm, 8px)',
                           fontSize: '11.5px',
                           cursor: 'pointer',
+                          height: '35px',
+                          maxHeight: '35px',
+                          boxSizing: 'border-box',
                           transition: 'background-color 0.1s ease',
                         }}
                         onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--yz-bg-subtle)')}
                         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                         title={`View details for ${p.name}`}
                       >
-                        <div style={{ minWidth: 0, paddingRight: '6px' }}>
+                        <div style={{ minWidth: 0, paddingRight: '6px', overflow: 'hidden' }}>
                           <div
                             style={{
                               fontWeight: 600,
@@ -1134,27 +1148,33 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap',
+                              fontSize: '11.5px',
+                              lineHeight: 1.25,
                             }}
                           >
                             {p.name}
                           </div>
                           <div
                             style={{
-                              fontSize: '10px',
+                              fontSize: '9.5px',
                               color: 'var(--yz-text-muted)',
                               fontFamily: 'var(--yz-font-mono)',
                               fontWeight: 600,
+                              lineHeight: 1.2,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
                             }}
                           >
                             {p.sku}
                           </div>
                         </div>
 
-                        <div style={{ textAlign: 'center' }}>
+                        <div style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                           <span
                             style={{
                               display: 'inline-block',
-                              padding: '2px 8px',
+                              padding: '1.5px 7px',
                               borderRadius: 'var(--yz-radius-full)',
                               fontSize: '10px',
                               fontWeight: 700,
@@ -1182,6 +1202,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                             fontFamily: 'var(--yz-font-mono)',
                             color: 'var(--yz-text-muted)',
                             fontSize: '11px',
+                            whiteSpace: 'nowrap',
                           }}
                         >
                           {reorder}
@@ -1190,6 +1211,44 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                     );
                   })}
                 </div>
+
+                {/* Show more / +N compact link - only when more than 2 products require attention */}
+                {stockStats.totalAttentionCount > 2 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '2px 6px',
+                      marginTop: '2px',
+                      height: '20px',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('products', 'LOW_STOCK')}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: 'var(--yz-primary, #852237)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        borderRadius: 'var(--yz-radius-sm, 6px)',
+                        transition: 'opacity 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                      onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                      title={`View all ${stockStats.totalAttentionCount} products needing attention in Products & Stock`}
+                    >
+                      +{stockStats.totalAttentionCount - 2} more
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

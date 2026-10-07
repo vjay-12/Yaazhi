@@ -130,7 +130,8 @@ router.post('/', async (req, res): Promise<void> => {
 
     const parsed = purchaseOrderSchema.safeParse(normalizedBody);
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.errors[0]?.message || 'Invalid PO data' });
+      const errorMsg = parsed.error.issues?.[0]?.message || (parsed.error as any).errors?.[0]?.message || 'Invalid PO data';
+      res.status(400).json({ error: errorMsg });
       return;
     }
 
@@ -165,8 +166,14 @@ router.post('/', async (req, res): Promise<void> => {
     }
 
     // Generate unique PO number
+    const year = new Date().getFullYear();
     const count = await prisma.purchaseOrder.count();
-    const poNumber = `PO-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
+    let nextPoNum = count + 1;
+    let poNumber = `PO-${year}-${String(nextPoNum).padStart(4, '0')}`;
+    while (await prisma.purchaseOrder.findUnique({ where: { po_number: poNumber } })) {
+      nextPoNum++;
+      poNumber = `PO-${year}-${String(nextPoNum).padStart(4, '0')}`;
+    }
 
     // Calculate totals
     let subtotal = 0;

@@ -183,7 +183,8 @@ router.post('/', async (req, res): Promise<void> => {
 
     const parsed = salesOrderSchema.safeParse(normalizedBody);
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.errors[0]?.message || 'Invalid sales order data' });
+      const errorMsg = parsed.error.issues?.[0]?.message || (parsed.error as any).errors?.[0]?.message || 'Invalid sales order data';
+      res.status(400).json({ error: errorMsg });
       return;
     }
 
@@ -217,8 +218,14 @@ router.post('/', async (req, res): Promise<void> => {
     }
 
     // Generate unique order number with BILL- prefix
+    const year = new Date().getFullYear();
     const count = await prisma.salesOrder.count();
-    const orderNumber = `BILL-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
+    let nextOrderNum = count + 1;
+    let orderNumber = `BILL-${year}-${String(nextOrderNum).padStart(4, '0')}`;
+    while (await prisma.salesOrder.findUnique({ where: { order_number: orderNumber } })) {
+      nextOrderNum++;
+      orderNumber = `BILL-${year}-${String(nextOrderNum).padStart(4, '0')}`;
+    }
 
     // Calculate totals
     let subtotal = 0;
@@ -372,8 +379,14 @@ router.post('/:id/fulfill', async (req, res): Promise<void> => {
       });
 
       if (!existingInv) {
+        const invYear = new Date().getFullYear();
         const invCount = await tx.invoice.count();
-        const invoiceNumber = `INV-${new Date().getFullYear()}-${String(invCount + 1).padStart(4, '0')}`;
+        let nextInvNum = invCount + 1;
+        let invoiceNumber = `INV-${invYear}-${String(nextInvNum).padStart(4, '0')}`;
+        while (await tx.invoice.findUnique({ where: { invoice_number: invoiceNumber } })) {
+          nextInvNum++;
+          invoiceNumber = `INV-${invYear}-${String(nextInvNum).padStart(4, '0')}`;
+        }
 
         await tx.invoice.create({
           data: {
@@ -542,8 +555,14 @@ router.post('/:id/settle', async (req, res): Promise<void> => {
       // 2. Update or create linked invoice
       let invoice = order.invoices[0];
       if (!invoice) {
+        const invYear = new Date().getFullYear();
         const invCount = await tx.invoice.count();
-        const invoiceNumber = `INV-${new Date().getFullYear()}-${String(invCount + 1).padStart(4, '0')}`;
+        let nextInvNum = invCount + 1;
+        let invoiceNumber = `INV-${invYear}-${String(nextInvNum).padStart(4, '0')}`;
+        while (await tx.invoice.findUnique({ where: { invoice_number: invoiceNumber } })) {
+          nextInvNum++;
+          invoiceNumber = `INV-${invYear}-${String(nextInvNum).padStart(4, '0')}`;
+        }
         invoice = await tx.invoice.create({
           data: {
             invoice_number: invoiceNumber,
@@ -571,8 +590,14 @@ router.post('/:id/settle', async (req, res): Promise<void> => {
       }
 
       // 3. Record Payment transaction
+      const payYear = new Date().getFullYear();
       const payCount = await tx.payment.count();
-      const paymentNumber = `PAY-${new Date().getFullYear()}-${String(payCount + 1).padStart(4, '0')}`;
+      let nextPayNum = payCount + 1;
+      let paymentNumber = `PAY-${payYear}-${String(nextPayNum).padStart(4, '0')}`;
+      while (await tx.payment.findUnique({ where: { payment_number: paymentNumber } })) {
+        nextPayNum++;
+        paymentNumber = `PAY-${payYear}-${String(nextPayNum).padStart(4, '0')}`;
+      }
 
       const payment = await tx.payment.create({
         data: {
