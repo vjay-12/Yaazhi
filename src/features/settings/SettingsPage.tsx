@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Store, Check, Loader2, QrCode, Upload, Trash2, RotateCcw } from 'lucide-react';
+import { Store, Check, Loader2, QrCode, Upload, Trash2, RotateCcw, Palette, Sun, Moon } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { settingsService } from '../../services/settingsService';
 import { useToast } from '../../components/common/Toast';
+import { useTheme } from '../../context/ThemeContext';
 
 const DEFAULT_SETTINGS = {
   storeName: 'Yaazhi Boutique & Atelier',
@@ -19,6 +20,7 @@ const DEFAULT_SETTINGS = {
 
 export const SettingsPage: React.FC = () => {
   const { showToast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [storeName, setStoreName] = useState(DEFAULT_SETTINGS.storeName);
   const [legalName, setLegalName] = useState(DEFAULT_SETTINGS.legalName);
   const [address, setAddress] = useState(DEFAULT_SETTINGS.address);
@@ -259,6 +261,119 @@ export const SettingsPage: React.FC = () => {
                 />
                 <span>Enable GST Invoicing & Calculations (CGST + SGST)</span>
               </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Appearance Settings */}
+        <div className="yz-card" style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1px solid var(--yz-border)', paddingBottom: '6px' }}>
+            <Palette size={16} color="var(--yz-primary)" />
+            <div>
+              <h3 style={{ fontSize: '13px', fontWeight: 600 }}>Appearance</h3>
+              <span style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)' }}>
+                Customize interface theme for daylight showroom counter or ambient evening operations.
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            {/* Light Theme Option */}
+            <div
+              onClick={() => setTheme('light')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 12px',
+                borderRadius: 'var(--yz-radius-md)',
+                border: `1.5px solid ${theme === 'light' ? 'var(--yz-primary)' : 'var(--yz-border)'}`,
+                backgroundColor: theme === 'light' ? 'var(--yz-primary-subtle)' : 'var(--yz-bg-subtle)',
+                cursor: 'pointer',
+                transition: 'all 0.14s ease',
+              }}
+            >
+              <div
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: 'var(--yz-radius-sm)',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E2E8F0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#B45309',
+                  boxShadow: 'var(--yz-shadow-2xs)',
+                  flexShrink: 0,
+                }}
+              >
+                <Sun size={16} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--yz-text-primary)' }}>
+                  Light Theme
+                </div>
+                <div style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)' }}>
+                  Crisp daylight boutique contrast
+                </div>
+              </div>
+              <input
+                type="radio"
+                name="theme"
+                checked={theme === 'light'}
+                onChange={() => setTheme('light')}
+                style={{ accentColor: 'var(--yz-primary)' }}
+              />
+            </div>
+
+            {/* Dark Theme Option */}
+            <div
+              onClick={() => setTheme('dark')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 12px',
+                borderRadius: 'var(--yz-radius-md)',
+                border: `1.5px solid ${theme === 'dark' ? 'var(--yz-primary)' : 'var(--yz-border)'}`,
+                backgroundColor: theme === 'dark' ? 'var(--yz-primary-subtle)' : 'var(--yz-bg-subtle)',
+                cursor: 'pointer',
+                transition: 'all 0.14s ease',
+              }}
+            >
+              <div
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: 'var(--yz-radius-sm)',
+                  backgroundColor: '#181B1D',
+                  border: '1px solid #30363A',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#60A5FA',
+                  boxShadow: 'var(--yz-shadow-2xs)',
+                  flexShrink: 0,
+                }}
+              >
+                <Moon size={16} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--yz-text-primary)' }}>
+                  Dark Theme
+                </div>
+                <div style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)' }}>
+                  Subtle, eye-friendly evening ambient
+                </div>
+              </div>
+              <input
+                type="radio"
+                name="theme"
+                checked={theme === 'dark'}
+                onChange={() => setTheme('dark')}
+                style={{ accentColor: 'var(--yz-primary)' }}
+              />
             </div>
           </div>
         </div>

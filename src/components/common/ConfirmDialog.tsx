@@ -138,7 +138,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           style={{
             padding: '12px 18px',
             borderBottom: '1px solid var(--yz-border, #E2E8F0)',
-            backgroundColor: '#F8FAFC',
+            backgroundColor: 'var(--yz-bg-subtle)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -155,8 +155,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                   width: '26px',
                   height: '26px',
                   borderRadius: 'var(--yz-radius-full)',
-                  backgroundColor: '#FEE2E2',
-                  color: '#DC2626',
+                  backgroundColor: 'var(--yz-status-out-stock-bg)',
+                  color: 'var(--yz-status-out-stock)',
                   flexShrink: 0,
                 }}
               >
@@ -221,7 +221,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           style={{
             padding: '12px 18px',
             borderTop: '1px solid var(--yz-border, #E2E8F0)',
-            backgroundColor: '#F8FAFC',
+            backgroundColor: 'var(--yz-bg-subtle)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',

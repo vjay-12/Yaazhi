@@ -490,8 +490,8 @@ export const VendorsPage: React.FC = () => {
                               fontWeight: 700,
                               padding: '1px 4px',
                               borderRadius: '2px',
-                              backgroundColor: '#FEE2E2',
-                              color: '#991B1B',
+                              backgroundColor: 'var(--yz-alert-danger-bg, #FEE2E2)',
+                              color: 'var(--yz-alert-danger-text, #991B1B)',
                               flexShrink: 0,
                             }}
                           >
@@ -557,8 +557,8 @@ export const VendorsPage: React.FC = () => {
                           fontSize: '11px',
                           fontWeight: 600,
                           fontFamily: 'var(--yz-font-mono)',
-                          backgroundColor: v.activeOrders > 0 ? '#E0F2FE' : 'var(--yz-bg-subtle)',
-                          color: v.activeOrders > 0 ? '#0369A1' : 'var(--yz-text-muted)',
+                          backgroundColor: v.activeOrders > 0 ? 'var(--yz-alert-info-bg, #E0F2FE)' : 'var(--yz-bg-subtle)',
+                          color: v.activeOrders > 0 ? 'var(--yz-alert-info-text, #0369A1)' : 'var(--yz-text-muted)',
                         }}
                       >
                         {v.activeOrders}
@@ -575,8 +575,8 @@ export const VendorsPage: React.FC = () => {
                             borderRadius: 'var(--yz-radius-full)',
                             fontSize: '10.5px',
                             fontWeight: 600,
-                            backgroundColor: isArchived ? '#FEE2E2' : '#DCFCE7',
-                            color: isArchived ? '#991B1B' : '#166534',
+                            backgroundColor: isArchived ? 'var(--yz-status-out-stock-bg, #FEE2E2)' : 'var(--yz-status-in-stock-bg, #DCFCE7)',
+                            color: isArchived ? 'var(--yz-status-out-stock, #991B1B)' : 'var(--yz-status-in-stock, #166534)',
                           }}
                         >
                           {isArchived ? 'Archived' : 'Active'}
@@ -730,9 +730,9 @@ export const VendorsPage: React.FC = () => {
                       style={{
                         padding: '8px 12px',
                         borderRadius: 'var(--yz-radius-md)',
-                        backgroundColor: '#FEF2F2',
-                        border: '1px solid #FECACA',
-                        color: '#991B1B',
+                        backgroundColor: 'var(--yz-alert-danger-bg, #FEF2F2)',
+                        border: '1px solid var(--yz-alert-danger-border, #FECACA)',
+                        color: 'var(--yz-alert-danger-text, #991B1B)',
                         fontSize: '11.5px',
                         display: 'flex',
                         alignItems: 'center',
@@ -1257,22 +1257,22 @@ export const VendorsPage: React.FC = () => {
                                         fontWeight: 600,
                                         backgroundColor:
                                           po.status === 'RECEIVED'
-                                            ? '#DCFCE7'
+                                            ? 'var(--yz-status-in-stock-bg, #DCFCE7)'
                                             : po.status === 'ORDERED'
-                                            ? '#FEF3C7'
-                                            : '#FEE2E2',
+                                            ? 'var(--yz-status-low-stock-bg, #FEF3C7)'
+                                            : 'var(--yz-status-out-stock-bg, #FEE2E2)',
                                         color:
                                           po.status === 'RECEIVED'
-                                            ? '#166534'
+                                            ? 'var(--yz-status-in-stock, #166534)'
                                             : po.status === 'ORDERED'
-                                            ? '#92400E'
-                                            : '#991B1B',
+                                            ? 'var(--yz-status-low-stock, #92400E)'
+                                            : 'var(--yz-status-out-stock, #991B1B)',
                                         border:
                                           po.status === 'RECEIVED'
-                                            ? '1px solid #BBF7D0'
+                                            ? '1px solid var(--yz-status-in-stock-border, #BBF7D0)'
                                             : po.status === 'ORDERED'
-                                            ? '1px solid #FDE68A'
-                                            : '1px solid #FECACA',
+                                            ? '1px solid var(--yz-status-low-stock-border, #FDE68A)'
+                                            : '1px solid var(--yz-status-out-stock-border, #FECACA)',
                                       }}
                                     >
                                       {po.status === 'RECEIVED'
@@ -1376,8 +1376,8 @@ export const VendorsPage: React.FC = () => {
                                           borderRadius: 'var(--yz-radius-full)',
                                           fontSize: '10.5px',
                                           fontWeight: 600,
-                                          backgroundColor: '#DCFCE7',
-                                          color: '#166534',
+                                          backgroundColor: 'var(--yz-status-in-stock-bg, #DCFCE7)',
+                                          color: 'var(--yz-status-in-stock, #166534)',
                                         }}
                                       >
                                         RECEIVED
@@ -1439,7 +1439,7 @@ export const VendorsPage: React.FC = () => {
             >
               <div>
                 <span style={{ color: 'var(--yz-text-muted)' }}>Status: </span>
-                <strong style={{ color: activePoDetail.status === 'RECEIVED' ? '#166534' : '#92400E' }}>
+                <strong style={{ color: activePoDetail.status === 'RECEIVED' ? 'var(--yz-status-in-stock, #166534)' : 'var(--yz-status-low-stock, #92400E)' }}>
                   {activePoDetail.status}
                 </strong>
               </div>

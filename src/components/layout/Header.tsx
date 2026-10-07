@@ -1,7 +1,8 @@
 import React from 'react';
-import { Plus, Receipt, ShoppingBag } from 'lucide-react';
+import { Plus, Receipt, ShoppingBag, Sun, Moon } from 'lucide-react';
 import type { NavTabId } from './Sidebar';
 import { Button } from '../common/Button';
+import { useTheme } from '../../context/ThemeContext';
 
 interface HeaderProps {
   currentTab: NavTabId;
@@ -59,6 +60,8 @@ export const Header: React.FC<HeaderProps> = ({
   onNewProductClick,
   onNewPurchaseOrderClick,
 }) => {
+  const { theme, toggleTheme } = useTheme();
+
   const currentInfo = TAB_TITLES[currentTab] || {
     title: 'Yaazhi Boutique',
     subtitle: 'Inventory & POS Platform',
@@ -96,6 +99,26 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="yz-header-right">
+        {/* Global Theme Toggle Button */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="yz-btn yz-btn-secondary yz-btn-sm"
+          style={{
+            width: '32px',
+            height: '32px',
+            padding: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--yz-text-secondary)',
+          }}
+          title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+          aria-label="Toggle dark/light theme"
+        >
+          {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+        </button>
+
         {/* Contextual primary actions */}
         {currentTab === 'overview' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

@@ -881,9 +881,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                             fontSize: '10px',
                             fontWeight: 700,
                             fontFamily: 'var(--yz-font-mono)',
-                            backgroundColor: isOut ? '#FEE2E2' : '#FEF3C7',
-                            color: isOut ? '#B91C1C' : '#B45309',
-                            border: `1px solid ${isOut ? '#FECACA' : '#FDE68A'}`,
+                            backgroundColor: isOut ? 'var(--yz-status-out-stock-bg, #FEE2E2)' : 'var(--yz-status-low-stock-bg, #FEF3C7)',
+                            color: isOut ? 'var(--yz-status-out-stock, #B91C1C)' : 'var(--yz-status-low-stock, #B45309)',
+                            border: `1px solid ${isOut ? 'var(--yz-status-out-stock-border, #FECACA)' : 'var(--yz-status-low-stock-border, #FDE68A)'}`,
                           }}
                         >
                           {current}
@@ -1034,9 +1034,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                               borderRadius: 'var(--yz-radius-full)',
                               fontSize: '10px',
                               fontWeight: 700,
-                              backgroundColor: isPaid ? '#DCFCE7' : '#FEF3C7',
-                              color: isPaid ? '#166534' : '#92400E',
-                              border: `1px solid ${isPaid ? '#BBF7D0' : '#FDE68A'}`,
+                              backgroundColor: isPaid ? 'var(--yz-status-in-stock-bg, #DCFCE7)' : 'var(--yz-status-low-stock-bg, #FEF3C7)',
+                              color: isPaid ? 'var(--yz-status-in-stock, #166534)' : 'var(--yz-status-low-stock, #92400E)',
+                              border: `1px solid ${isPaid ? 'var(--yz-status-in-stock-border, #BBF7D0)' : 'var(--yz-status-low-stock-border, #FDE68A)'}`,
                             }}
                           >
                             {isPaid ? 'PAID' : 'PENDING'}

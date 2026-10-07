@@ -254,14 +254,14 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                 borderRadius: '4px',
                 ...(currentCustomer.isArchived
                   ? {
-                      backgroundColor: '#F1F5F9',
-                      color: '#475569',
-                      border: '1px solid #CBD5E1',
+                      backgroundColor: 'var(--yz-bg-subtle, #F1F5F9)',
+                      color: 'var(--yz-text-secondary, #475569)',
+                      border: '1px solid var(--yz-border-strong, #CBD5E1)',
                     }
                   : {
-                      backgroundColor: '#ECFDF5',
-                      color: '#065F46',
-                      border: '1px solid #A7F3D0',
+                      backgroundColor: 'var(--yz-status-in-stock-bg, #ECFDF5)',
+                      color: 'var(--yz-status-in-stock, #065F46)',
+                      border: '1px solid var(--yz-status-in-stock-border, #A7F3D0)',
                     }),
               }}
             >
@@ -463,9 +463,9 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                       style={{
                         fontSize: '10px',
                         fontWeight: 700,
-                        backgroundColor: '#FEF2F2',
+                        backgroundColor: 'var(--yz-primary-subtle, #FEF2F2)',
                         color: 'var(--yz-primary, #832729)',
-                        border: '1px solid #FECACA',
+                        border: '1px solid var(--yz-primary-border, #FECACA)',
                         padding: '1px 8px',
                         borderRadius: 'var(--yz-radius-full)',
                       }}
@@ -562,9 +562,9 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                                     fontSize: '9.5px',
                                     fontWeight: 700,
                                     fontFamily: 'var(--yz-font-mono)',
-                                    backgroundColor: '#FEF2F2',
+                                    backgroundColor: 'var(--yz-primary-subtle, #FEF2F2)',
                                     color: 'var(--yz-primary, #832729)',
-                                    border: '1px solid #FECACA',
+                                    border: '1px solid var(--yz-primary-border, #FECACA)',
                                     padding: '1px 5px',
                                     borderRadius: '3px',
                                   }}
@@ -841,8 +841,8 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                                   borderRadius: 'var(--yz-radius-sm)',
                                   fontSize: '10px',
                                   fontWeight: 600,
-                                  backgroundColor: o.status === 'DELIVERED' || o.payment_status === 'PAID' ? '#DCFCE7' : '#FEF3C7',
-                                  color: o.status === 'DELIVERED' || o.payment_status === 'PAID' ? '#166534' : '#92400E',
+                                  backgroundColor: o.status === 'DELIVERED' || o.payment_status === 'PAID' ? 'var(--yz-status-in-stock-bg, #DCFCE7)' : 'var(--yz-status-low-stock-bg, #FEF3C7)',
+                                  color: o.status === 'DELIVERED' || o.payment_status === 'PAID' ? 'var(--yz-status-in-stock, #166534)' : 'var(--yz-status-low-stock, #92400E)',
                                 }}
                               >
                                 {o.payment_status || o.status || 'PAID'}
@@ -978,7 +978,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                     size="sm"
                     icon={<Archive size={12} />}
                     onClick={() => setIsArchiveCustomerOpen(true)}
-                    style={{ color: '#B45309', borderColor: '#FDE68A' }}
+                    style={{ color: 'var(--yz-status-low-stock, #B45309)', borderColor: 'var(--yz-status-low-stock-border, #FDE68A)' }}
                   >
                     Archive Customer
                   </Button>

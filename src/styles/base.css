@@ -20,6 +20,10 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+[data-theme="dark"], .dark {
+  color-scheme: dark;
+}
+
 #root {
   min-height: 100%;
   display: flex;
@@ -53,11 +57,11 @@ p, span, label, input, button, select, textarea {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: var(--yz-border-strong, #CBD5E1);
   border-radius: var(--yz-radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: var(--yz-text-muted, #94A3B8);
 }
 
 /* ==========================================================================
@@ -112,7 +116,7 @@ p, span, label, input, button, select, textarea {
 }
 
 .yz-btn-secondary {
-  background-color: #FFFFFF;
+  background-color: var(--yz-bg-surface);
   color: var(--yz-text-primary);
   border-color: var(--yz-border);
   box-shadow: var(--yz-shadow-2xs);
@@ -226,6 +230,15 @@ p, span, label, input, button, select, textarea {
   border-color: var(--yz-border);
 }
 
+.yz-badge-archived {
+  background-color: var(--yz-bg-subtle);
+  color: var(--yz-text-muted);
+  border-color: var(--yz-border);
+}
+.yz-badge-archived .yz-badge-dot {
+  background-color: var(--yz-text-muted);
+}
+
 .yz-badge-gold {
   background-color: var(--yz-gold-subtle);
   color: var(--yz-gold-hover);
@@ -291,8 +304,13 @@ p, span, label, input, button, select, textarea {
 
 .yz-input:focus, .yz-select:focus, .yz-textarea:focus {
   border-color: var(--yz-primary);
-  box-shadow: 0 0 0 2.5px rgba(133, 34, 55, 0.15);
-  background-color: #FFFFFF;
+  box-shadow: 0 0 0 2.5px rgba(168, 50, 74, 0.18);
+  background-color: var(--yz-bg-surface);
+}
+
+[data-theme="dark"] .yz-select,
+.dark .yz-select {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2392989C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
 }
 
 .yz-input::placeholder, .yz-textarea::placeholder {
@@ -330,7 +348,7 @@ p, span, label, input, button, select, textarea {
 }
 
 .yz-table th {
-  background-color: #F8FAFC;
+  background-color: var(--yz-bg-subtle);
   padding: 8px 14px;
   font-size: 10px;
   font-weight: 700;
@@ -363,7 +381,7 @@ p, span, label, input, button, select, textarea {
 }
 
 .yz-table tbody tr:hover {
-  background-color: #F8FAFC;
+  background-color: var(--yz-bg-surface-hover);
 }
 
 /* Ellipsis helper for long text in compact tables */

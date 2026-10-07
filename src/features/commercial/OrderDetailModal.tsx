@@ -60,20 +60,20 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   const isPaid = !isVoided && (order.paymentStatus === 'PAID' || (order.totalAmount > 0 && order.pendingAmount === 0));
 
   let statusLabel = 'PENDING';
-  let statusBg = '#F1F5F9';
-  let statusColor = '#475569';
-  let statusBorder = '#CBD5E1';
+  let statusBg = 'var(--yz-bg-subtle, #F1F5F9)';
+  let statusColor = 'var(--yz-text-secondary, #475569)';
+  let statusBorder = 'var(--yz-border-strong, #CBD5E1)';
 
   if (isVoided) {
     statusLabel = 'VOIDED';
-    statusBg = '#F8FAFC';
-    statusColor = '#64748B';
-    statusBorder = '#CBD5E1';
+    statusBg = 'var(--yz-bg-subtle, #F8FAFC)';
+    statusColor = 'var(--yz-text-muted, #64748B)';
+    statusBorder = 'var(--yz-border, #CBD5E1)';
   } else if (isPaid) {
     statusLabel = 'PAID';
-    statusBg = '#DCFCE7';
-    statusColor = '#166534';
-    statusBorder = '#BBF7D0';
+    statusBg = 'var(--yz-status-in-stock-bg, #DCFCE7)';
+    statusColor = 'var(--yz-status-in-stock, #166534)';
+    statusBorder = 'var(--yz-status-in-stock-border, #BBF7D0)';
   }
 
   return (
@@ -265,7 +265,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
               </span>
             </div>
             {order.discountTotal ? (
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#166534' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--yz-status-in-stock, #166534)' }}>
                 <span>Discount:</span>
                 <span style={{ fontFamily: 'var(--yz-font-mono)' }}>
                   - ₹{order.discountTotal.toLocaleString('en-IN')}
@@ -327,7 +327,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             <span style={{ color: 'var(--yz-text-muted)', display: 'block', fontSize: '10px' }}>
               PAID AMOUNT
             </span>
-            <strong style={{ fontSize: '14px', color: '#166534', fontFamily: 'var(--yz-font-mono)' }}>
+            <strong style={{ fontSize: '14px', color: 'var(--yz-status-in-stock, #166534)', fontFamily: 'var(--yz-font-mono)' }}>
               ₹{order.paidAmount.toLocaleString('en-IN')}
             </strong>
           </div>
@@ -338,7 +338,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             <strong
               style={{
                 fontSize: '14px',
-                color: order.pendingAmount > 0 ? '#B45309' : 'var(--yz-text-secondary)',
+                color: order.pendingAmount > 0 ? 'var(--yz-status-low-stock, #B45309)' : 'var(--yz-text-secondary)',
                 fontFamily: 'var(--yz-font-mono)',
               }}
             >
@@ -379,8 +379,8 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
               justifyContent: 'space-between',
               padding: '8px 12px',
               borderRadius: 'var(--yz-radius-md)',
-              backgroundColor: order.paidAmount > 0 ? '#FFFBEB' : '#F8FAFC',
-              border: `1px solid ${order.paidAmount > 0 ? '#FDE68A' : '#E2E8F0'}`,
+              backgroundColor: order.paidAmount > 0 ? 'var(--yz-alert-warning-bg, #FFFBEB)' : 'var(--yz-bg-subtle, #F8FAFC)',
+              border: `1px solid ${order.paidAmount > 0 ? 'var(--yz-alert-warning-border, #FDE68A)' : 'var(--yz-border, #E2E8F0)'}`,
               fontSize: '11px',
             }}
           >
@@ -392,13 +392,13 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                   borderRadius: 'var(--yz-radius-full)',
                   fontSize: '10px',
                   fontWeight: 700,
-                  backgroundColor: order.paidAmount > 0 ? '#FEF3C7' : '#E2E8F0',
-                  color: order.paidAmount > 0 ? '#92400E' : '#475569',
+                  backgroundColor: order.paidAmount > 0 ? 'var(--yz-alert-warning-bg, #FEF3C7)' : 'var(--yz-bg-subtle, #E2E8F0)',
+                  color: order.paidAmount > 0 ? 'var(--yz-alert-warning-text, #92400E)' : 'var(--yz-text-secondary, #475569)',
                 }}
               >
                 {order.paidAmount > 0 ? 'PARTIALLY PAID' : 'UNPAID'}
               </span>
-              <span style={{ color: order.paidAmount > 0 ? '#78350F' : 'var(--yz-text-secondary)' }}>
+              <span style={{ color: order.paidAmount > 0 ? 'var(--yz-alert-warning-text, #78350F)' : 'var(--yz-text-secondary)' }}>
                 {order.paidAmount > 0
                   ? `Paid: ₹${order.paidAmount.toLocaleString('en-IN')} • Balance: ₹${order.pendingAmount.toLocaleString('en-IN')}`
                   : `Unpaid: ₹0 paid • Balance: ₹${order.pendingAmount.toLocaleString('en-IN')} pending`}
@@ -408,7 +408,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
               style={{
                 fontWeight: 600,
                 fontFamily: 'var(--yz-font-mono)',
-                color: order.paidAmount > 0 ? '#92400E' : '#475569',
+                color: order.paidAmount > 0 ? 'var(--yz-alert-warning-text, #92400E)' : 'var(--yz-text-secondary, #475569)',
               }}
             >
               Balance: ₹{order.pendingAmount.toLocaleString('en-IN')}
@@ -439,12 +439,12 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           {order.status === 'VOIDED' && (
             <div
               style={{
-                backgroundColor: '#FEF2F2',
-                border: '1px solid #FECACA',
+                backgroundColor: 'var(--yz-alert-danger-bg, #FEF2F2)',
+                border: '1px solid var(--yz-alert-danger-border, #FECACA)',
                 borderRadius: 'var(--yz-radius-md)',
                 padding: '8px 12px',
                 fontSize: '11px',
-                color: '#991B1B',
+                color: 'var(--yz-alert-danger-text, #991B1B)',
                 marginBottom: '8px',
                 display: 'flex',
                 alignItems: 'center',
@@ -479,8 +479,8 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                         width: '22px',
                         height: '22px',
                         borderRadius: '50%',
-                        backgroundColor: '#DCFCE7',
-                        color: '#166534',
+                        backgroundColor: 'var(--yz-alert-success-bg, #DCFCE7)',
+                        color: 'var(--yz-alert-success-text, #166534)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -503,8 +503,8 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                             borderRadius: 'var(--yz-radius-sm)',
                             fontSize: '9.5px',
                             fontWeight: 600,
-                            backgroundColor: '#DCFCE7',
-                            color: '#166534',
+                            backgroundColor: 'var(--yz-alert-success-bg, #DCFCE7)',
+                            color: 'var(--yz-alert-success-text, #166534)',
                           }}
                         >
                           {pay.status || 'Successful'}
@@ -529,7 +529,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                       style={{
                         fontWeight: 700,
                         fontFamily: 'var(--yz-font-mono)',
-                        color: '#166534',
+                        color: 'var(--yz-status-in-stock, #166534)',
                         fontSize: '12.5px',
                       }}
                     >
@@ -547,12 +547,12 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '6px 10px',
-                    backgroundColor: '#FFFBEB',
-                    border: '1px solid #FDE68A',
+                    backgroundColor: 'var(--yz-alert-warning-bg, #FFFBEB)',
+                    border: '1px solid var(--yz-alert-warning-border, #FDE68A)',
                     borderRadius: 'var(--yz-radius-sm)',
                     fontSize: '11px',
                     fontWeight: 600,
-                    color: '#92400E',
+                    color: 'var(--yz-alert-warning-text, #92400E)',
                   }}
                 >
                   <span>Remaining Balance:</span>

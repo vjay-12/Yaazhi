@@ -320,7 +320,7 @@ export const CustomersPage: React.FC = () => {
                         gap: '6px',
                       }}
                       onMouseEnter={(e) => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = '#F1F5F9';
+                        if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--yz-bg-subtle, #F1F5F9)';
                       }}
                       onMouseLeave={(e) => {
                         if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
@@ -425,9 +425,9 @@ export const CustomersPage: React.FC = () => {
                             fontWeight: 700,
                             padding: '1px 6px',
                             borderRadius: 'var(--yz-radius-full)',
-                            backgroundColor: '#F1F5F9',
-                            color: '#64748B',
-                            border: '1px solid #CBD5E1',
+                            backgroundColor: 'var(--yz-bg-subtle, #F1F5F9)',
+                            color: 'var(--yz-text-muted, #64748B)',
+                            border: '1px solid var(--yz-border-strong, #CBD5E1)',
                             lineHeight: 1.2,
                             flexShrink: 0,
                           }}
@@ -472,8 +472,8 @@ export const CustomersPage: React.FC = () => {
                         gap: '4px',
                         fontSize: '10.5px',
                         color: 'var(--yz-primary, #832729)',
-                        backgroundColor: '#FEF2F2',
-                        border: '1px solid #FECACA',
+                        backgroundColor: 'var(--yz-primary-subtle, #FEF2F2)',
+                        border: '1px solid var(--yz-primary-border, #FECACA)',
                         padding: '2px 8px',
                         borderRadius: 'var(--yz-radius-full)',
                         maxWidth: '220px',
@@ -561,7 +561,7 @@ export const CustomersPage: React.FC = () => {
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              color: '#166534',
+                              color: 'var(--yz-status-in-stock, #166534)',
                               flexShrink: 0,
                             }}
                             onClick={(e) => {

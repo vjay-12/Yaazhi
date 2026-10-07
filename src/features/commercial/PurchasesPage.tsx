@@ -570,22 +570,22 @@ export const PurchasesPage: React.FC = () => {
                           fontWeight: 700,
                           backgroundColor:
                             p.status === 'RECEIVED'
-                              ? '#DCFCE7'
+                              ? 'var(--yz-status-in-stock-bg, #DCFCE7)'
                               : p.status === 'ORDERED'
-                              ? '#FEF3C7'
-                              : '#FEE2E2',
+                              ? 'var(--yz-status-low-stock-bg, #FEF3C7)'
+                              : 'var(--yz-status-out-stock-bg, #FEE2E2)',
                           color:
                             p.status === 'RECEIVED'
-                              ? '#166534'
+                              ? 'var(--yz-status-in-stock, #166534)'
                               : p.status === 'ORDERED'
-                              ? '#92400E'
-                              : '#991B1B',
+                              ? 'var(--yz-status-low-stock, #92400E)'
+                              : 'var(--yz-status-out-stock, #991B1B)',
                           border:
                             p.status === 'RECEIVED'
-                              ? '1px solid #BBF7D0'
+                              ? '1px solid var(--yz-status-in-stock-border, #BBF7D0)'
                               : p.status === 'ORDERED'
-                              ? '1px solid #FDE68A'
-                              : '1px solid #FECACA',
+                              ? '1px solid var(--yz-status-low-stock-border, #FDE68A)'
+                              : '1px solid var(--yz-status-out-stock-border, #FECACA)',
                         }}
                       >
                         {p.status === 'RECEIVED' ? (
@@ -712,22 +712,22 @@ export const PurchasesPage: React.FC = () => {
                       fontWeight: 700,
                       backgroundColor:
                         selectedPO.status === 'RECEIVED'
-                          ? '#DCFCE7'
+                          ? 'var(--yz-status-in-stock-bg, #DCFCE7)'
                           : selectedPO.status === 'ORDERED'
-                          ? '#FEF3C7'
-                          : '#FEE2E2',
+                          ? 'var(--yz-status-low-stock-bg, #FEF3C7)'
+                          : 'var(--yz-status-out-stock-bg, #FEE2E2)',
                       color:
                         selectedPO.status === 'RECEIVED'
-                          ? '#166534'
+                          ? 'var(--yz-status-in-stock, #166534)'
                           : selectedPO.status === 'ORDERED'
-                          ? '#92400E'
-                          : '#991B1B',
+                          ? 'var(--yz-status-low-stock, #92400E)'
+                          : 'var(--yz-status-out-stock, #991B1B)',
                       border:
                         selectedPO.status === 'RECEIVED'
-                          ? '1px solid #BBF7D0'
+                          ? '1px solid var(--yz-status-in-stock-border, #BBF7D0)'
                           : selectedPO.status === 'ORDERED'
-                          ? '1px solid #FDE68A'
-                          : '1px solid #FECACA',
+                          ? '1px solid var(--yz-status-low-stock-border, #FDE68A)'
+                          : '1px solid var(--yz-status-out-stock-border, #FECACA)',
                     }}
                   >
                     {selectedPO.status === 'RECEIVED' ? (
@@ -835,11 +835,11 @@ export const PurchasesPage: React.FC = () => {
                       alignItems: 'center',
                       gap: '5px',
                       fontSize: '11px',
-                      color: '#166534',
-                      backgroundColor: '#F0FDF4',
+                      color: 'var(--yz-alert-success-text, #166534)',
+                      backgroundColor: 'var(--yz-alert-success-bg, #F0FDF4)',
                       padding: '4px 8px',
                       borderRadius: 'var(--yz-radius-sm)',
-                      border: '1px solid #BBF7D0',
+                      border: '1px solid var(--yz-alert-success-border, #BBF7D0)',
                       marginTop: '6px',
                     }}
                   >
@@ -853,11 +853,11 @@ export const PurchasesPage: React.FC = () => {
                       alignItems: 'center',
                       gap: '5px',
                       fontSize: '11px',
-                      color: '#92400E',
-                      backgroundColor: '#FEF3C7',
+                      color: 'var(--yz-alert-warning-text, #92400E)',
+                      backgroundColor: 'var(--yz-alert-warning-bg, #FEF3C7)',
                       padding: '4px 8px',
                       borderRadius: 'var(--yz-radius-sm)',
-                      border: '1px solid #FDE68A',
+                      border: '1px solid var(--yz-alert-warning-border, #FDE68A)',
                       marginTop: '6px',
                     }}
                   >
@@ -871,11 +871,11 @@ export const PurchasesPage: React.FC = () => {
                       alignItems: 'center',
                       gap: '5px',
                       fontSize: '11px',
-                      color: '#991B1B',
-                      backgroundColor: '#FEF2F2',
+                      color: 'var(--yz-alert-danger-text, #991B1B)',
+                      backgroundColor: 'var(--yz-alert-danger-bg, #FEF2F2)',
                       padding: '4px 8px',
                       borderRadius: 'var(--yz-radius-sm)',
-                      border: '1px solid #FECACA',
+                      border: '1px solid var(--yz-alert-danger-border, #FECACA)',
                       marginTop: '6px',
                     }}
                   >
@@ -1143,7 +1143,7 @@ export const PurchasesPage: React.FC = () => {
                                 color: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-text-primary)',
                               }}
                               onMouseEnter={(e) => {
-                                if (!isSelected) e.currentTarget.style.backgroundColor = '#F1F5F9';
+                                if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--yz-bg-subtle, #F1F5F9)';
                               }}
                               onMouseLeave={(e) => {
                                 if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
@@ -1263,7 +1263,7 @@ export const PurchasesPage: React.FC = () => {
                         gridTemplateColumns: '1fr 70px 95px 95px 28px',
                         gap: '6px',
                         alignItems: 'center',
-                        backgroundColor: '#F8FAFC',
+                        backgroundColor: 'var(--yz-bg-subtle, #F8FAFC)',
                         padding: '6px 8px',
                         borderRadius: 'var(--yz-radius-sm)',
                         border: '1px solid var(--yz-border)',
@@ -1396,7 +1396,7 @@ export const PurchasesPage: React.FC = () => {
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '4px',
-                  backgroundColor: '#F8FAFC',
+                  backgroundColor: 'var(--yz-bg-subtle, #F8FAFC)',
                   padding: '8px 10px',
                   borderRadius: 'var(--yz-radius-sm)',
                   border: '1px solid var(--yz-border)',

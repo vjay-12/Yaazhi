@@ -206,9 +206,9 @@ export const StockMovementsPage: React.FC = () => {
                         <span
                           style={{
                             ...badgeStyle,
-                            backgroundColor: '#ECFDF5',
-                            color: '#065F46',
-                            border: '1px solid #A7F3D0',
+                            backgroundColor: 'var(--yz-status-in-stock-bg, #ECFDF5)',
+                            color: 'var(--yz-status-in-stock, #065F46)',
+                            border: '1px solid var(--yz-status-in-stock-border, #A7F3D0)',
                           }}
                         >
                           <ArrowDownLeft size={11} strokeWidth={2.5} />
@@ -218,9 +218,9 @@ export const StockMovementsPage: React.FC = () => {
                         <span
                           style={{
                             ...badgeStyle,
-                            backgroundColor: '#FEF2F2',
-                            color: '#991B1B',
-                            border: '1px solid #FECACA',
+                            backgroundColor: 'var(--yz-status-out-stock-bg, #FEF2F2)',
+                            color: 'var(--yz-status-out-stock, #991B1B)',
+                            border: '1px solid var(--yz-status-out-stock-border, #FECACA)',
                           }}
                         >
                           <ArrowUpRight size={11} strokeWidth={2.5} />
@@ -230,9 +230,9 @@ export const StockMovementsPage: React.FC = () => {
                         <span
                           style={{
                             ...badgeStyle,
-                            backgroundColor: '#FFFBEB',
-                            color: '#92400E',
-                            border: '1px solid #FDE68A',
+                            backgroundColor: 'var(--yz-status-low-stock-bg, #FFFBEB)',
+                            color: 'var(--yz-status-low-stock, #92400E)',
+                            border: '1px solid var(--yz-status-low-stock-border, #FDE68A)',
                           }}
                         >
                           <SlidersHorizontal size={10} strokeWidth={2.2} />

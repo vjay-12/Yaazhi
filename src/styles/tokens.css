@@ -99,6 +99,23 @@
   --yz-status-info-bg: #DBEAFE;
   --yz-status-info-border: #BFDBFE;
 
+  /* Semantic Alert Containers */
+  --yz-alert-success-bg: #DCFCE7;
+  --yz-alert-success-border: #BBF7D0;
+  --yz-alert-success-text: #166534;
+
+  --yz-alert-warning-bg: #FEF3C7;
+  --yz-alert-warning-border: #FDE68A;
+  --yz-alert-warning-text: #92400E;
+
+  --yz-alert-danger-bg: #FEE2E2;
+  --yz-alert-danger-border: #FECACA;
+  --yz-alert-danger-text: #991B1B;
+
+  --yz-alert-info-bg: #DBEAFE;
+  --yz-alert-info-border: #BFDBFE;
+  --yz-alert-info-text: #1E40AF;
+
   /* Form & Interactive Tokens */
   --yz-border: #E2E8F0;
   --yz-border-subtle: #F1F5F9;
@@ -127,3 +144,92 @@
   --yz-header-height: 52px;
   --yz-billing-panel-width: 380px;
 }
+
+/* ==========================================================================
+   Dark Theme Design Tokens - Production Grade Boutique Hierarchy
+   Layered: Canvas (#111315) -> Surface (#181B1D) -> Subtle/Elevated (#22272A)
+   ========================================================================== */
+[data-theme="dark"],
+.dark {
+  /* Canvases & Surfaces */
+  --yz-bg-canvas: #111315;             /* Deep Neutral Page Canvas */
+  --yz-bg-surface: #181B1D;            /* Primary Surface / Cards / Modals */
+  --yz-bg-surface-hover: #1E2225;      /* Elevated hover */
+  --yz-bg-subtle: #22272A;             /* Table headers, filter bars, dialog headers/footers */
+  --yz-bg-subtle-hover: #292F33;
+
+  /* Sidebar Tokens - Layered Dark Aesthetic */
+  --yz-bg-sidebar: #0D0F10;            /* Darkest structural layer */
+  --yz-bg-sidebar-hover: #191D20;
+  --yz-bg-sidebar-active: #22272A;      /* Elevated active nav */
+  --yz-border-sidebar: #272C30;
+
+  /* Brand Signature: Luminous Silk Crimson & Antique Gold Accent */
+  --yz-primary: #A8324A;               /* Luminous Silk Crimson, high contrast against #181B1D */
+  --yz-primary-hover: #BE3D58;
+  --yz-primary-active: #8C243B;
+  --yz-primary-subtle: rgba(168, 50, 74, 0.16);
+  --yz-primary-border: rgba(168, 50, 74, 0.32);
+
+  --yz-gold: #D97706;                  /* Luminous Warm Amber Gold */
+  --yz-gold-hover: #F59E0B;
+  --yz-gold-subtle: rgba(217, 119, 6, 0.16);
+  --yz-gold-border: rgba(217, 119, 6, 0.32);
+
+  /* Text & Contrast (Warm Linen to Muted) */
+  --yz-text-primary: #F4F1EC;          /* Warm Linen Primary (high legibility) */
+  --yz-text-secondary: #C5C8C9;        /* Soft Gray Secondary */
+  --yz-text-muted: #92989C;            /* Restrained Muted */
+  --yz-text-disabled: #666C70;
+  --yz-text-inverse: #111315;
+  --yz-text-sidebar-muted: #8E959A;
+
+  /* Operational Status Tokens (Subtle Dark Surfaces + Luminous Semantic Text) */
+  --yz-status-in-stock: #34D399;        /* Mint / Emerald */
+  --yz-status-in-stock-bg: rgba(16, 185, 129, 0.14);
+  --yz-status-in-stock-border: rgba(16, 185, 129, 0.28);
+
+  --yz-status-low-stock: #FBBF24;       /* Amber */
+  --yz-status-low-stock-bg: rgba(245, 158, 11, 0.14);
+  --yz-status-low-stock-border: rgba(245, 158, 11, 0.28);
+
+  --yz-status-out-stock: #F87171;       /* Rose Red */
+  --yz-status-out-stock-bg: rgba(239, 68, 68, 0.14);
+  --yz-status-out-stock-border: rgba(239, 68, 68, 0.28);
+
+  --yz-status-info: #60A5FA;            /* Sky Blue */
+  --yz-status-info-bg: rgba(59, 130, 246, 0.14);
+  --yz-status-info-border: rgba(59, 130, 246, 0.28);
+
+  /* Semantic Alerts */
+  --yz-alert-success-bg: rgba(16, 185, 129, 0.14);
+  --yz-alert-success-border: rgba(16, 185, 129, 0.28);
+  --yz-alert-success-text: #34D399;
+
+  --yz-alert-warning-bg: rgba(245, 158, 11, 0.14);
+  --yz-alert-warning-border: rgba(245, 158, 11, 0.28);
+  --yz-alert-warning-text: #FBBF24;
+
+  --yz-alert-danger-bg: rgba(239, 68, 68, 0.14);
+  --yz-alert-danger-border: rgba(239, 68, 68, 0.28);
+  --yz-alert-danger-text: #F87171;
+
+  --yz-alert-info-bg: rgba(59, 130, 246, 0.14);
+  --yz-alert-info-border: rgba(59, 130, 246, 0.28);
+  --yz-alert-info-text: #60A5FA;
+
+  /* Form & Interactive Tokens */
+  --yz-border: #30363A;                /* Structural Separation */
+  --yz-border-subtle: #24292D;         /* Inner Row Dividers */
+  --yz-border-strong: #3D4449;
+  --yz-border-focus: #A8324A;
+
+  /* Shadows - Layered Dark Elevation */
+  --yz-shadow-2xs: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --yz-shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.45);
+  --yz-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --yz-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.55);
+  --yz-shadow-lg: 0 10px 18px rgba(0, 0, 0, 0.65);
+  --yz-shadow-modal: 0 20px 30px rgba(0, 0, 0, 0.75);
+}
+

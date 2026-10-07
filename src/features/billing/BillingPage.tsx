@@ -584,7 +584,7 @@ export const BillingPage: React.FC = () => {
                           height: '20px',
                           borderRadius: 'var(--yz-radius-full)',
                           border: 'none',
-                          backgroundColor: currentQty > 0 ? '#FFFFFF' : 'transparent',
+                          backgroundColor: currentQty > 0 ? 'var(--yz-bg-surface)' : 'transparent',
                           color: currentQty > 0 ? 'var(--yz-primary, #852237)' : 'var(--yz-text-muted, #94A3B8)',
                           cursor: currentQty > 0 && inStock ? 'pointer' : 'not-allowed',
                           opacity: currentQty > 0 && inStock ? 1 : 0.45,
@@ -1468,12 +1468,12 @@ export const BillingPage: React.FC = () => {
                               display: 'flex',
                               justifyContent: 'space-between',
                               alignItems: 'center',
-                              backgroundColor: '#DCFCE7',
-                              border: '1px solid #86EFAC',
+                              backgroundColor: 'var(--yz-alert-success-bg)',
+                              border: '1px solid var(--yz-alert-success-border)',
                               borderRadius: 'var(--yz-radius-sm)',
                               padding: '6px 10px',
                               fontSize: '11.5px',
-                              color: '#166534',
+                              color: 'var(--yz-alert-success-text)',
                             }}
                           >
                             <span style={{ fontWeight: 600 }}>Change to Return:</span>
@@ -1490,12 +1490,12 @@ export const BillingPage: React.FC = () => {
                               display: 'flex',
                               justifyContent: 'space-between',
                               alignItems: 'center',
-                              backgroundColor: '#FEF2F2',
-                              border: '1px solid #FECACA',
+                              backgroundColor: 'var(--yz-alert-danger-bg)',
+                              border: '1px solid var(--yz-alert-danger-border)',
                               borderRadius: 'var(--yz-radius-sm)',
                               padding: '6px 10px',
                               fontSize: '11px',
-                              color: '#991B1B',
+                              color: 'var(--yz-alert-danger-text)',
                             }}
                           >
                             <span>Remaining / Shortfall:</span>

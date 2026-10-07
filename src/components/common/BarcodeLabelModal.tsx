@@ -103,7 +103,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
               padding: '0.5rem',
               border: '1px solid var(--yz-border)',
               borderRadius: 'var(--yz-radius-md)',
-              background: '#EAE6DF',
+              background: 'var(--yz-bg-canvas, #EAE6DF)',
             }}
           >
             {Array.from({ length: Math.min(copies, 6) }).map((_, i) => (

@@ -544,7 +544,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
                               type="button"
                               onClick={() => setProductToArchive(product)}
                               className="yz-btn yz-btn-ghost yz-btn-sm"
-                              style={{ color: '#64748B', width: '26px', height: '26px', padding: 0, borderRadius: 'var(--yz-radius-sm)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                              style={{ color: 'var(--yz-text-muted, #64748B)', width: '26px', height: '26px', padding: 0, borderRadius: 'var(--yz-radius-sm)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                               title="Archive Product"
                             >
                               <Archive size={13} />
@@ -556,7 +556,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
                               type="button"
                               onClick={(e) => handleRestoreProduct(product, e)}
                               className="yz-btn yz-btn-ghost yz-btn-sm"
-                              style={{ color: '#166534', width: '26px', height: '26px', padding: 0, borderRadius: 'var(--yz-radius-sm)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                              style={{ color: 'var(--yz-status-in-stock, #166534)', width: '26px', height: '26px', padding: 0, borderRadius: 'var(--yz-radius-sm)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                               title="Restore to Active Catalog"
                             >
                               <RotateCcw size={13} />

@@ -64,7 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
           style={{
             padding: '14px 18px',
             borderBottom: '1px solid var(--yz-border)',
-            backgroundColor: '#F8FAFC',
+            backgroundColor: 'var(--yz-bg-subtle)',
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
@@ -136,7 +136,7 @@ export const Modal: React.FC<ModalProps> = ({
             style={{
               padding: '12px 18px',
               borderTop: '1px solid var(--yz-border)',
-              backgroundColor: '#F8FAFC',
+              backgroundColor: 'var(--yz-bg-subtle)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-end',

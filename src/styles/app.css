@@ -139,7 +139,7 @@
   background-color: var(--yz-bg-sidebar-active);
   color: var(--yz-primary);
   font-weight: 700;
-  border-color: #D8DFE9;
+  border-color: var(--yz-border-sidebar);
   box-shadow: var(--yz-shadow-xs);
 }
 

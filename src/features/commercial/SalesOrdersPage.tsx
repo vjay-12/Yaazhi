@@ -222,20 +222,20 @@ export const SalesOrdersPage: React.FC = () => {
     const isPaid = !isVoided && (o.paymentStatus === 'PAID' || (o.totalAmount > 0 && o.pendingAmount === 0));
 
     let label = 'PENDING';
-    let bg = '#F1F5F9';
-    let color = '#475569';
-    let border = '#CBD5E1';
+    let bg = 'var(--yz-bg-subtle, #F1F5F9)';
+    let color = 'var(--yz-text-secondary, #475569)';
+    let border = 'var(--yz-border-strong, #CBD5E1)';
 
     if (isVoided) {
       label = 'VOIDED';
-      bg = '#F8FAFC';
-      color = '#64748B';
-      border = '#CBD5E1';
+      bg = 'var(--yz-bg-subtle, #F8FAFC)';
+      color = 'var(--yz-text-muted, #64748B)';
+      border = 'var(--yz-border, #CBD5E1)';
     } else if (isPaid) {
       label = 'PAID';
-      bg = '#DCFCE7';
-      color = '#166534';
-      border = '#BBF7D0';
+      bg = 'var(--yz-status-in-stock-bg, #DCFCE7)';
+      color = 'var(--yz-status-in-stock, #166534)';
+      border = 'var(--yz-status-in-stock-border, #BBF7D0)';
     }
 
     return (
@@ -609,7 +609,7 @@ export const SalesOrdersPage: React.FC = () => {
                         gap: '6px',
                       }}
                       onMouseEnter={(e) => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = '#F1F5F9';
+                        if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--yz-bg-subtle, #F1F5F9)';
                       }}
                       onMouseLeave={(e) => {
                         if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
@@ -746,8 +746,8 @@ export const SalesOrdersPage: React.FC = () => {
                               fontSize: '10px',
                               fontWeight: 600,
                               color: 'var(--yz-text-secondary, #475569)',
-                              backgroundColor: '#F1F5F9',
-                              border: '1px solid #CBD5E1',
+                              backgroundColor: 'var(--yz-bg-subtle, #F1F5F9)',
+                              border: '1px solid var(--yz-border-strong, #CBD5E1)',
                               borderRadius: '3px',
                               whiteSpace: 'nowrap',
                               flexShrink: 0,
@@ -870,7 +870,7 @@ export const SalesOrdersPage: React.FC = () => {
                 <span style={{ color: 'var(--yz-text-muted)', fontSize: '10px', display: 'block' }}>
                   ALREADY PAID
                 </span>
-                <strong style={{ fontSize: '13px', color: '#166534', fontFamily: 'var(--yz-font-mono)' }}>
+                <strong style={{ fontSize: '13px', color: 'var(--yz-status-in-stock, #166534)', fontFamily: 'var(--yz-font-mono)' }}>
                   ₹{orderToSettle.paidAmount.toLocaleString('en-IN')}
                 </strong>
               </div>
@@ -878,7 +878,7 @@ export const SalesOrdersPage: React.FC = () => {
                 <span style={{ color: 'var(--yz-text-muted)', fontSize: '10px', display: 'block' }}>
                   PENDING DUE
                 </span>
-                <strong style={{ fontSize: '13px', color: '#B45309', fontFamily: 'var(--yz-font-mono)' }}>
+                <strong style={{ fontSize: '13px', color: 'var(--yz-status-low-stock, #B45309)', fontFamily: 'var(--yz-font-mono)' }}>
                   ₹{orderToSettle.pendingAmount.toLocaleString('en-IN')}
                 </strong>
               </div>
@@ -938,15 +938,15 @@ export const SalesOrdersPage: React.FC = () => {
               />
               <div style={{ marginTop: '4px', fontSize: '10.5px' }}>
                 {Number(settleAmount) >= orderToSettle.pendingAmount ? (
-                  <span style={{ color: '#166534', fontWeight: 600 }}>
+                  <span style={{ color: 'var(--yz-status-in-stock, #166534)', fontWeight: 600 }}>
                     ✓ Order will be fully PAID with ₹0 remaining due.
                   </span>
                 ) : Number(settleAmount) > 0 && Number(settleAmount) < orderToSettle.pendingAmount ? (
-                  <span style={{ color: '#92400E' }}>
+                  <span style={{ color: 'var(--yz-status-low-stock, #92400E)' }}>
                     Remaining due: ₹{(orderToSettle.pendingAmount - Number(settleAmount)).toLocaleString('en-IN')} (will remain PENDING).
                   </span>
                 ) : Number(settleAmount) > orderToSettle.pendingAmount ? (
-                  <span style={{ color: '#DC2626', fontWeight: 600 }}>
+                  <span style={{ color: 'var(--yz-status-out-stock, #DC2626)', fontWeight: 600 }}>
                     Amount exceeds pending due of ₹{orderToSettle.pendingAmount.toLocaleString('en-IN')}.
                   </span>
                 ) : null}
@@ -980,7 +980,7 @@ export const SalesOrdersPage: React.FC = () => {
                         : '1px solid var(--yz-border)',
                     backgroundColor:
                       settlePaymentMode === 'CASH'
-                        ? 'var(--yz-primary-50, #FDF2F2)'
+                        ? 'var(--yz-primary-subtle, #FDF2F2)'
                         : 'var(--yz-bg-surface)',
                     color:
                       settlePaymentMode === 'CASH'
@@ -1011,7 +1011,7 @@ export const SalesOrdersPage: React.FC = () => {
                         : '1px solid var(--yz-border)',
                     backgroundColor:
                       settlePaymentMode === 'UPI'
-                        ? 'var(--yz-primary-50, #FDF2F2)'
+                        ? 'var(--yz-primary-subtle, #FDF2F2)'
                         : 'var(--yz-bg-surface)',
                     color:
                       settlePaymentMode === 'UPI'
@@ -1113,12 +1113,12 @@ export const SalesOrdersPage: React.FC = () => {
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          backgroundColor: '#DCFCE7',
-                          border: '1px solid #86EFAC',
+                          backgroundColor: 'var(--yz-alert-success-bg, #DCFCE7)',
+                          border: '1px solid var(--yz-alert-success-border, #86EFAC)',
                           borderRadius: '4px',
                           padding: '4px 8px',
                           fontSize: '11px',
-                          color: '#166534',
+                          color: 'var(--yz-alert-success-text, #166534)',
                         }}
                       >
                         <span style={{ fontWeight: 600 }}>Change to Return:</span>
@@ -1135,12 +1135,12 @@ export const SalesOrdersPage: React.FC = () => {
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          backgroundColor: '#FEF2F2',
-                          border: '1px solid #FECACA',
+                          backgroundColor: 'var(--yz-alert-danger-bg, #FEF2F2)',
+                          border: '1px solid var(--yz-alert-danger-border, #FECACA)',
                           borderRadius: '4px',
                           padding: '4px 8px',
                           fontSize: '10.5px',
-                          color: '#991B1B',
+                          color: 'var(--yz-alert-danger-text, #991B1B)',
                         }}
                       >
                         <span>Remaining Shortfall:</span>

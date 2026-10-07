@@ -10,15 +10,10 @@ export const StockBadge: React.FC<StockBadgeProps> = ({ status, stockCount }) =>
   if (status === 'ARCHIVED') {
     return (
       <span
-        className="yz-badge"
-        style={{
-          backgroundColor: '#F1F5F9',
-          color: '#64748B',
-          border: '1px solid #CBD5E1',
-        }}
+        className="yz-badge yz-badge-archived"
         title="Product archived from active catalog"
       >
-        <span className="yz-badge-dot" style={{ backgroundColor: '#94A3B8' }} />
+        <span className="yz-badge-dot" />
         Archived
       </span>
     );
@@ -71,15 +66,10 @@ export const LifecycleBadge: React.FC<LifecycleBadgeProps> = ({ status }) => {
   if (isArchived) {
     return (
       <span
-        className="yz-badge"
-        style={{
-          backgroundColor: '#F1F5F9',
-          color: '#64748B',
-          border: '1px solid #CBD5E1',
-        }}
+        className="yz-badge yz-badge-archived"
         title="Product archived from active catalog"
       >
-        <span className="yz-badge-dot" style={{ backgroundColor: '#94A3B8' }} />
+        <span className="yz-badge-dot" />
         Archived
       </span>
     );
@@ -87,15 +77,10 @@ export const LifecycleBadge: React.FC<LifecycleBadgeProps> = ({ status }) => {
 
   return (
     <span
-      className="yz-badge"
-      style={{
-        backgroundColor: '#ECFDF5',
-        color: '#065F46',
-        border: '1px solid #A7F3D0',
-      }}
+      className="yz-badge yz-badge-in-stock"
       title="Active boutique product"
     >
-      <span className="yz-badge-dot" style={{ backgroundColor: '#10B981' }} />
+      <span className="yz-badge-dot" />
       Active
     </span>
   );

@@ -1057,11 +1057,11 @@ export const ReportsPage: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         gap: '6px',
-                        backgroundColor: '#FFFBEB',
+                        backgroundColor: 'var(--yz-alert-warning-bg, #FFFBEB)',
                         padding: '6px 8px',
                         borderRadius: 'var(--yz-radius-sm)',
                         fontSize: '11px',
-                        color: '#92400E',
+                        color: 'var(--yz-alert-warning-text, #92400E)',
                         marginTop: '4px',
                       }}
                     >
@@ -1273,10 +1273,10 @@ export const ReportsPage: React.FC = () => {
                     alignItems: 'center',
                     gap: '6px',
                     padding: '4px 8px',
-                    backgroundColor: inventorySummary.lowStockCount > 0 ? '#FFFBEB' : 'var(--yz-bg-base)',
+                    backgroundColor: inventorySummary.lowStockCount > 0 ? 'var(--yz-alert-warning-bg, #FFFBEB)' : 'var(--yz-bg-subtle)',
                     borderRadius: 'var(--yz-radius-sm)',
                     fontSize: '11px',
-                    color: inventorySummary.lowStockCount > 0 ? '#92400E' : 'var(--yz-text-secondary)',
+                    color: inventorySummary.lowStockCount > 0 ? 'var(--yz-alert-warning-text, #92400E)' : 'var(--yz-text-secondary)',
                   }}
                 >
                   <AlertTriangle size={12} />
@@ -1290,10 +1290,10 @@ export const ReportsPage: React.FC = () => {
                     alignItems: 'center',
                     gap: '6px',
                     padding: '4px 8px',
-                    backgroundColor: inventorySummary.outOfStockCount > 0 ? '#FEF2F2' : 'var(--yz-bg-base)',
+                    backgroundColor: inventorySummary.outOfStockCount > 0 ? 'var(--yz-alert-danger-bg, #FEF2F2)' : 'var(--yz-bg-subtle)',
                     borderRadius: 'var(--yz-radius-sm)',
                     fontSize: '11px',
-                    color: inventorySummary.outOfStockCount > 0 ? '#991B1B' : 'var(--yz-text-secondary)',
+                    color: inventorySummary.outOfStockCount > 0 ? 'var(--yz-alert-danger-text, #991B1B)' : 'var(--yz-text-secondary)',
                   }}
                 >
                   <Package size={12} />
@@ -1379,9 +1379,9 @@ export const ReportsPage: React.FC = () => {
                                   fontWeight: 600,
                                   padding: '2px 8px',
                                   borderRadius: 'var(--yz-radius-full)',
-                                  backgroundColor: isOut ? '#FEF2F2' : '#FFFBEB',
-                                  color: isOut ? '#991B1B' : '#92400E',
-                                  border: isOut ? '1px solid #FECACA' : '1px solid #FDE68A',
+                                  backgroundColor: isOut ? 'var(--yz-status-out-stock-bg, #FEF2F2)' : 'var(--yz-status-low-stock-bg, #FFFBEB)',
+                                  color: isOut ? 'var(--yz-status-out-stock, #991B1B)' : 'var(--yz-status-low-stock, #92400E)',
+                                  border: isOut ? '1px solid var(--yz-status-out-stock-border, #FECACA)' : '1px solid var(--yz-status-low-stock-border, #FDE68A)',
                                 }}
                               >
                                 {isOut ? 'Out of Stock' : 'Low Stock'}
