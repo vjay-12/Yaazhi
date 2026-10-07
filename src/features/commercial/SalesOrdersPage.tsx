@@ -269,7 +269,7 @@ export const SalesOrdersPage: React.FC = () => {
     const isVoided = o.status === 'VOIDED' || o.status === 'CANCELLED' || o.paymentStatus === 'VOIDED';
     const isPaid = !isVoided && (o.paymentStatus === 'PAID' || (o.totalAmount > 0 && o.pendingAmount === 0));
 
-    // Shared void icon button (26px x 26px footprint)
+    // Shared void icon button (24px x 24px footprint)
     const renderVoidButton = () => {
       if (isVoided) {
         return (
@@ -278,10 +278,10 @@ export const SalesOrdersPage: React.FC = () => {
             className="yz-btn yz-btn-ghost yz-btn-sm"
             disabled
             style={{
-              width: '26px',
-              height: '26px',
+              width: '24px',
+              height: '24px',
               padding: 0,
-              borderRadius: 'var(--yz-radius-sm)',
+              borderRadius: 'var(--yz-radius-sm, 6px)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -305,10 +305,10 @@ export const SalesOrdersPage: React.FC = () => {
             type="button"
             className="yz-btn yz-btn-ghost yz-btn-sm"
             style={{
-              width: '26px',
-              height: '26px',
+              width: '24px',
+              height: '24px',
               padding: 0,
-              borderRadius: 'var(--yz-radius-sm)',
+              borderRadius: 'var(--yz-radius-sm, 6px)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -334,10 +334,10 @@ export const SalesOrdersPage: React.FC = () => {
           className="yz-btn yz-btn-ghost yz-btn-sm"
           disabled
           style={{
-            width: '26px',
-            height: '26px',
+            width: '24px',
+            height: '24px',
             padding: 0,
-            borderRadius: 'var(--yz-radius-sm)',
+            borderRadius: 'var(--yz-radius-sm, 6px)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -355,7 +355,7 @@ export const SalesOrdersPage: React.FC = () => {
       );
     };
 
-    // Primary action button (exact same 70px x 26px footprint across all states)
+    // Primary action button (exact same 66px x 24px footprint across all states)
     const renderPrimaryButton = () => {
       if (isPaid || isVoided) {
         return (
@@ -363,17 +363,18 @@ export const SalesOrdersPage: React.FC = () => {
             type="button"
             className="yz-btn yz-btn-secondary yz-btn-sm"
             style={{
-              width: '70px',
-              height: '26px',
+              width: '66px',
+              height: '24px',
               padding: '0 6px',
               fontSize: '11px',
-              borderRadius: 'var(--yz-radius-sm)',
-              gap: '4px',
+              borderRadius: 'var(--yz-radius-sm, 6px)',
+              gap: '3px',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               boxSizing: 'border-box',
               whiteSpace: 'nowrap',
+              lineHeight: 1,
               flexShrink: 0,
             }}
             onClick={(e) => {
@@ -394,17 +395,18 @@ export const SalesOrdersPage: React.FC = () => {
           type="button"
           className="yz-btn yz-btn-primary yz-btn-sm"
           style={{
-            width: '70px',
-            height: '26px',
+            width: '66px',
+            height: '24px',
             padding: '0 6px',
             fontSize: '11px',
-            borderRadius: 'var(--yz-radius-sm)',
+            borderRadius: 'var(--yz-radius-sm, 6px)',
             fontWeight: 600,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             boxSizing: 'border-box',
             whiteSpace: 'nowrap',
+            lineHeight: 1,
             flexShrink: 0,
           }}
           onClick={(e) => {
@@ -425,8 +427,8 @@ export const SalesOrdersPage: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'center',
           gap: '5px',
-          width: '102px',
-          height: '26px',
+          width: '95px',
+          height: '24px',
         }}
       >
         {renderPrimaryButton()}
@@ -640,13 +642,13 @@ export const SalesOrdersPage: React.FC = () => {
         <table className="yz-table" style={{ width: '100%', tableLayout: 'fixed' }}>
           <thead>
             <tr>
-              <th style={{ width: '115px', paddingLeft: '12px', textAlign: 'left' }}>ORDER NUMBER</th>
-              <th style={{ width: '20%', textAlign: 'left' }}>CUSTOMER</th>
-              <th style={{ width: '85px', textAlign: 'left' }}>DATE</th>
-              <th style={{ textAlign: 'left' }}>PRODUCTS</th>
-              <th style={{ width: '105px', textAlign: 'right' }}>TOTAL AMOUNT</th>
-              <th style={{ width: '85px', textAlign: 'center' }}>STATUS</th>
-              <th style={{ width: '108px', textAlign: 'center', paddingRight: '12px' }}>ACTION</th>
+              <th style={{ width: '135px', paddingLeft: '12px', paddingRight: '6px', textAlign: 'left' }}>ORDER NUMBER</th>
+              <th style={{ width: '18%', minWidth: '120px', paddingLeft: '6px', paddingRight: '6px', textAlign: 'left' }}>CUSTOMER</th>
+              <th style={{ width: '95px', paddingLeft: '6px', paddingRight: '6px', textAlign: 'left' }}>DATE</th>
+              <th style={{ paddingLeft: '6px', paddingRight: '6px', textAlign: 'left' }}>PRODUCTS</th>
+              <th style={{ width: '115px', paddingLeft: '6px', paddingRight: '12px', textAlign: 'right' }}>TOTAL AMOUNT</th>
+              <th style={{ width: '88px', paddingLeft: '4px', paddingRight: '4px', textAlign: 'center' }}>STATUS</th>
+              <th style={{ width: '120px', paddingLeft: '4px', paddingRight: '12px', textAlign: 'center' }}>ACTION</th>
             </tr>
           </thead>
           <tbody>
@@ -684,21 +686,23 @@ export const SalesOrdersPage: React.FC = () => {
                     style={{ cursor: 'pointer', height: '38px' }}
                     title="Click row to view sales order details"
                   >
+                    {/* Order Number: Always full, no truncation */}
                     <td
                       style={{
+                        width: '135px',
                         paddingLeft: '12px',
+                        paddingRight: '6px',
                         overflow: 'hidden',
                         whiteSpace: 'nowrap',
                       }}
                     >
                       <div
                         style={{
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
                           fontWeight: 600,
                           fontFamily: 'var(--yz-font-mono)',
                           fontSize: '11.5px',
+                          color: 'var(--yz-text-primary)',
+                          whiteSpace: 'nowrap',
                         }}
                         title={o.orderNumber}
                       >
@@ -706,7 +710,8 @@ export const SalesOrdersPage: React.FC = () => {
                       </div>
                     </td>
 
-                    <td style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    {/* Customer Name: Ellipsis for long names with tooltip */}
+                    <td style={{ paddingLeft: '6px', paddingRight: '6px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       <div
                         style={{
                           overflow: 'hidden',
@@ -721,12 +726,13 @@ export const SalesOrdersPage: React.FC = () => {
                       </div>
                     </td>
 
-                    <td style={{ fontSize: '11px', color: 'var(--yz-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                    {/* Date: Compact, full date display */}
+                    <td style={{ width: '95px', paddingLeft: '6px', paddingRight: '6px', fontSize: '11px', color: 'var(--yz-text-muted)', whiteSpace: 'nowrap' }}>
                       {o.date}
                     </td>
 
                     {/* PRODUCTS: single-line, First Product +N, CSS ellipsis, full tooltip */}
-                    <td style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    <td style={{ paddingLeft: '6px', paddingRight: '6px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       <div
                         style={{
                           display: 'flex',
@@ -775,24 +781,29 @@ export const SalesOrdersPage: React.FC = () => {
                       </div>
                     </td>
 
+                    {/* Total Amount: Aligns underneath TOTAL AMOUNT header */}
                     <td
                       style={{
+                        width: '115px',
+                        paddingLeft: '6px',
+                        paddingRight: '12px',
                         textAlign: 'right',
                         fontWeight: 600,
                         fontFamily: 'var(--yz-font-mono)',
                         whiteSpace: 'nowrap',
-                        overflow: 'hidden',
                       }}
                       className="tabular-nums"
                     >
                       ₹{o.totalAmount.toLocaleString('en-IN')}
                     </td>
 
-                    <td style={{ textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                    {/* Status: Complete badge, no dots, centered */}
+                    <td style={{ width: '88px', paddingLeft: '4px', paddingRight: '4px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                       {renderStatusBadge(o)}
                     </td>
 
-                    <td style={{ textAlign: 'center', paddingRight: '12px', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                    {/* Action: Settle / Invoice and Void with proper right boundary gap */}
+                    <td style={{ width: '120px', paddingLeft: '4px', paddingRight: '12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                       {renderActionButtons(o)}
                     </td>
                   </tr>

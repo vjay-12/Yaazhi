@@ -211,7 +211,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
     };
   }, [validOrders]);
 
-  // 4. RECENT SALES (latest 5 valid orders)
+  // 4. RECENT SALES (latest 4 valid orders - moved to left column for bottom alignment)
   const recentSales = useMemo(() => {
     return [...validOrders]
       .sort((a, b) => {
@@ -219,10 +219,10 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         const dateB = new Date(b.orderDate || b.createdAt || b.date).getTime();
         return dateB - dateA;
       })
-      .slice(0, 5);
+      .slice(0, 4);
   }, [validOrders]);
 
-  // 5. TOP SELLING PRODUCTS (by actual units sold from valid sales)
+  // 5. TOP SELLING PRODUCTS (by actual units sold from valid sales - max 3 rows for balanced grid)
   const topSellingProducts = useMemo(() => {
     const productMap = new Map<string, { id?: string; name: string; sku: string; units: number; revenue: number }>();
 
@@ -247,7 +247,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
     return Array.from(productMap.values())
       .filter((p) => p.units > 0)
       .sort((a, b) => b.units - a.units || b.revenue - a.revenue)
-      .slice(0, 5);
+      .slice(0, 3);
   }, [validOrders]);
 
   if (isLoading) {
@@ -819,9 +819,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             )}
           </div>
 
-          {/* 2. TOP SELLING PRODUCTS CARD */}
+          {/* 2. RECENT SALES CARD (4 records) */}
           <div
-            className="yz-card yz-overview-topselling"
+            className="yz-card yz-overview-recentsales"
             style={{
               padding: '12px 14px',
               display: 'flex',
@@ -841,15 +841,15 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             >
               <div>
                 <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--yz-text-primary)', margin: 0 }}>
-                  Top Selling Products
+                  Recent Sales
                 </h3>
                 <span style={{ fontSize: '11px', color: 'var(--yz-text-muted)' }}>
-                  By units sold from completed sales
+                  Latest completed orders and counter bills
                 </span>
               </div>
 
               <button
-                onClick={() => onNavigate('reports')}
+                onClick={() => onNavigate('orders')}
                 className="yz-btn yz-btn-ghost yz-btn-sm"
                 style={{
                   fontSize: '11px',
@@ -861,13 +861,13 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                   gap: '3px',
                 }}
               >
-                <span>View Reports</span>
+                <span>View All Sales</span>
                 <ArrowRight size={11} />
               </button>
             </div>
 
             {/* Table or Empty State */}
-            {topSellingProducts.length === 0 ? (
+            {recentSales.length === 0 ? (
               <div
                 style={{
                   padding: '1.75rem 1rem',
@@ -876,71 +876,104 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                   fontSize: '11.5px',
                 }}
               >
-                No product sales recorded yet.
+                No recent sales.
               </div>
             ) : (
               <div className="yz-table-container">
-                <table className="yz-table yz-table-compact">
+                <table className="yz-table yz-table-compact" style={{ width: '100%', tableLayout: 'fixed' }}>
                   <thead>
                     <tr>
-                      <th>Product</th>
-                      <th style={{ textAlign: 'center', width: '80px' }}>Units Sold</th>
-                      <th style={{ textAlign: 'right', width: '90px' }}>Revenue</th>
+                      <th style={{ width: '115px' }}>Order</th>
+                      <th>Customer</th>
+                      <th style={{ width: '65px' }}>Time</th>
+                      <th style={{ textAlign: 'right', width: '75px' }}>Amount</th>
+                      <th style={{ textAlign: 'center', width: '78px' }}>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {topSellingProducts.map((p, idx) => {
-                      const matchedProd = products.find((prod) => prod.id === p.id || prod.sku === p.sku);
+                    {recentSales.map((o) => {
+                      const isPaid = o.paymentStatus === 'PAID' || (o.totalAmount > 0 && o.pendingAmount === 0);
+                      const isVoided = o.status === 'VOIDED' || o.paymentStatus === 'VOIDED';
+
                       return (
                         <tr
-                          key={p.sku || idx}
-                          onClick={() => matchedProd && onViewProductDetail(matchedProd)}
-                          style={{ cursor: matchedProd ? 'pointer' : 'default' }}
-                          title={matchedProd ? `View details for ${p.name}` : undefined}
+                          key={o.id}
+                          onClick={() => setSelectedOrder(o)}
+                          style={{ cursor: 'pointer' }}
+                          title="Click to view sales order details"
                         >
-                          <td>
+                          <td
+                            style={{
+                              fontWeight: 600,
+                              fontFamily: 'var(--yz-font-mono)',
+                              color: 'var(--yz-primary, #852237)',
+                              fontSize: '11px',
+                              width: '115px',
+                            }}
+                          >
+                            {o.orderNumber}
+                          </td>
+                          <td style={{ fontWeight: 500 }}>
                             <div
                               style={{
-                                fontWeight: 600,
-                                color: 'var(--yz-text-primary)',
-                                maxWidth: '180px',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
                               }}
-                              title={p.name}
+                              title={o.customerName || 'Walk-in Guest'}
                             >
-                              {p.name}
-                            </div>
-                            <div
-                              style={{
-                                fontSize: '10px',
-                                color: 'var(--yz-text-muted)',
-                                fontFamily: 'var(--yz-font-mono)',
-                              }}
-                            >
-                              {p.sku}
+                              {o.customerName || 'Walk-in Guest'}
                             </div>
                           </td>
-                          <td
-                            style={{
-                              textAlign: 'center',
-                              fontFamily: 'var(--yz-font-mono)',
-                              fontWeight: 600,
-                            }}
-                            className="tabular-nums"
-                          >
-                            {p.units}
+                          <td style={{ color: 'var(--yz-text-muted)', fontSize: '10.5px', width: '65px' }}>
+                            {formatOrderTime(o.orderDate || o.createdAt || o.date)}
                           </td>
                           <td
                             style={{
                               textAlign: 'right',
-                              fontFamily: 'var(--yz-font-mono)',
                               fontWeight: 700,
+                              fontFamily: 'var(--yz-font-mono)',
+                              fontSize: '11px',
+                              width: '75px',
                             }}
                             className="tabular-nums"
                           >
-                            ₹{p.revenue.toLocaleString('en-IN')}
+                            ₹{Number(o.totalAmount || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td style={{ textAlign: 'center', width: '78px' }}>
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '2px 8px',
+                                minWidth: '56px',
+                                boxSizing: 'border-box',
+                                borderRadius: 'var(--yz-radius-full)',
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                whiteSpace: 'nowrap',
+                                backgroundColor: isVoided
+                                  ? 'var(--yz-status-out-stock-bg, #FEE2E2)'
+                                  : isPaid
+                                  ? 'var(--yz-status-in-stock-bg, #DCFCE7)'
+                                  : 'var(--yz-status-low-stock-bg, #FEF3C7)',
+                                color: isVoided
+                                  ? 'var(--yz-status-out-stock, #B91C1C)'
+                                  : isPaid
+                                  ? 'var(--yz-status-in-stock, #166534)'
+                                  : 'var(--yz-status-low-stock, #92400E)',
+                                border: `1px solid ${
+                                  isVoided
+                                    ? 'var(--yz-status-out-stock-border, #FECACA)'
+                                    : isPaid
+                                    ? 'var(--yz-status-in-stock-border, #BBF7D0)'
+                                    : 'var(--yz-status-low-stock-border, #FDE68A)'
+                                }`,
+                              }}
+                            >
+                              {isVoided ? 'VOIDED' : isPaid ? 'PAID' : 'PENDING'}
+                            </span>
                           </td>
                         </tr>
                       );
@@ -1068,9 +1101,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                   <span style={{ textAlign: 'right' }}>Reorder</span>
                 </div>
 
-                {/* Rows */}
+                {/* Rows - Max 3 rows as specified */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
-                  {stockStats.attentionProducts.slice(0, 5).map((p) => {
+                  {stockStats.attentionProducts.slice(0, 3).map((p) => {
                     const current = Number(p.currentStock) || 0;
                     const reorder = Number(p.reorderPoint ?? 3);
                     const isOut = current <= 0;
@@ -1161,9 +1194,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             )}
           </div>
 
-          {/* 2. RECENT SALES CARD (Status column clipping completely fixed) */}
+          {/* 2. TOP SELLING PRODUCTS CARD */}
           <div
-            className="yz-card yz-overview-recentsales"
+            className="yz-card yz-overview-topselling"
             style={{
               padding: '12px 14px',
               display: 'flex',
@@ -1183,15 +1216,15 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             >
               <div>
                 <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--yz-text-primary)', margin: 0 }}>
-                  Recent Sales
+                  Top Selling Products
                 </h3>
                 <span style={{ fontSize: '11px', color: 'var(--yz-text-muted)' }}>
-                  Latest completed orders and counter bills
+                  By units sold from completed sales
                 </span>
               </div>
 
               <button
-                onClick={() => onNavigate('orders')}
+                onClick={() => onNavigate('reports')}
                 className="yz-btn yz-btn-ghost yz-btn-sm"
                 style={{
                   fontSize: '11px',
@@ -1203,13 +1236,13 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                   gap: '3px',
                 }}
               >
-                <span>View All Sales</span>
+                <span>View Reports</span>
                 <ArrowRight size={11} />
               </button>
             </div>
 
             {/* Table or Empty State */}
-            {recentSales.length === 0 ? (
+            {topSellingProducts.length === 0 ? (
               <div
                 style={{
                   padding: '1.75rem 1rem',
@@ -1218,105 +1251,74 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                   fontSize: '11.5px',
                 }}
               >
-                No recent sales.
+                No product sales recorded yet.
               </div>
             ) : (
               <div className="yz-table-container">
-                <table className="yz-table yz-table-compact" style={{ minWidth: '420px', width: '100%' }}>
+                <table className="yz-table yz-table-compact" style={{ width: '100%', tableLayout: 'fixed' }}>
                   <thead>
                     <tr>
-                      <th style={{ width: '95px' }}>Order</th>
-                      <th>Customer</th>
-                      <th style={{ width: '65px' }}>Time</th>
-                      <th style={{ textAlign: 'right', width: '75px' }}>Amount</th>
-                      <th style={{ textAlign: 'center', width: '72px', minWidth: '72px' }}>Status</th>
+                      <th>Product</th>
+                      <th style={{ textAlign: 'center', width: '80px' }}>Units Sold</th>
+                      <th style={{ textAlign: 'right', width: '90px' }}>Revenue</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {recentSales.map((o) => {
-                      const isPaid = o.paymentStatus === 'PAID' || (o.totalAmount > 0 && o.pendingAmount === 0);
-                      const isVoided = o.status === 'VOIDED' || o.paymentStatus === 'VOIDED';
-
+                    {topSellingProducts.map((p, idx) => {
+                      const matchedProd = products.find((prod) => prod.id === p.id || prod.sku === p.sku);
                       return (
                         <tr
-                          key={o.id}
-                          onClick={() => setSelectedOrder(o)}
-                          style={{ cursor: 'pointer' }}
-                          title="Click to view sales order details"
+                          key={p.sku || idx}
+                          onClick={() => matchedProd && onViewProductDetail(matchedProd)}
+                          style={{ cursor: matchedProd ? 'pointer' : 'default' }}
+                          title={matchedProd ? `View details for ${p.name}` : undefined}
                         >
-                          <td
-                            style={{
-                              fontWeight: 600,
-                              fontFamily: 'var(--yz-font-mono)',
-                              color: 'var(--yz-primary, #852237)',
-                              fontSize: '11px',
-                              width: '95px',
-                            }}
-                          >
-                            {o.orderNumber}
-                          </td>
-                          <td style={{ fontWeight: 500 }}>
+                          <td style={{ minWidth: 0 }}>
                             <div
                               style={{
-                                maxWidth: '120px',
+                                fontWeight: 600,
+                                color: 'var(--yz-text-primary)',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
                               }}
-                              title={o.customerName || 'Walk-in Guest'}
                             >
-                              {o.customerName || 'Walk-in Guest'}
+                              {p.name}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: '10px',
+                                color: 'var(--yz-text-muted)',
+                                fontFamily: 'var(--yz-font-mono)',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {p.sku}
                             </div>
                           </td>
-                          <td style={{ color: 'var(--yz-text-muted)', fontSize: '10.5px', width: '65px' }}>
-                            {formatOrderTime(o.orderDate || o.createdAt || o.date)}
+                          <td
+                            style={{
+                              textAlign: 'center',
+                              fontFamily: 'var(--yz-font-mono)',
+                              fontWeight: 600,
+                              fontSize: '11px',
+                              width: '80px',
+                            }}
+                            className="tabular-nums"
+                          >
+                            {p.units}
                           </td>
                           <td
                             style={{
                               textAlign: 'right',
-                              fontWeight: 700,
                               fontFamily: 'var(--yz-font-mono)',
+                              fontWeight: 700,
                               fontSize: '11px',
-                              width: '75px',
+                              width: '90px',
                             }}
                             className="tabular-nums"
                           >
-                            ₹{Number(o.totalAmount || 0).toLocaleString('en-IN')}
-                          </td>
-                          <td style={{ textAlign: 'center', width: '72px', minWidth: '72px' }}>
-                            <span
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                padding: '2px 8px',
-                                minWidth: '56px',
-                                boxSizing: 'border-box',
-                                borderRadius: 'var(--yz-radius-full)',
-                                fontSize: '10px',
-                                fontWeight: 700,
-                                whiteSpace: 'nowrap',
-                                backgroundColor: isVoided
-                                  ? 'var(--yz-status-out-stock-bg, #FEE2E2)'
-                                  : isPaid
-                                  ? 'var(--yz-status-in-stock-bg, #DCFCE7)'
-                                  : 'var(--yz-status-low-stock-bg, #FEF3C7)',
-                                color: isVoided
-                                  ? 'var(--yz-status-out-stock, #B91C1C)'
-                                  : isPaid
-                                  ? 'var(--yz-status-in-stock, #166534)'
-                                  : 'var(--yz-status-low-stock, #92400E)',
-                                border: `1px solid ${
-                                  isVoided
-                                    ? 'var(--yz-status-out-stock-border, #FECACA)'
-                                    : isPaid
-                                    ? 'var(--yz-status-in-stock-border, #BBF7D0)'
-                                    : 'var(--yz-status-low-stock-border, #FDE68A)'
-                                }`,
-                              }}
-                            >
-                              {isVoided ? 'VOIDED' : isPaid ? 'PAID' : 'PENDING'}
-                            </span>
+                            ₹{Number(p.revenue || 0).toLocaleString('en-IN')}
                           </td>
                         </tr>
                       );

@@ -375,13 +375,20 @@
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .yz-overview-col {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.yz-overview-recentsales,
+.yz-overview-topselling {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ==========================================================================
@@ -423,10 +430,10 @@
   .yz-overview-lowstock {
     order: 2;
   }
-  .yz-overview-topselling {
+  .yz-overview-recentsales {
     order: 3;
   }
-  .yz-overview-recentsales {
+  .yz-overview-topselling {
     order: 4;
   }
 }

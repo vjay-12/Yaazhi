@@ -377,7 +377,7 @@ p, span, label, input, button, select, textarea {
   height: 34px;
   user-select: none;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip;
 }
 
 .yz-table td {
@@ -390,7 +390,7 @@ p, span, label, input, button, select, textarea {
   height: var(--yz-table-row-height, 38px);
   max-height: var(--yz-table-row-height, 38px);
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip;
   box-sizing: border-box;
 }
 

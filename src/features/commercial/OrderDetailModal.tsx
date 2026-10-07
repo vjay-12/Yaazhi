@@ -1,10 +1,7 @@
 import React from 'react';
-import { Ban, Download } from 'lucide-react';
+import { Ban } from 'lucide-react';
 import { Modal } from '../../components/common/Modal';
-import { Button } from '../../components/common/Button';
 import type { SalesOrderData } from '../../services/salesOrderService';
-import { downloadSalesOrderPdf } from '../../utils/invoicePdfGenerator';
-import { useToast } from '../../components/common/Toast';
 
 interface OrderDetailModalProps {
   order: SalesOrderData | null;
@@ -17,10 +14,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   order,
   isOpen,
   onClose,
-  onDownloadInvoice,
 }) => {
-  const { showToast } = useToast();
-
   if (!order || !isOpen) return null;
 
   const formatDisplayDate = (dateStr: string | Date | undefined): string => {
@@ -31,28 +25,6 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
       return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch {
       return String(dateStr);
-    }
-  };
-
-  const handleDownload = async () => {
-    if (onDownloadInvoice) {
-      onDownloadInvoice(order);
-      return;
-    }
-    try {
-      await downloadSalesOrderPdf(order);
-      showToast({
-        type: 'success',
-        title: 'Invoice Downloaded',
-        message: `Saved Yaazhi invoice for ${order.orderNumber}`,
-      });
-    } catch (err: any) {
-      console.error('Invoice generation failed:', err);
-      showToast({
-        type: 'error',
-        title: 'Download Failed',
-        message: err.message || 'Could not generate invoice PDF',
-      });
     }
   };
 
@@ -83,21 +55,6 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
       title={`Sales Order ${order.orderNumber}`}
       subtitle={`Customer: ${order.customerName} • Source: ${order.location || 'Main Showroom Counter'}`}
       maxWidth="640px"
-      footer={
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<Download size={13} />}
-            onClick={handleDownload}
-          >
-            Download Invoice PDF
-          </Button>
-          <Button variant="secondary" size="sm" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {/* Top Order Information (Billing Details & Shipping Details) */}
