@@ -380,15 +380,15 @@ export const CustomersPage: React.FC = () => {
 
       {/* Clean Compact Customers Table */}
       <div className="yz-table-container">
-        <table className="yz-table" style={{ width: '100%' }}>
+        <table className="yz-table" style={{ width: '100%', tableLayout: 'fixed' }}>
           <thead>
             <tr>
-              <th style={{ minWidth: '180px', paddingLeft: '12px' }}>CUSTOMER</th>
-              <th style={{ width: '135px' }}>PHONE</th>
-              <th style={{ width: '140px' }}>CITY/LOCATION</th>
-              <th style={{ width: '75px', textAlign: 'center' }}>VISITS</th>
-              <th style={{ width: '120px', textAlign: 'right' }}>TOTAL SPEND</th>
-              <th style={{ minWidth: '220px' }}>TAILORING / MEASUREMENT PROFILE</th>
+              <th style={{ width: '22%', paddingLeft: '12px' }}>CUSTOMER</th>
+              <th style={{ width: '120px' }}>PHONE</th>
+              <th style={{ width: '110px' }}>CITY/LOCATION</th>
+              <th style={{ width: '65px', textAlign: 'center' }}>VISITS</th>
+              <th style={{ width: '105px', textAlign: 'right' }}>TOTAL SPEND</th>
+              <th>TAILORING / MEASUREMENT PROFILE</th>
               <th style={{ width: '85px', textAlign: 'center', paddingRight: '12px' }}>ACTION</th>
             </tr>
           </thead>

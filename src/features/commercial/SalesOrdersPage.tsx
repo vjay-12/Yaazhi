@@ -637,16 +637,16 @@ export const SalesOrdersPage: React.FC = () => {
 
       {/* Sales Orders Table */}
       <div className="yz-table-container">
-        <table className="yz-table" style={{ width: '100%' }}>
+        <table className="yz-table" style={{ width: '100%', tableLayout: 'fixed' }}>
           <thead>
             <tr>
-              <th style={{ width: '130px', minWidth: '125px', paddingLeft: '12px' }}>ORDER NUMBER</th>
-              <th style={{ width: '180px', minWidth: '150px' }}>CUSTOMER</th>
-              <th style={{ width: '95px' }}>DATE</th>
-              <th style={{ minWidth: '220px' }}>PRODUCTS</th>
-              <th style={{ width: '120px', textAlign: 'right' }}>TOTAL AMOUNT</th>
+              <th style={{ width: '115px', paddingLeft: '12px', textAlign: 'left' }}>ORDER NUMBER</th>
+              <th style={{ width: '20%', textAlign: 'left' }}>CUSTOMER</th>
+              <th style={{ width: '85px', textAlign: 'left' }}>DATE</th>
+              <th style={{ textAlign: 'left' }}>PRODUCTS</th>
+              <th style={{ width: '105px', textAlign: 'right' }}>TOTAL AMOUNT</th>
               <th style={{ width: '85px', textAlign: 'center' }}>STATUS</th>
-              <th style={{ width: '110px', textAlign: 'center', paddingRight: '12px' }}>ACTION</th>
+              <th style={{ width: '108px', textAlign: 'center', paddingRight: '12px' }}>ACTION</th>
             </tr>
           </thead>
           <tbody>
@@ -681,56 +681,71 @@ export const SalesOrdersPage: React.FC = () => {
                   <tr
                     key={o.id}
                     onClick={() => setSelectedOrder(o)}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: 'pointer', height: '38px' }}
                     title="Click row to view sales order details"
                   >
                     <td
                       style={{
-                        fontWeight: 600,
-                        fontFamily: 'var(--yz-font-mono)',
                         paddingLeft: '12px',
+                        overflow: 'hidden',
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      {o.orderNumber}
+                      <div
+                        style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          fontWeight: 600,
+                          fontFamily: 'var(--yz-font-mono)',
+                          fontSize: '11.5px',
+                        }}
+                        title={o.orderNumber}
+                      >
+                        {o.orderNumber}
+                      </div>
                     </td>
 
-                    <td style={{ whiteSpace: 'nowrap' }}>
+                    <td style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       <div
-                        className="yz-cell-truncate"
-                        style={{ maxWidth: '180px', fontWeight: 500 }}
+                        style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          fontWeight: 500,
+                          width: '100%',
+                        }}
                         title={o.customerName}
                       >
                         {o.customerName}
                       </div>
                     </td>
 
-                    <td style={{ fontSize: '11px', color: 'var(--yz-text-muted)', whiteSpace: 'nowrap' }}>
+                    <td style={{ fontSize: '11px', color: 'var(--yz-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden' }}>
                       {o.date}
                     </td>
 
                     {/* PRODUCTS: single-line, First Product +N, CSS ellipsis, full tooltip */}
-                    <td style={{ minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    <td style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       <div
                         style={{
-                          display: 'inline-flex',
+                          display: 'flex',
                           alignItems: 'center',
-                          gap: '5px',
-                          maxWidth: '100%',
-                          overflow: 'hidden',
-                          whiteSpace: 'nowrap',
-                          verticalAlign: 'middle',
+                          gap: '6px',
+                          width: '100%',
+                          minWidth: 0,
                         }}
                         title={fullProductsTooltip}
                       >
                         <span
                           style={{
+                            flex: 1,
+                            minWidth: 0,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
                             fontWeight: 500,
                             color: 'var(--yz-text-primary)',
-                            display: 'inline-block',
                           }}
                         >
                           {firstProduct}
@@ -738,19 +753,20 @@ export const SalesOrdersPage: React.FC = () => {
                         {extraCount > 0 && (
                           <span
                             style={{
+                              flexShrink: 0,
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               padding: '0 4px',
                               height: '16px',
                               fontSize: '10px',
-                              fontWeight: 600,
+                              fontWeight: 700,
                               color: 'var(--yz-text-secondary, #475569)',
                               backgroundColor: 'var(--yz-bg-subtle, #F1F5F9)',
                               border: '1px solid var(--yz-border-strong, #CBD5E1)',
                               borderRadius: '3px',
+                              lineHeight: 1,
                               whiteSpace: 'nowrap',
-                              flexShrink: 0,
                             }}
                           >
                             +{extraCount}
@@ -765,17 +781,18 @@ export const SalesOrdersPage: React.FC = () => {
                         fontWeight: 600,
                         fontFamily: 'var(--yz-font-mono)',
                         whiteSpace: 'nowrap',
+                        overflow: 'hidden',
                       }}
                       className="tabular-nums"
                     >
                       ₹{o.totalAmount.toLocaleString('en-IN')}
                     </td>
 
-                    <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                    <td style={{ textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden' }}>
                       {renderStatusBadge(o)}
                     </td>
 
-                    <td style={{ textAlign: 'center', paddingRight: '12px', whiteSpace: 'nowrap' }}>
+                    <td style={{ textAlign: 'center', paddingRight: '12px', whiteSpace: 'nowrap', overflow: 'hidden' }}>
                       {renderActionButtons(o)}
                     </td>
                   </tr>

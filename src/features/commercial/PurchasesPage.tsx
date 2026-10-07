@@ -485,11 +485,11 @@ export const PurchasesPage: React.FC = () => {
 
       {/* Clean Compact ERP Purchases Table (NO ACTIONS COLUMN, ENTIRE ROW CLICKABLE) */}
       <div className="yz-table-container">
-        <table className="yz-table">
+        <table className="yz-table" style={{ width: '100%', tableLayout: 'fixed' }}>
           <thead>
             <tr>
-              <th style={{ width: '130px' }}>PO NUMBER</th>
-              <th style={{ minWidth: '180px' }}>VENDOR</th>
+              <th style={{ width: '130px', paddingLeft: '12px' }}>PO NUMBER</th>
+              <th style={{ width: '22%' }}>VENDOR</th>
               <th style={{ width: '105px' }}>DATE</th>
               <th>PRODUCTS</th>
               <th style={{ width: '120px', textAlign: 'right' }}>TOTAL AMOUNT</th>

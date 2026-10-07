@@ -11,6 +11,8 @@
 html, body {
   height: 100%;
   width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
   background-color: var(--yz-bg-canvas);
   color: var(--yz-text-primary);
   font-family: var(--yz-font-body);
@@ -26,6 +28,9 @@ html, body {
 
 #root {
   min-height: 100%;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -340,6 +345,9 @@ p, span, label, input, button, select, textarea {
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .yz-table {
@@ -347,6 +355,7 @@ p, span, label, input, button, select, textarea {
   border-collapse: collapse;
   text-align: left;
   font-size: 12px;
+  table-layout: fixed;
 }
 
 .yz-table-compact th,
@@ -367,6 +376,8 @@ p, span, label, input, button, select, textarea {
   white-space: nowrap;
   height: 34px;
   user-select: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .yz-table td {
@@ -377,6 +388,10 @@ p, span, label, input, button, select, textarea {
   vertical-align: middle;
   white-space: nowrap;
   height: var(--yz-table-row-height, 38px);
+  max-height: var(--yz-table-row-height, 38px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
 }
 
 .yz-table tr:last-child td {
@@ -386,6 +401,8 @@ p, span, label, input, button, select, textarea {
 .yz-table tbody tr {
   transition: background-color 0.1s ease;
   cursor: pointer;
+  height: var(--yz-table-row-height, 38px);
+  max-height: var(--yz-table-row-height, 38px);
 }
 
 .yz-table tbody tr:hover {
@@ -394,7 +411,7 @@ p, span, label, input, button, select, textarea {
 
 /* Ellipsis helper for long text in compact tables */
 .yz-cell-truncate {
-  max-width: 220px;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

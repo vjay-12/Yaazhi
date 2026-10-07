@@ -140,6 +140,9 @@ export const Pagination: React.FC<PaginationProps> = ({
         userSelect: 'none',
         gap: '12px',
         flexWrap: 'wrap',
+        width: '100%',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
         ...style,
       }}
     >

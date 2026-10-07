@@ -409,7 +409,7 @@ export const VendorsPage: React.FC = () => {
 
       {/* Clean Compact Vendors Table - Perfectly aligned, no horizontal scaling */}
       <div className="yz-table-container">
-        <table className="yz-table" style={{ width: '100%' }}>
+        <table className="yz-table" style={{ width: '100%', tableLayout: 'fixed' }}>
           <thead>
             <tr>
               <th style={{ minWidth: statusFilter === 'ALL' ? '140px' : '170px', paddingLeft: '12px' }}>

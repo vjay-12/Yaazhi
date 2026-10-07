@@ -401,10 +401,10 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
         />
       ) : (
         <div className="yz-table-container">
-          <table className="yz-table" style={{ width: '100%' }}>
+          <table className="yz-table" style={{ width: '100%', tableLayout: 'fixed' }}>
             <thead>
               <tr>
-                <th style={{ minWidth: '180px', paddingLeft: '12px', textAlign: 'left' }}>PRODUCT & WEAVE</th>
+                <th style={{ width: '28%', paddingLeft: '12px', textAlign: 'left' }}>PRODUCT & WEAVE</th>
                 <th style={{ width: '110px', textAlign: 'left' }}>CATEGORY</th>
                 <th style={{ width: '95px', textAlign: 'left' }}>SKU</th>
                 <th style={{ width: '80px', textAlign: 'right' }}>COST</th>
