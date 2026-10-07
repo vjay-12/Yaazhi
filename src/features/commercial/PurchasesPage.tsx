@@ -398,7 +398,7 @@ export const PurchasesPage: React.FC = () => {
   }, [vendors, vendorSearch]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }}>
       {/* Compact Toolbar */}
       <div
         style={{
@@ -412,6 +412,9 @@ export const PurchasesPage: React.FC = () => {
           boxShadow: 'var(--yz-shadow-2xs)',
           gap: '8px',
           flexWrap: 'wrap',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '280px', flexWrap: 'wrap' }}>
@@ -488,12 +491,12 @@ export const PurchasesPage: React.FC = () => {
         <table className="yz-table" style={{ width: '100%', tableLayout: 'fixed' }}>
           <thead>
             <tr>
-              <th style={{ width: '130px', paddingLeft: '12px' }}>PO NUMBER</th>
-              <th style={{ width: '22%' }}>VENDOR</th>
-              <th style={{ width: '105px' }}>DATE</th>
-              <th>PRODUCTS</th>
-              <th style={{ width: '120px', textAlign: 'right' }}>TOTAL AMOUNT</th>
-              <th style={{ width: '125px', textAlign: 'center' }}>STATUS</th>
+              <th style={{ width: '125px', paddingLeft: '12px', textAlign: 'left' }}>PO NUMBER</th>
+              <th style={{ width: '20%', textAlign: 'left' }}>VENDOR</th>
+              <th style={{ width: '100px', textAlign: 'left', paddingLeft: '8px', paddingRight: '8px' }}>DATE</th>
+              <th style={{ textAlign: 'left' }}>PRODUCTS</th>
+              <th style={{ width: '120px', textAlign: 'right', paddingLeft: '6px', paddingRight: '10px' }}>TOTAL AMOUNT</th>
+              <th style={{ width: '120px', textAlign: 'center', paddingRight: '12px', paddingLeft: '6px' }}>STATUS</th>
             </tr>
           </thead>
           <tbody>
@@ -514,34 +517,126 @@ export const PurchasesPage: React.FC = () => {
               </tr>
             ) : (
               paginatedItems.map((p) => {
+                const productItems = p.items && p.items.length > 0
+                  ? p.items.map((it) => `${it.productName || 'Boutique Item'} (x${it.quantity})`)
+                  : (p.itemsSummary
+                      ? p.itemsSummary.split(', ').filter(Boolean)
+                      : ['Boutique Item']);
+
+                const firstProduct = productItems[0] || 'Boutique Item';
+                const extraCount = Math.max(0, productItems.length - 1);
+
                 return (
                   <tr
                     key={p.id}
                     onClick={() => setSelectedPO(p)}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: 'pointer', height: '38px' }}
                     title="Click row to view purchase order details"
                   >
                     {/* PO NUMBER */}
-                    <td style={{ fontWeight: 700, fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-primary, #832729)' }}>
-                      {p.poNumber}
+                    <td
+                      style={{
+                        paddingLeft: '12px',
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <div
+                        style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          fontWeight: 700,
+                          fontFamily: 'var(--yz-font-mono)',
+                          color: 'var(--yz-primary, #832729)',
+                          fontSize: '11.5px',
+                        }}
+                        title={p.poNumber}
+                      >
+                        {p.poNumber}
+                      </div>
                     </td>
 
                     {/* VENDOR */}
-                    <td>
-                      <div className="yz-cell-truncate" style={{ maxWidth: '240px', fontWeight: 600 }}>
+                    <td style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <div
+                        style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          fontWeight: 600,
+                          width: '100%',
+                        }}
+                        title={p.vendorName}
+                      >
                         {p.vendorName}
                       </div>
                     </td>
 
                     {/* DATE */}
-                    <td style={{ fontSize: '11px', color: 'var(--yz-text-secondary)', fontFamily: 'var(--yz-font-mono)' }}>
+                    <td
+                      style={{
+                        fontSize: '11px',
+                        color: 'var(--yz-text-secondary)',
+                        fontFamily: 'var(--yz-font-mono)',
+                        paddingLeft: '8px',
+                        paddingRight: '8px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                      }}
+                    >
                       {p.date}
                     </td>
 
-                    {/* PRODUCTS */}
-                    <td>
-                      <div className="yz-cell-truncate" style={{ maxWidth: '340px' }} title={p.itemsSummary}>
-                        {p.itemsSummary || `${p.itemsCount} line items`}
+                    {/* PRODUCTS: single line, First Product +N, CSS ellipsis before badge, no tooltip for extra products */}
+                    <td style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          width: '100%',
+                          minWidth: 0,
+                        }}
+                      >
+                        <span
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            fontWeight: 500,
+                            color: 'var(--yz-text-primary)',
+                          }}
+                          title={firstProduct}
+                        >
+                          {firstProduct}
+                        </span>
+                        {extraCount > 0 && (
+                          <span
+                            style={{
+                              flexShrink: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: '0 4px',
+                              height: '16px',
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              color: 'var(--yz-text-secondary, #475569)',
+                              backgroundColor: 'var(--yz-bg-subtle, #F1F5F9)',
+                              border: '1px solid var(--yz-border-strong, #CBD5E1)',
+                              borderRadius: '3px',
+                              lineHeight: 1,
+                              whiteSpace: 'nowrap',
+                              userSelect: 'none',
+                              pointerEvents: 'none',
+                            }}
+                          >
+                            +{extraCount}
+                          </span>
+                        )}
                       </div>
                     </td>
 
@@ -551,6 +646,10 @@ export const PurchasesPage: React.FC = () => {
                         textAlign: 'right',
                         fontWeight: 700,
                         fontFamily: 'var(--yz-font-mono)',
+                        paddingLeft: '6px',
+                        paddingRight: '10px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
                       }}
                       className="tabular-nums"
                     >
@@ -558,13 +657,13 @@ export const PurchasesPage: React.FC = () => {
                     </td>
 
                     {/* STATUS */}
-                    <td style={{ textAlign: 'center' }}>
+                    <td style={{ textAlign: 'center', paddingRight: '12px', paddingLeft: '6px', whiteSpace: 'nowrap', overflow: 'hidden' }}>
                       <span
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '4px',
-                          padding: '2px 10px',
+                          padding: '2px 8px',
                           borderRadius: 'var(--yz-radius-full)',
                           fontSize: '10.5px',
                           fontWeight: 700,
