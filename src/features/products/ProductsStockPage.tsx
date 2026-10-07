@@ -7,11 +7,15 @@ import {
   Package,
   RefreshCw,
 } from 'lucide-react';
-import type { YaazhiProduct, StockStatus } from '../../types/product';
+import type {
+  YaazhiProduct,
+  ProductLifecycleFilter,
+  StockStatusFilter,
+} from '../../types/product';
 import type { StockSummary } from '../../types/inventory';
 import { productService } from '../../services/productService';
 import { inventoryService } from '../../services/inventoryService';
-import { StockBadge, CategoryBadge } from '../../components/common/Badge';
+import { StockBadge, CategoryBadge, LifecycleBadge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { TableSkeleton } from '../../components/common/LoadingState';
@@ -30,12 +34,17 @@ interface ProductsStockPageProps {
   onCloseInitialAddModal?: () => void;
 }
 
-const STATUS_OPTIONS: DropdownOption<StockStatus | 'ARCHIVED' | 'ALL'>[] = [
-  { value: 'ALL', label: 'All Statuses' },
+const LIFECYCLE_OPTIONS: DropdownOption<ProductLifecycleFilter>[] = [
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'ARCHIVED', label: 'Archived' },
+  { value: 'ALL', label: 'All Lifecycle' },
+];
+
+const STOCK_OPTIONS: DropdownOption<StockStatusFilter>[] = [
+  { value: 'ALL', label: 'All Stock' },
   { value: 'IN_STOCK', label: 'In Stock' },
   { value: 'LOW_STOCK', label: 'Low Stock' },
   { value: 'OUT_OF_STOCK', label: 'Out of Stock' },
-  { value: 'ARCHIVED', label: 'Archived' },
 ];
 
 const SORT_OPTIONS: DropdownOption[] = [
@@ -58,10 +67,11 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
   const [summary, setSummary] = useState<StockSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Filters
+  // Filters: Lifecycle defaults to ACTIVE, Stock defaults to ALL
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const [stockStatusFilter, setStockStatusFilter] = useState<StockStatus | 'ARCHIVED' | 'ALL'>('ALL');
+  const [lifecycleFilter, setLifecycleFilter] = useState<ProductLifecycleFilter>('ACTIVE');
+  const [stockStatusFilter, setStockStatusFilter] = useState<StockStatusFilter>('ALL');
   const [sortBy, setSortBy] = useState<'name' | 'sellPrice' | 'currentStock' | 'createdAt'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [catalogCategories, setCatalogCategories] = useState<string[]>([]);
@@ -91,6 +101,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
         productService.list({
           search,
           category: selectedCategory,
+          lifecycle: lifecycleFilter,
           stockStatus: stockStatusFilter,
           sortBy,
           sortOrder,
@@ -101,8 +112,8 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
       setProducts(allProducts);
       setSummary(stockSummary);
 
-      // Keep catalog categories updated when viewing all
-      if (selectedCategory === 'ALL' && !search && stockStatusFilter === 'ALL') {
+      // Keep catalog categories updated when viewing active all
+      if (selectedCategory === 'ALL' && !search && lifecycleFilter === 'ACTIVE' && stockStatusFilter === 'ALL') {
         const uniqueCats = Array.from(new Set(allProducts.map((p) => p.category).filter(Boolean))).sort();
         setCatalogCategories(uniqueCats);
       }
@@ -115,7 +126,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [search, selectedCategory, stockStatusFilter, sortBy, sortOrder, showToast]);
+  }, [search, selectedCategory, lifecycleFilter, stockStatusFilter, sortBy, sortOrder, showToast]);
 
   useEffect(() => {
     loadData();
@@ -191,7 +202,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
     paginatedItems,
   } = usePagination({
     items: products,
-    resetDependencies: [search, selectedCategory, stockStatusFilter, sortBy, sortOrder],
+    resetDependencies: [search, selectedCategory, lifecycleFilter, stockStatusFilter, sortBy, sortOrder],
   });
 
   const lowStockCount = summary?.lowStockCount || 0;
@@ -299,15 +310,23 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
             value={selectedCategory}
             onChange={(val) => setSelectedCategory(val as any)}
             options={categoryOptions}
-            minWidth="125px"
+            minWidth="115px"
           />
 
-          {/* Status Dropdown */}
+          {/* Lifecycle Status Dropdown (Active, Archived, All) */}
+          <CustomDropdown
+            value={lifecycleFilter}
+            onChange={(val) => setLifecycleFilter(val as ProductLifecycleFilter)}
+            options={LIFECYCLE_OPTIONS}
+            minWidth="95px"
+          />
+
+          {/* Stock Status Dropdown (All Stock, In Stock, Low Stock, Out of Stock) */}
           <CustomDropdown
             value={stockStatusFilter}
-            onChange={(val) => setStockStatusFilter(val as any)}
-            options={STATUS_OPTIONS}
-            minWidth="110px"
+            onChange={(val) => setStockStatusFilter(val as StockStatusFilter)}
+            options={STOCK_OPTIONS}
+            minWidth="105px"
           />
 
           {/* Sort Dropdown */}
@@ -319,7 +338,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
               setSortOrder(so);
             }}
             options={SORT_OPTIONS}
-            minWidth="125px"
+            minWidth="120px"
           />
         </div>
 
@@ -355,23 +374,24 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
       ) : products.length === 0 ? (
         <EmptyState
           icon={<Package size={24} />}
-          title={stockStatusFilter === 'ARCHIVED' ? 'No archived products' : 'No products found'}
+          title={lifecycleFilter === 'ARCHIVED' ? 'No archived products' : 'No products found'}
           description={
-            stockStatusFilter === 'ARCHIVED'
+            lifecycleFilter === 'ARCHIVED'
               ? 'There are currently no archived products in the boutique catalog.'
-              : search || selectedCategory !== 'ALL' || stockStatusFilter !== 'ALL'
+              : search || selectedCategory !== 'ALL' || stockStatusFilter !== 'ALL' || lifecycleFilter !== 'ACTIVE'
               ? 'No products match your active search or filter criteria.'
               : 'Your boutique catalog is empty. Add your first silk weave or designer garment to begin.'
           }
           actionLabel={
-            search || selectedCategory !== 'ALL' || stockStatusFilter !== 'ALL'
+            search || selectedCategory !== 'ALL' || stockStatusFilter !== 'ALL' || lifecycleFilter !== 'ACTIVE'
               ? 'Reset Filters'
               : 'Add Product'
           }
           onAction={() => {
-            if (search || selectedCategory !== 'ALL' || stockStatusFilter !== 'ALL') {
+            if (search || selectedCategory !== 'ALL' || stockStatusFilter !== 'ALL' || lifecycleFilter !== 'ACTIVE') {
               setSearch('');
               setSelectedCategory('ALL');
+              setLifecycleFilter('ACTIVE');
               setStockStatusFilter('ALL');
             } else {
               setIsAddModalOpen(true);
@@ -473,9 +493,16 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
                       {product.reorderPoint}
                     </td>
 
-                    {/* STATUS */}
+                    {/* STATUS: Stock badge + Lifecycle badge */}
                     <td style={{ textAlign: 'left', whiteSpace: 'nowrap' }}>
-                      <StockBadge status={status} stockCount={product.currentStock} />
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <StockBadge status={status} stockCount={product.currentStock} />
+                        {product.isArchived ? (
+                          <LifecycleBadge status="ARCHIVED" />
+                        ) : lifecycleFilter === 'ALL' ? (
+                          <LifecycleBadge status="ACTIVE" />
+                        ) : null}
+                      </div>
                     </td>
 
                     {/* ACTIONS: Fixed width, right-aligned */}

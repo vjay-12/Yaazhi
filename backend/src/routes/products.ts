@@ -76,6 +76,7 @@ router.get('/', async (req, res): Promise<void> => {
         imageUrl: p.image_url || null,
         isActive: Boolean(p.is_active),
         isArchived: !p.is_active,
+        status: p.is_active ? 'ACTIVE' : 'ARCHIVED',
         createdAt: p.created_at,
         updatedAt: p.updated_at,
       };
@@ -174,6 +175,9 @@ router.get('/:id', async (req, res): Promise<void> => {
       currentStock: totalStock,
       locationStock,
       imageUrl: product.image_url || null,
+      isActive: Boolean(product.is_active),
+      isArchived: !product.is_active,
+      status: product.is_active ? 'ACTIVE' : 'ARCHIVED',
       recentMovements: product.stock_movements.map((m) => ({
         id: m.id,
         type: m.movement_type,
@@ -319,6 +323,9 @@ router.post('/', async (req, res): Promise<void> => {
       taxRate: Number(product.tax_rate),
       reorderPoint: Number(product.min_stock_level),
       imageUrl: product.image_url || null,
+      isActive: true,
+      isArchived: false,
+      status: 'ACTIVE',
     });
   } catch (err: any) {
     console.error('Create product error:', err);
@@ -416,7 +423,13 @@ router.post('/:id/archive', async (req, res): Promise<void> => {
       where: { id: req.params.id },
       data: { is_active: false },
     });
-    res.json({ success: true, message: `Product ${product.name} archived successfully`, isArchived: true });
+    res.json({
+      success: true,
+      message: `Product ${product.name} archived successfully`,
+      isArchived: true,
+      isActive: false,
+      status: 'ARCHIVED',
+    });
   } catch (err: any) {
     res.status(500).json({ error: 'Failed to archive product' });
   }
@@ -429,7 +442,13 @@ router.post('/:id/unarchive', async (req, res): Promise<void> => {
       where: { id: req.params.id },
       data: { is_active: true },
     });
-    res.json({ success: true, message: `Product ${product.name} restored to active catalog`, isArchived: false });
+    res.json({
+      success: true,
+      message: `Product ${product.name} restored to active catalog`,
+      isArchived: false,
+      isActive: true,
+      status: 'ACTIVE',
+    });
   } catch (err: any) {
     res.status(500).json({ error: 'Failed to restore product' });
   }

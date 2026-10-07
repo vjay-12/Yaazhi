@@ -17,7 +17,11 @@ export type BoutiqueCategory =
 
 export type UnitOfMeasure = 'pcs' | 'meters' | 'sets' | 'pairs' | 'box';
 
+export type ProductLifecycleStatus = 'ACTIVE' | 'ARCHIVED';
+export type ProductLifecycleFilter = 'ACTIVE' | 'ARCHIVED' | 'ALL';
+
 export type StockStatus = 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
+export type StockStatusFilter = 'ALL' | 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
 
 export interface ProductVariant {
   id: string;
@@ -56,9 +60,10 @@ export interface YaazhiProduct {
   variants: ProductVariant[];
   tags: string[];
   isActive: boolean;
-  isArchived?: boolean;
+  isArchived: boolean;
+  status: ProductLifecycleStatus;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface CreateProductInput {
@@ -92,7 +97,8 @@ export interface UpdateProductInput extends Partial<CreateProductInput> {
 export interface ProductFilterOptions {
   search?: string;
   category?: BoutiqueCategory | 'ALL' | string;
-  stockStatus?: StockStatus | 'ARCHIVED' | 'ALL';
+  lifecycle?: ProductLifecycleFilter;
+  stockStatus?: StockStatusFilter | StockStatus | 'ARCHIVED' | 'ALL';
   fabric?: string;
   sortBy?: 'name' | 'sellPrice' | 'currentStock' | 'createdAt';
   sortOrder?: 'asc' | 'desc';

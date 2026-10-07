@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../../components/common/Modal';
 import { Button } from '../../components/common/Button';
 import type { YaazhiProduct } from '../../types/product';
-import type { AdjustmentReasonCode, BoutiqueLocation } from '../../types/inventory';
+import type { AdjustmentReasonCode } from '../../types/inventory';
 import { inventoryService } from '../../services/inventoryService';
 import { CustomDropdown } from '../../components/common/CustomDropdown';
 
@@ -17,7 +17,7 @@ const REASON_OPTIONS: { code: AdjustmentReasonCode; label: string; desc: string 
   { code: 'audit', label: 'Physical Audit (Periodic Count)', desc: 'Reconciling physical boutique count' },
   { code: 'damage', label: 'Damaged / Defective', desc: 'Zari snag, fabric discoloration, tear' },
   { code: 'loss', label: 'Loss / Shrinkage', desc: 'Discrepancy or unexplained loss' },
-  { code: 'miscount', label: 'Counter Miscount Correction', desc: 'Correcting prior entry error' },
+  { code: 'miscount', label: 'Miscount Correction', desc: 'Correcting prior inventory entry error' },
   { code: 'return', label: 'Customer Return Restock', desc: 'Restocking unworn boutique item' },
 ];
 
@@ -27,8 +27,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
   product,
   onStockAdjusted,
 }) => {
-  const [locations, setLocations] = useState<BoutiqueLocation[]>([]);
-  const [selectedLocationId, setSelectedLocationId] = useState('');
+  const [defaultLocationId, setDefaultLocationId] = useState('sr-01');
   const [newStock, setNewStock] = useState('');
   const [reasonCode, setReasonCode] = useState<AdjustmentReasonCode>('audit');
   const [notes, setNotes] = useState('');
@@ -39,14 +38,12 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
   useEffect(() => {
     if (isOpen && product) {
       inventoryService.getLocations().then((locs) => {
-        setLocations(locs);
         const defaultLoc = locs.find((l) => l.isDefault) || locs[0];
         if (defaultLoc) {
-          setSelectedLocationId(defaultLoc.id);
-          const currentCount = product.locationStock[defaultLoc.id] ?? product.currentStock;
-          setNewStock(String(currentCount));
+          setDefaultLocationId(defaultLoc.id);
         }
-      });
+      }).catch(() => {});
+      setNewStock(String(product.currentStock));
       setNotes('');
       setError(null);
     }
@@ -54,8 +51,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
 
   if (!product) return null;
 
-  const currentCount =
-    product.locationStock[selectedLocationId] ?? product.currentStock;
+  const currentCount = product.currentStock;
   const delta = Number(newStock) - currentCount;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,7 +74,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
     try {
       await inventoryService.adjustStock({
         productId: product.id,
-        locationId: selectedLocationId,
+        locationId: defaultLocationId,
         newStock: Number(newStock),
         reasonCode,
         notes: notes.trim(),
@@ -131,25 +127,6 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             {error}
           </div>
         )}
-
-        <div className="yz-field">
-          <label className="yz-label">Stock Location / Counter *</label>
-          <CustomDropdown
-            value={selectedLocationId}
-            onChange={(val) => {
-              const locId = String(val);
-              setSelectedLocationId(locId);
-              const count = product.locationStock[locId] ?? product.currentStock;
-              setNewStock(String(count));
-            }}
-            options={locations.map((l) => ({
-              value: l.id,
-              label: `${l.name} (${l.code})`,
-            }))}
-            minWidth="100%"
-            style={{ width: '100%' }}
-          />
-        </div>
 
         {/* Current vs New Calculation */}
         <div

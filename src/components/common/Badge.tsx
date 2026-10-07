@@ -64,3 +64,48 @@ export const CategoryBadge: React.FC<CategoryBadgeProps> = ({ category }) => {
     </span>
   );
 };
+
+interface LifecycleBadgeProps {
+  status: 'ACTIVE' | 'ARCHIVED' | string;
+}
+
+export const LifecycleBadge: React.FC<LifecycleBadgeProps> = ({ status }) => {
+  const isArchived = status === 'ARCHIVED';
+  if (isArchived) {
+    return (
+      <span
+        className="yz-badge"
+        style={{
+          backgroundColor: '#F1F5F9',
+          color: '#64748B',
+          border: '1px solid #CBD5E1',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+        }}
+        title="Product archived from active catalog"
+      >
+        <span className="yz-badge-dot" style={{ backgroundColor: '#94A3B8' }} />
+        Archived
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="yz-badge"
+      style={{
+        backgroundColor: '#ECFDF5',
+        color: '#065F46',
+        border: '1px solid #A7F3D0',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+      }}
+      title="Active boutique product"
+    >
+      <span className="yz-badge-dot" style={{ backgroundColor: '#10B981' }} />
+      Active
+    </span>
+  );
+};

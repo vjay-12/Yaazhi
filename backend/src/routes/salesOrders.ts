@@ -224,9 +224,17 @@ router.post('/', async (req, res): Promise<void> => {
     let subtotal = 0;
     let discountTotal = 0;
     for (const it of items) {
+      const prod = await prisma.product.findUnique({ where: { id: it.product_id } });
+      if (!prod) {
+        res.status(400).json({ error: `Product not found (ID: ${it.product_id})` });
+        return;
+      }
+      if (!prod.is_active) {
+        res.status(400).json({ error: `Product "${prod.name}" (${prod.sku}) is archived and cannot be ordered.` });
+        return;
+      }
       if (it.tax_rate === undefined) {
-        const prod = await prisma.product.findUnique({ where: { id: it.product_id } });
-        it.tax_rate = prod ? Number(prod.tax_rate) : 5.0;
+        it.tax_rate = Number(prod.tax_rate);
       }
       subtotal += it.quantity * it.unit_price;
       discountTotal += it.discount;

@@ -46,23 +46,18 @@ export const BillingPage: React.FC = () => {
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Dynamically derive unique categories from real product data
+  // Dynamically derive unique categories from real product data (ACTIVE ONLY)
   const availableCategories = React.useMemo(() => {
     const set = new Set<string>();
     products.forEach((p) => {
-      if (p.category && typeof p.category === 'string' && p.category.trim()) {
+      if (p.isActive && !p.isArchived && p.category && typeof p.category === 'string' && p.category.trim()) {
         set.add(p.category.trim());
       }
     });
     return ['ALL', ...Array.from(set).sort()];
   }, [products]);
 
-  // Reset selected category if it no longer exists
-  useEffect(() => {
-    if (selectedCategory !== 'ALL' && !availableCategories.includes(selectedCategory)) {
-      setSelectedCategory('ALL');
-    }
-  }, [availableCategories, selectedCategory]);
+  const effectiveCategory = (selectedCategory !== 'ALL' && availableCategories.includes(selectedCategory)) ? selectedCategory : 'ALL';
 
   // Payment Modal State
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
@@ -82,7 +77,7 @@ export const BillingPage: React.FC = () => {
   const [recentCustomers, setRecentCustomers] = useState<any[]>([]);
 
   useEffect(() => {
-    productService.list().then(setProducts);
+    productService.list({ lifecycle: 'ACTIVE' }).then(setProducts);
     customerService.list().then(setRecentCustomers).catch(() => {});
     settingsService
       .getSettings()
@@ -132,6 +127,15 @@ export const BillingPage: React.FC = () => {
   });
 
   const addToCart = (product: YaazhiProduct) => {
+    if (product.isArchived || !product.isActive) {
+      showToast({
+        type: 'error',
+        title: 'Product Archived',
+        message: `${product.name} is archived and cannot be billed.`,
+      });
+      return;
+    }
+
     if (product.currentStock <= 0) {
       showToast({
         type: 'warning',
@@ -232,6 +236,16 @@ export const BillingPage: React.FC = () => {
   const handleCompletePayment = async () => {
     if (cart.length === 0 || isSubmittingPayment) return;
 
+    const archivedItem = cart.find((i) => i.product.isArchived || !i.product.isActive);
+    if (archivedItem) {
+      showToast({
+        type: 'error',
+        title: 'Archived Item in Cart',
+        message: `${archivedItem.product.name} is archived and cannot be billed. Please remove it from the cart.`,
+      });
+      return;
+    }
+
     if (!selectedCustomerId || !customerName.trim()) {
       showToast({
         type: 'warning',
@@ -319,8 +333,8 @@ export const BillingPage: React.FC = () => {
         message: `Bill ${res.billNo} registered (${billPaymentStatus}). Total: ₹${res.totalAmount.toLocaleString('en-IN')}`,
       });
 
-      // Refresh product stock
-      productService.list().then(setProducts);
+      // Refresh product stock (ACTIVE ONLY)
+      productService.list({ lifecycle: 'ACTIVE' }).then(setProducts);
     } catch (err: any) {
       showToast({
         type: 'error',
@@ -347,7 +361,8 @@ export const BillingPage: React.FC = () => {
   };
 
   const filteredProducts = products.filter((p) => {
-    if (selectedCategory !== 'ALL' && p.category?.trim().toLowerCase() !== selectedCategory.toLowerCase()) {
+    if (p.isArchived || !p.isActive) return false;
+    if (effectiveCategory !== 'ALL' && p.category?.trim().toLowerCase() !== effectiveCategory.toLowerCase()) {
       return false;
     }
     if (search.trim()) {
@@ -393,7 +408,7 @@ export const BillingPage: React.FC = () => {
             {/* Dynamic Category Quick Pills */}
             <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '2px' }}>
               {availableCategories.map((c) => {
-                const isSelected = selectedCategory === c;
+                const isSelected = effectiveCategory === c;
                 return (
                   <button
                     key={c}

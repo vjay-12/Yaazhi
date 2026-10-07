@@ -5,89 +5,120 @@ import type {
   UpdateProductInput,
   ProductFilterOptions,
   StockStatus,
+  ProductLifecycleStatus,
+  ProductLifecycleFilter,
 } from '../types/product';
 
 class ProductService {
-  public getStockStatus(product: YaazhiProduct): StockStatus | 'ARCHIVED' {
-    if (product.isArchived || !product.isActive) return 'ARCHIVED';
+  public getStockStatus(product: YaazhiProduct): StockStatus {
     if (product.currentStock <= 0) return 'OUT_OF_STOCK';
     if (product.currentStock <= product.reorderPoint) return 'LOW_STOCK';
     return 'IN_STOCK';
   }
 
+  public getLifecycleStatus(product: YaazhiProduct): ProductLifecycleStatus {
+    return product.isArchived || !product.isActive ? 'ARCHIVED' : 'ACTIVE';
+  }
+
   public async list(filters?: ProductFilterOptions): Promise<YaazhiProduct[]> {
-    const data = await api.get<any[]>('/products?status=all');
+    // 1. Determine lifecycle filter: default is 'ACTIVE'
+    const lifecycle: ProductLifecycleFilter = filters?.lifecycle || 'ACTIVE';
 
-    let products: YaazhiProduct[] = data.map((p) => ({
-      id: p.id,
-      sku: p.sku,
-      barcode: p.sku, // barcode generated from SKU
-      name: p.name,
-      description: p.description || '',
-      fabric: p.fabric || 'Pure Silk',
-      craft: p.craft || 'Handloom',
-      category: p.category || 'Sarees',
-      unitOfMeasure: p.unitOfMeasure || 'PCS',
-      costPrice: p.purchasePrice ?? p.costPrice ?? 0,
-      salePrice: p.salePrice ?? p.sellPrice ?? 0,
-      sellPrice: p.salePrice ?? p.sellPrice ?? 0,
-      taxRate: Number(p.taxRate ?? p.gstRate ?? p.tax_rate ?? 5.0),
-      gstRate: Number(p.gstRate ?? p.taxRate ?? p.tax_rate ?? 5.0),
-      hsnCode: p.hsnCode || '5007',
-      currentStock: p.currentStock ?? p.totalStock ?? 0,
-      reorderPoint: p.reorderPoint || 3,
-      imageUrl: p.imageUrl || p.image_url || null,
-      locationStock: p.locationStock || {},
-      variants: [],
-      tags: [],
-      isActive: Boolean(p.isActive ?? p.is_active ?? true),
-      isArchived: Boolean(p.isArchived ?? (p.is_active !== undefined ? !p.is_active : false)),
-      createdAt: p.createdAt || new Date().toISOString(),
-      updatedAt: p.updatedAt || new Date().toISOString(),
-    }));
+    // Support legacy filters where stockStatus was passed as 'ARCHIVED'
+    const effectiveLifecycle: ProductLifecycleFilter =
+      filters?.stockStatus === 'ARCHIVED' ? 'ARCHIVED' : lifecycle;
 
-    if (filters) {
-      if (filters.search && filters.search.trim() !== '') {
-        const query = filters.search.toLowerCase().trim();
-        products = products.filter(
-          (p) =>
-            p.name.toLowerCase().includes(query) ||
-            p.sku.toLowerCase().includes(query) ||
-            p.barcode.toLowerCase().includes(query) ||
-            p.category.toLowerCase().includes(query) ||
-            (p.fabric && p.fabric.toLowerCase().includes(query)) ||
-            (p.craft && p.craft.toLowerCase().includes(query))
-        );
-      }
+    const statusParam =
+      effectiveLifecycle === 'ALL'
+        ? 'all'
+        : effectiveLifecycle === 'ARCHIVED'
+        ? 'archived'
+        : 'active';
 
-      if (filters.category && filters.category !== 'ALL') {
-        const catFilter = filters.category.trim().toLowerCase();
-        products = products.filter((p) => p.category?.trim().toLowerCase() === catFilter);
-      }
+    const data = await api.get<any[]>(`/products?status=${statusParam}`);
 
-      if (filters.stockStatus === 'ARCHIVED') {
-        products = products.filter((p) => p.isArchived || !p.isActive);
-      } else {
-        // By default, exclude archived products from active stock views
-        products = products.filter((p) => !p.isArchived && p.isActive !== false);
+    let products: YaazhiProduct[] = data.map((p) => {
+      const isArchived = Boolean(p.isArchived ?? (p.is_active !== undefined ? !p.is_active : false));
+      const isActive = Boolean(p.isActive ?? p.is_active ?? !isArchived);
+      const status: ProductLifecycleStatus = isArchived || !isActive ? 'ARCHIVED' : 'ACTIVE';
 
-        if (filters.stockStatus && filters.stockStatus !== 'ALL') {
-          products = products.filter((p) => this.getStockStatus(p) === filters.stockStatus);
+      return {
+        id: p.id,
+        sku: p.sku,
+        barcode: p.sku, // barcode generated from SKU
+        name: p.name,
+        description: p.description || '',
+        fabric: p.fabric || 'Pure Silk',
+        craft: p.craft || 'Handloom',
+        category: p.category || 'Sarees',
+        unitOfMeasure: p.unitOfMeasure || p.unit || 'PCS',
+        costPrice: p.purchasePrice ?? p.costPrice ?? 0,
+        salePrice: p.salePrice ?? p.sellPrice ?? 0,
+        sellPrice: p.salePrice ?? p.sellPrice ?? 0,
+        taxRate: Number(p.taxRate ?? p.gstRate ?? p.tax_rate ?? 5.0),
+        gstRate: Number(p.gstRate ?? p.taxRate ?? p.tax_rate ?? 5.0),
+        hsnCode: p.hsnCode || '5007',
+        currentStock: p.currentStock ?? p.totalStock ?? 0,
+        reorderPoint: p.reorderPoint || 3,
+        imageUrl: p.imageUrl || p.image_url || null,
+        locationStock: p.locationStock || {},
+        variants: [],
+        tags: [],
+        isActive,
+        isArchived,
+        status,
+        createdAt: p.createdAt || new Date().toISOString(),
+        updatedAt: p.updatedAt || new Date().toISOString(),
+      };
+    });
+
+    // Filtering pipeline in strict order:
+    // 1. Lifecycle filter
+    if (effectiveLifecycle === 'ACTIVE') {
+      products = products.filter((p) => p.status === 'ACTIVE' && p.isActive && !p.isArchived);
+    } else if (effectiveLifecycle === 'ARCHIVED') {
+      products = products.filter((p) => p.status === 'ARCHIVED' || p.isArchived || !p.isActive);
+    }
+    // If 'ALL', show both active and archived
+
+    // 2. Stock filter (works together with lifecycle filtering)
+    const stockFilter = filters?.stockStatus;
+    if (stockFilter && stockFilter !== 'ALL' && stockFilter !== 'ARCHIVED') {
+      products = products.filter((p) => this.getStockStatus(p) === stockFilter);
+    }
+
+    // 3. Category filter
+    if (filters?.category && filters.category !== 'ALL') {
+      const catFilter = filters.category.trim().toLowerCase();
+      products = products.filter((p) => p.category?.trim().toLowerCase() === catFilter);
+    }
+
+    // 4. Search filter
+    if (filters?.search && filters.search.trim() !== '') {
+      const query = filters.search.toLowerCase().trim();
+      products = products.filter(
+        (p) =>
+          p.name.toLowerCase().includes(query) ||
+          p.sku.toLowerCase().includes(query) ||
+          p.barcode.toLowerCase().includes(query) ||
+          p.category.toLowerCase().includes(query) ||
+          (p.fabric && p.fabric.toLowerCase().includes(query)) ||
+          (p.craft && p.craft.toLowerCase().includes(query))
+      );
+    }
+
+    // 5. Sort
+    if (filters?.sortBy) {
+      products = [...products].sort((a, b) => {
+        const valA: any = a[filters.sortBy!];
+        const valB: any = b[filters.sortBy!];
+        if (typeof valA === 'string') {
+          return filters.sortOrder === 'desc'
+            ? valB.localeCompare(valA)
+            : valA.localeCompare(valB);
         }
-      }
-
-      if (filters.sortBy) {
-        products = [...products].sort((a, b) => {
-          const valA: any = a[filters.sortBy!];
-          const valB: any = b[filters.sortBy!];
-          if (typeof valA === 'string') {
-            return filters.sortOrder === 'desc'
-              ? valB.localeCompare(valA)
-              : valA.localeCompare(valB);
-          }
-          return filters.sortOrder === 'desc' ? valB - valA : valA - valB;
-        });
-      }
+        return filters.sortOrder === 'desc' ? valB - valA : valA - valB;
+      });
     }
 
     return products;
@@ -96,6 +127,10 @@ class ProductService {
   public async getById(id: string): Promise<YaazhiProduct | null> {
     try {
       const p = await api.get<any>(`/products/${id}`);
+      const isArchived = Boolean(p.isArchived ?? (p.is_active !== undefined ? !p.is_active : false));
+      const isActive = Boolean(p.isActive ?? p.is_active ?? !isArchived);
+      const status: ProductLifecycleStatus = isArchived || !isActive ? 'ARCHIVED' : 'ACTIVE';
+
       return {
         id: p.id,
         sku: p.sku,
@@ -118,9 +153,11 @@ class ProductService {
         locationStock: p.locationStock || {},
         variants: [],
         tags: [],
-        isActive: true,
+        isActive,
+        isArchived,
+        status,
         createdAt: p.createdAt || new Date().toISOString(),
-        updatedAt: p.createdAt || new Date().toISOString(),
+        updatedAt: p.updatedAt || new Date().toISOString(),
       };
     } catch {
       return null;
@@ -128,7 +165,7 @@ class ProductService {
   }
 
   public async getByBarcodeOrSku(code: string): Promise<YaazhiProduct | null> {
-    const products = await this.list();
+    const products = await this.list({ lifecycle: 'ACTIVE' });
     const clean = code.trim().toLowerCase();
     return (
       products.find(
@@ -183,6 +220,8 @@ class ProductService {
       variants: [],
       tags: [],
       isActive: true,
+      isArchived: false,
+      status: 'ACTIVE',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

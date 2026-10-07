@@ -79,6 +79,10 @@ router.post('/checkout', async (req, res): Promise<void> => {
             throw new Error(`Product not found (ID: ${item.product_id})`);
           }
 
+          if (!product.is_active) {
+            throw new Error(`Product "${product.name}" (${product.sku}) is archived and cannot be billed.`);
+          }
+
           if (item.tax_rate === undefined) {
             item.tax_rate = Number(product.tax_rate);
           }
