@@ -6,7 +6,6 @@ import {
   ArrowUpRight,
   SlidersHorizontal,
   Clock,
-  Eye,
 } from 'lucide-react';
 import type { StockMovement, MovementType } from '../../types/inventory';
 import { inventoryService } from '../../services/inventoryService';
@@ -134,7 +133,7 @@ export const StockMovementsPage: React.FC = () => {
 
       {/* Compact Single-Line Movements Table */}
       {isLoading ? (
-        <TableSkeleton rows={8} columns={9} />
+        <TableSkeleton rows={8} columns={7} />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={<Clock size={24} />}
@@ -148,32 +147,48 @@ export const StockMovementsPage: React.FC = () => {
         />
       ) : (
         <div className="yz-table-container">
-          <table className="yz-table">
+          <table className="yz-table" style={{ width: '100%', tableLayout: 'fixed' }}>
             <thead>
               <tr>
-                <th style={{ width: '135px' }}>Timestamp</th>
-                <th style={{ width: '90px' }}>Type</th>
-                <th>Product & Weave</th>
+                <th style={{ width: '140px', paddingLeft: '12px' }}>TIMESTAMP</th>
+                <th style={{ width: '84px', textAlign: 'center' }}>TYPE</th>
+                <th style={{ width: '26%', minWidth: '180px' }}>PRODUCT & WEAVE</th>
                 <th style={{ width: '110px' }}>SKU</th>
-                <th style={{ textAlign: 'center', width: '85px' }}>Qty Change</th>
-                <th>Location / Counter</th>
-                <th>Audit Justification / Ref</th>
-                <th>Staff</th>
-                <th style={{ textAlign: 'right', width: '85px' }}>Balance</th>
-                <th style={{ textAlign: 'right', width: '45px', paddingRight: '10px' }}></th>
+                <th style={{ width: '95px', textAlign: 'right' }}>QTY CHANGE</th>
+                <th style={{ minWidth: '220px' }}>AUDIT JUSTIFICATION / REF</th>
+                <th style={{ width: '90px', textAlign: 'right', paddingRight: '14px' }}>BALANCE</th>
               </tr>
             </thead>
             <tbody>
               {paginatedItems.map((m) => {
                 const isIn = m.movementType === 'IN';
                 const isOut = m.movementType === 'OUT';
+
+                const badgeStyle: React.CSSProperties = {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  width: '70px',
+                  height: '22px',
+                  borderRadius: 'var(--yz-radius-sm, 4px)',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  letterSpacing: '0.02em',
+                  textAlign: 'center',
+                  boxSizing: 'border-box',
+                  padding: '0 4px',
+                };
+
                 return (
                   <tr
                     key={m.id}
                     onClick={() => setSelectedMovement(m)}
+                    style={{ cursor: 'pointer' }}
                     title="Click to view full movement details"
                   >
-                    <td style={{ fontSize: '11px', color: 'var(--yz-text-secondary)', whiteSpace: 'nowrap' }}>
+                    {/* 1. TIMESTAMP */}
+                    <td style={{ fontSize: '11px', color: 'var(--yz-text-secondary)', whiteSpace: 'nowrap', paddingLeft: '12px' }}>
                       {new Date(m.timestamp).toLocaleString('en-IN', {
                         day: '2-digit',
                         month: 'short',
@@ -183,52 +198,82 @@ export const StockMovementsPage: React.FC = () => {
                       })}
                     </td>
 
-                    <td>
-                      <span
-                        className={`yz-badge ${
-                          isIn
-                            ? 'yz-badge-in-stock'
-                            : isOut
-                            ? 'yz-badge-out-stock'
-                            : 'yz-badge-gold'
-                        }`}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}
-                      >
-                        {isIn && <ArrowDownLeft size={11} />}
-                        {isOut && <ArrowUpRight size={11} />}
-                        {!isIn && !isOut && <SlidersHorizontal size={11} />}
-                        {m.movementType}
-                      </span>
+                    {/* 2. TYPE */}
+                    <td style={{ textAlign: 'center' }}>
+                      {isIn ? (
+                        <span
+                          style={{
+                            ...badgeStyle,
+                            backgroundColor: '#ECFDF5',
+                            color: '#065F46',
+                            border: '1px solid #A7F3D0',
+                          }}
+                        >
+                          <ArrowDownLeft size={11} strokeWidth={2.5} />
+                          <span>IN</span>
+                        </span>
+                      ) : isOut ? (
+                        <span
+                          style={{
+                            ...badgeStyle,
+                            backgroundColor: '#FEF2F2',
+                            color: '#991B1B',
+                            border: '1px solid #FECACA',
+                          }}
+                        >
+                          <ArrowUpRight size={11} strokeWidth={2.5} />
+                          <span>OUT</span>
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            ...badgeStyle,
+                            backgroundColor: '#FFFBEB',
+                            color: '#92400E',
+                            border: '1px solid #FDE68A',
+                          }}
+                        >
+                          <SlidersHorizontal size={10} strokeWidth={2.2} />
+                          <span>ADJUST</span>
+                        </span>
+                      )}
                     </td>
 
+                    {/* 3. PRODUCT & WEAVE */}
                     <td>
-                      <div className="yz-cell-truncate" style={{ fontWeight: 600, color: 'var(--yz-text-primary)' }}>
+                      <div
+                        className="yz-cell-truncate"
+                        style={{ fontWeight: 600, color: 'var(--yz-text-primary)', maxWidth: '100%' }}
+                        title={m.productName}
+                      >
                         {m.productName}
                       </div>
                     </td>
 
+                    {/* 4. SKU */}
                     <td
                       style={{
                         fontFamily: 'var(--yz-font-mono)',
                         fontSize: '11px',
                         color: 'var(--yz-text-secondary)',
                         whiteSpace: 'nowrap',
-                        minWidth: '95px',
                       }}
                     >
                       {m.sku}
                     </td>
 
+                    {/* 5. QTY CHANGE */}
                     <td
                       style={{
-                        textAlign: 'center',
+                        textAlign: 'right',
                         fontWeight: 700,
                         fontFamily: 'var(--yz-font-mono)',
                         fontSize: '12px',
+                        whiteSpace: 'nowrap',
                         color: isIn
-                          ? 'var(--yz-status-in-stock)'
+                          ? 'var(--yz-status-in-stock, #16A34A)'
                           : isOut
-                          ? 'var(--yz-status-out-stock)'
+                          ? 'var(--yz-status-out-stock, #DC2626)'
                           : 'var(--yz-text-primary)',
                       }}
                       className="tabular-nums"
@@ -236,14 +281,17 @@ export const StockMovementsPage: React.FC = () => {
                       {isIn ? `+${m.quantity}` : isOut ? `-${m.quantity}` : `Δ ${m.quantity}`}
                     </td>
 
-                    <td style={{ fontSize: '11px', color: 'var(--yz-text-secondary)' }}>
-                      <span className="yz-cell-truncate" style={{ maxWidth: '140px', display: 'inline-block' }}>
-                        {m.locationName}
-                      </span>
-                    </td>
-
+                    {/* 6. AUDIT JUSTIFICATION / REF */}
                     <td style={{ fontSize: '11px' }}>
-                      <div className="yz-cell-truncate" style={{ maxWidth: '240px' }}>
+                      <div
+                        className="yz-cell-truncate"
+                        style={{ maxWidth: '100%' }}
+                        title={
+                          m.reasonCode
+                            ? `[${m.reasonCode}] ${m.notes || m.referenceId || ''}`
+                            : `${m.referenceType}: ${m.referenceId || ''}${m.notes ? ` (${m.notes})` : ''}`
+                        }
+                      >
                         {m.reasonCode ? (
                           <>
                             <span
@@ -266,34 +314,18 @@ export const StockMovementsPage: React.FC = () => {
                       </div>
                     </td>
 
-                    <td style={{ fontSize: '11px', color: 'var(--yz-text-secondary)' }}>
-                      {m.performedBy}
-                    </td>
-
+                    {/* 7. BALANCE */}
                     <td
                       style={{
                         textAlign: 'right',
                         fontWeight: 700,
                         fontFamily: 'var(--yz-font-mono)',
+                        whiteSpace: 'nowrap',
+                        paddingRight: '14px',
                       }}
                       className="tabular-nums"
                     >
                       {m.runningBalance}
-                    </td>
-
-                    <td style={{ textAlign: 'right', paddingRight: '8px' }}>
-                      <button
-                        className="yz-btn yz-btn-ghost yz-btn-sm"
-                        style={{ padding: '0 4px', height: '22px' }}
-                        title="View Audit Details"
-                        aria-label="View movement details"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedMovement(m);
-                        }}
-                      >
-                        <Eye size={12} />
-                      </button>
                     </td>
                   </tr>
                 );

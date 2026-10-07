@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
+import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { Pagination } from '../../components/common/Pagination';
 import { usePagination } from '../../hooks/usePagination';
 import { AddVendorModal } from './AddVendorModal';
@@ -1502,100 +1503,57 @@ export const VendorsPage: React.FC = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* ARCHIVE CONFIRMATION MODAL                                                */}
+      {/* ARCHIVE CONFIRMATION DIALOG                                               */}
       {/* ========================================================================= */}
-      {vendorToArchive && (
-        <Modal
-          isOpen={true}
-          onClose={() => setVendorToArchive(null)}
-          title={`Archive Vendor: ${vendorToArchive.name}`}
-          size="sm"
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '10px',
-                backgroundColor: '#FFFBEB',
-                border: '1px solid #FDE68A',
-                padding: '10px 12px',
-                borderRadius: 'var(--yz-radius-sm)',
-                fontSize: '11.5px',
-                color: '#92400E',
-                lineHeight: 1.5,
-              }}
-            >
-              <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px', color: '#D97706' }} />
-              <div>
-                <strong>Archiving does not remove historical records.</strong>
-                <p style={{ marginTop: '4px', margin: 0 }}>
-                  This vendor will be hidden from the default active procurement list. All existing Purchase Orders,
-                  Goods Receipt Notes (GRNs), transactions, and inventory references remain permanently linked and intact.
-                </p>
-              </div>
+      <ConfirmDialog
+        isOpen={Boolean(vendorToArchive)}
+        onClose={() => !isArchiving && setVendorToArchive(null)}
+        onConfirm={handleConfirmArchive}
+        title="Archive Vendor"
+        description={
+          vendorToArchive ? (
+            <div>
+              <p style={{ margin: 0, fontWeight: 500, color: 'var(--yz-text-primary)' }}>
+                Are you sure you want to archive <strong>{vendorToArchive.name}</strong>?
+              </p>
+              <p style={{ margin: '8px 0 0', fontSize: '11.5px', color: 'var(--yz-text-secondary)', lineHeight: 1.45 }}>
+                This vendor will be hidden from the default active procurement list. All existing Purchase Orders,
+                Goods Receipt Notes (GRNs), transactions, and inventory references remain permanently linked and intact.
+              </p>
             </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setVendorToArchive(null)}
-                disabled={isArchiving}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleConfirmArchive}
-                disabled={isArchiving}
-                style={{ backgroundColor: '#B45309', borderColor: '#B45309' }}
-              >
-                {isArchiving ? 'Archiving...' : 'Confirm Archive'}
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
+          ) : null
+        }
+        confirmLabel="Archive Vendor"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={isArchiving}
+      />
 
       {/* ========================================================================= */}
-      {/* RESTORE CONFIRMATION MODAL                                                */}
+      {/* RESTORE CONFIRMATION DIALOG                                               */}
       {/* ========================================================================= */}
-      {vendorToRestore && (
-        <Modal
-          isOpen={true}
-          onClose={() => setVendorToRestore(null)}
-          title={`Restore Vendor: ${vendorToRestore.name}`}
-          size="sm"
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ fontSize: '12px', color: 'var(--yz-text-secondary)', lineHeight: 1.5 }}>
-              Restore <strong>{vendorToRestore.name}</strong> to the active vendor directory? This vendor will be available
-              for new Purchase Orders and regular procurement.
+      <ConfirmDialog
+        isOpen={Boolean(vendorToRestore)}
+        onClose={() => !isRestoring && setVendorToRestore(null)}
+        onConfirm={handleConfirmRestore}
+        title="Restore Vendor"
+        description={
+          vendorToRestore ? (
+            <div>
+              <p style={{ margin: 0, fontWeight: 500, color: 'var(--yz-text-primary)' }}>
+                Are you sure you want to restore <strong>{vendorToRestore.name}</strong>?
+              </p>
+              <p style={{ margin: '8px 0 0', fontSize: '11.5px', color: 'var(--yz-text-secondary)', lineHeight: 1.45 }}>
+                This vendor will be returned to the active vendor directory and available for new Purchase Orders and regular procurement.
+              </p>
             </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setVendorToRestore(null)}
-                disabled={isRestoring}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleConfirmRestore}
-                disabled={isRestoring}
-              >
-                {isRestoring ? 'Restoring...' : 'Restore Vendor'}
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
+          ) : null
+        }
+        confirmLabel="Restore Vendor"
+        cancelLabel="Cancel"
+        variant="primary"
+        isLoading={isRestoring}
+      />
 
       {/* ========================================================================= */}
       {/* ADD / EDIT VENDOR MODAL                                                   */}

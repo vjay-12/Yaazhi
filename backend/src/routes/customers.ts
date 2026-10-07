@@ -88,7 +88,10 @@ router.get('/', async (req, res): Promise<void> => {
           value: v.numeric_value ? `${v.numeric_value} ${v.unit}` : (v.text_value || '-'),
         })) || [],
         isArchived: Boolean(c.is_archived),
+        archivedAt: c.archived_at ? c.archived_at.toISOString() : null,
+        archivedBy: c.archived_by || null,
         createdAt: c.created_at,
+        updatedAt: c.updated_at,
       };
     });
 
@@ -141,6 +144,9 @@ router.get('/:id', async (req, res): Promise<void> => {
       ...customer,
       billingAddress: customer.address || '',
       shippingAddress: customer.shipping_address || customer.address || '',
+      isArchived: Boolean(customer.is_archived),
+      archivedAt: customer.archived_at ? customer.archived_at.toISOString() : null,
+      archivedBy: customer.archived_by || null,
       totalOrders,
       totalSpent,
     });
@@ -238,7 +244,11 @@ router.post('/:id/archive', async (req, res): Promise<void> => {
   try {
     const customer = await prisma.customer.update({
       where: { id: req.params.id },
-      data: { is_archived: true },
+      data: {
+        is_archived: true,
+        archived_at: new Date(),
+        archived_by: req.body.archived_by || 'Boutique Manager',
+      },
     });
     res.json({ success: true, message: `Customer ${customer.name} moved to archive`, customer });
   } catch (err: any) {
@@ -252,7 +262,11 @@ router.post(['/:id/unarchive', '/:id/restore'], async (req, res): Promise<void> 
   try {
     const customer = await prisma.customer.update({
       where: { id: req.params.id },
-      data: { is_archived: false },
+      data: {
+        is_archived: false,
+        archived_at: null,
+        archived_by: null,
+      },
     });
     res.json({ success: true, message: `Customer ${customer.name} restored to active directory`, customer });
   } catch (err: any) {

@@ -10,10 +10,10 @@ import {
   Clock,
   PackageCheck,
   XCircle,
-  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
+import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { Pagination } from '../../components/common/Pagination';
 import { CustomDropdown } from '../../components/common/CustomDropdown';
 import { ProductSearchDropdown } from '../../components/common/ProductSearchDropdown';
@@ -936,105 +936,69 @@ export const PurchasesPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Footer with Actions */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                alignItems: 'center',
-                gap: '8px',
-                marginTop: '6px',
-                borderTop: '1px solid var(--yz-border)',
-                paddingTop: '10px',
-              }}
-            >
-              {selectedPO.status === 'ORDERED' && (
-                <>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    icon={<XCircle size={13} />}
-                    onClick={() => setPoToCancel(selectedPO)}
-                    disabled={isCancelling === selectedPO.id || isReceiving === selectedPO.id}
-                    style={{ color: '#DC2626', borderColor: '#FCA5A5' }}
-                  >
-                    Cancel Purchase Order
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    icon={<PackageCheck size={14} />}
-                    onClick={() => handleReceivePO(selectedPO)}
-                    disabled={isReceiving === selectedPO.id || isCancelling === selectedPO.id}
-                    style={{ backgroundColor: '#166534', borderColor: '#166534' }}
-                  >
-                    {isReceiving === selectedPO.id ? 'Processing Receipt...' : 'Receive Goods into Stock (GRN)'}
-                  </Button>
-                </>
-              )}
-              <Button variant="secondary" size="sm" onClick={() => setSelectedPO(null)}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* Cancel Purchase Order Confirmation Modal */}
-      {poToCancel && (
-        <Modal
-          isOpen={true}
-          onClose={() => !isCancelling && setPoToCancel(null)}
-          title={`Cancel Purchase Order ${poToCancel.poNumber}`}
-          size="sm"
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '10px',
-                backgroundColor: '#FEF2F2',
-                border: '1px solid #FECACA',
-                padding: '10px 12px',
-                borderRadius: 'var(--yz-radius-sm)',
-                fontSize: '11.5px',
-                color: '#991B1B',
-                lineHeight: 1.5,
-              }}
-            >
-              <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px', color: '#DC2626' }} />
-              <div>
-                <strong>Are you sure you want to cancel this purchase order?</strong>
-                <p style={{ marginTop: '4px', margin: 0 }}>
-                  This will mark <strong>{poToCancel.poNumber}</strong> ({poToCancel.vendorName}) as Cancelled.
-                  No goods will be received into showroom inventory and the order becomes read-only history.
-                </p>
+            {/* Footer with Actions (Only when actionable) */}
+            {selectedPO.status === 'ORDERED' && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginTop: '12px',
+                  borderTop: '1px solid var(--yz-border)',
+                  paddingTop: '10px',
+                }}
+              >
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={<XCircle size={13} />}
+                  onClick={() => setPoToCancel(selectedPO)}
+                  disabled={isCancelling === selectedPO.id || isReceiving === selectedPO.id}
+                  style={{ color: '#DC2626', borderColor: '#FCA5A5' }}
+                >
+                  Cancel Purchase Order
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon={<PackageCheck size={14} />}
+                  onClick={() => handleReceivePO(selectedPO)}
+                  disabled={isReceiving === selectedPO.id || isCancelling === selectedPO.id}
+                  style={{ backgroundColor: '#166534', borderColor: '#166534' }}
+                >
+                  {isReceiving === selectedPO.id ? 'Processing Receipt...' : 'Receive Goods into Stock (GRN)'}
+                </Button>
               </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setPoToCancel(null)}
-                disabled={Boolean(isCancelling)}
-              >
-                Keep Order
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleConfirmCancelPO}
-                disabled={Boolean(isCancelling)}
-                style={{ backgroundColor: '#DC2626', borderColor: '#DC2626' }}
-              >
-                {isCancelling ? 'Cancelling...' : 'Confirm Cancellation'}
-              </Button>
-            </div>
+            )}
           </div>
         </Modal>
       )}
+
+      {/* Cancel Purchase Order Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(poToCancel)}
+        onClose={() => !isCancelling && setPoToCancel(null)}
+        onConfirm={handleConfirmCancelPO}
+        title="Cancel Purchase Order"
+        description={
+          poToCancel ? (
+            <div>
+              <p style={{ margin: 0, fontWeight: 500, color: 'var(--yz-text-primary)' }}>
+                Are you sure you want to cancel purchase order <strong>"{poToCancel.poNumber}"</strong>?
+              </p>
+              <p style={{ margin: '8px 0 0', fontSize: '11.5px', color: 'var(--yz-text-secondary)', lineHeight: 1.45 }}>
+                This will mark order <strong>{poToCancel.poNumber}</strong> ({poToCancel.vendorName}) as Cancelled.
+                No goods will be received into showroom inventory and the order becomes read-only history.
+              </p>
+            </div>
+          ) : null
+        }
+        confirmLabel="Cancel Purchase Order"
+        cancelLabel="Keep Order"
+        variant="danger"
+        isLoading={Boolean(isCancelling)}
+      />
 
       {/* Reworked Invenaro-Style Create Purchase Order Modal */}
       {isCreateModalOpen && (

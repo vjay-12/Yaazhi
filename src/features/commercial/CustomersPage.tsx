@@ -12,7 +12,6 @@ import {
   Check,
 } from 'lucide-react';
 import { Button } from '../../components/common/Button';
-import { Modal } from '../../components/common/Modal';
 import { Pagination } from '../../components/common/Pagination';
 import { usePagination } from '../../hooks/usePagination';
 import { customerService, type CustomerData } from '../../services/customerService';
@@ -20,6 +19,7 @@ import { useToast } from '../../components/common/Toast';
 import { AddCustomerModal } from './AddCustomerModal';
 import { TemplateManagerModal } from './TemplateManagerModal';
 import { CustomerDetailModal } from './CustomerDetailModal';
+import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 
 type CustomerStatusFilter = 'ALL' | 'ACTIVE' | 'ARCHIVED';
 
@@ -42,9 +42,11 @@ export const CustomersPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
 
-  // Archive & Permanent Delete confirmation states
+  // Archive, Restore & Permanent Delete confirmation states
   const [customerToArchive, setCustomerToArchive] = useState<CustomerData | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [customerToRestore, setCustomerToRestore] = useState<CustomerData | null>(null);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [customerToDeletePermanently, setCustomerToDeletePermanently] = useState<CustomerData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -110,17 +112,19 @@ export const CustomersPage: React.FC = () => {
   };
 
   // Restore action
-  const handleRestoreCustomer = async (c: CustomerData, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleConfirmRestore = async () => {
+    if (!customerToRestore) return;
     try {
-      await customerService.unarchive(c.id);
+      setIsRestoring(true);
+      await customerService.unarchive(customerToRestore.id);
       showToast({
         type: 'success',
         title: 'Customer Restored',
-        message: `${c.name} restored to active directory.`,
+        message: `${customerToRestore.name} restored to active directory.`,
       });
+      setCustomerToRestore(null);
       await loadCustomers();
-      if (selectedCustomer?.id === c.id) {
+      if (selectedCustomer?.id === customerToRestore.id) {
         setSelectedCustomer((prev) => (prev ? { ...prev, isArchived: false } : null));
       }
     } catch (err: any) {
@@ -129,6 +133,8 @@ export const CustomersPage: React.FC = () => {
         title: 'Restore Failed',
         message: err.message || 'Could not restore customer',
       });
+    } finally {
+      setIsRestoring(false);
     }
   };
 
@@ -554,7 +560,10 @@ export const CustomersPage: React.FC = () => {
                               color: '#166534',
                               flexShrink: 0,
                             }}
-                            onClick={(e) => handleRestoreCustomer(c, e)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCustomerToRestore(c);
+                            }}
                             title="Restore customer to active directory"
                           >
                             <RotateCcw size={12} />
@@ -638,96 +647,78 @@ export const CustomersPage: React.FC = () => {
         />
       )}
 
-      {/* Archive Customer Confirmation Modal */}
-      {customerToArchive && (
-        <Modal
-          isOpen={Boolean(customerToArchive)}
-          onClose={() => !isArchiving && setCustomerToArchive(null)}
-          title="Archive Customer"
-          maxWidth="460px"
-          footer={
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setCustomerToArchive(null)}
-                disabled={isArchiving}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleConfirmArchive}
-                disabled={isArchiving}
-              >
-                {isArchiving ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Loader2 size={13} className="animate-spin" /> Archiving...
-                  </span>
-                ) : (
-                  'Archive Customer'
-                )}
-              </Button>
-            </>
-          }
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
-            <p style={{ margin: 0, color: 'var(--yz-text-primary)' }}>
-              Are you sure you want to archive <strong>{customerToArchive.name}</strong>?
-            </p>
-            <p style={{ margin: 0, color: 'var(--yz-text-secondary)', fontSize: '11px', lineHeight: 1.4 }}>
-              The customer will be moved to the <strong>Archived</strong> tab. Their entire profile, tailoring
-              measurement profiles, sales orders, payments, and notes will be safely preserved and never deleted.
-            </p>
-          </div>
-        </Modal>
-      )}
+      {/* Archive Customer Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(customerToArchive)}
+        onClose={() => !isArchiving && setCustomerToArchive(null)}
+        onConfirm={handleConfirmArchive}
+        title="Archive Customer"
+        description={
+          customerToArchive ? (
+            <div>
+              <p style={{ margin: 0, fontWeight: 500, color: 'var(--yz-text-primary)' }}>
+                Are you sure you want to archive <strong>{customerToArchive.name}</strong>?
+              </p>
+              <p style={{ margin: '8px 0 0', fontSize: '11.5px', color: 'var(--yz-text-secondary)', lineHeight: 1.45 }}>
+                The customer will be moved to the <strong>Archived</strong> tab. Their entire profile, tailoring
+                measurement profiles, sales orders, payments, and notes will be safely preserved and never deleted.
+              </p>
+            </div>
+          ) : null
+        }
+        confirmLabel="Archive Customer"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={isArchiving}
+      />
 
-      {/* Permanent Delete Customer Confirmation Modal (Archived customers only) */}
-      {customerToDeletePermanently && (
-        <Modal
-          isOpen={Boolean(customerToDeletePermanently)}
-          onClose={() => !isDeleting && setCustomerToDeletePermanently(null)}
-          title="Permanently Delete Customer"
-          maxWidth="460px"
-          footer={
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setCustomerToDeletePermanently(null)}
-                disabled={isDeleting}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={handleConfirmPermanentDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Loader2 size={13} className="animate-spin" /> Deleting...
-                  </span>
-                ) : (
-                  'Delete Permanently'
-                )}
-              </Button>
-            </>
-          }
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
-            <p style={{ margin: 0, color: 'var(--yz-text-primary)' }}>
-              Are you sure you want to permanently delete <strong>{customerToDeletePermanently.name}</strong>?
-            </p>
-            <p style={{ margin: 0, color: 'var(--yz-error, #DC2626)', fontSize: '11px', lineHeight: 1.4, fontWeight: 500 }}>
-              ⚠️ This action cannot be undone. All tailoring measurements associated with this customer will be removed. Past invoices and sales orders will retain customer records for accounting compliance.
-            </p>
-          </div>
-        </Modal>
-      )}
+      {/* Restore Customer Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(customerToRestore)}
+        onClose={() => !isRestoring && setCustomerToRestore(null)}
+        onConfirm={handleConfirmRestore}
+        title="Restore Customer"
+        description={
+          customerToRestore ? (
+            <div>
+              <p style={{ margin: 0, fontWeight: 500, color: 'var(--yz-text-primary)' }}>
+                Are you sure you want to restore <strong>{customerToRestore.name}</strong> to the active customer list?
+              </p>
+              <p style={{ margin: '8px 0 0', fontSize: '11.5px', color: 'var(--yz-text-secondary)', lineHeight: 1.45 }}>
+                This customer will reappear in the active customer directory and be available for new sales orders and fitting appointments.
+              </p>
+            </div>
+          ) : null
+        }
+        confirmLabel="Restore Customer"
+        cancelLabel="Cancel"
+        variant="primary"
+        isLoading={isRestoring}
+      />
+
+      {/* Permanent Delete Customer Confirmation Dialog (Archived customers only) */}
+      <ConfirmDialog
+        isOpen={Boolean(customerToDeletePermanently)}
+        onClose={() => !isDeleting && setCustomerToDeletePermanently(null)}
+        onConfirm={handleConfirmPermanentDelete}
+        title="Permanently Delete Customer"
+        description={
+          customerToDeletePermanently ? (
+            <div>
+              <p style={{ margin: 0, fontWeight: 500, color: 'var(--yz-text-primary)' }}>
+                Are you sure you want to permanently delete <strong>{customerToDeletePermanently.name}</strong>?
+              </p>
+              <p style={{ margin: '8px 0 0', color: 'var(--yz-error, #DC2626)', fontSize: '11.5px', lineHeight: 1.45, fontWeight: 500 }}>
+                ⚠️ This action cannot be undone. All tailoring measurements associated with this customer will be removed. Past invoices and sales orders will retain customer records for accounting compliance.
+              </p>
+            </div>
+          ) : null
+        }
+        confirmLabel="Delete Permanently"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

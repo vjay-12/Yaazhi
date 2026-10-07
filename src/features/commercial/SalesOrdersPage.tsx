@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Download, Ban, Loader2, ChevronDown, Check, Banknote, QrCode } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
+import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { Pagination } from '../../components/common/Pagination';
 import { usePagination } from '../../hooks/usePagination';
 import { salesOrderService, type SalesOrderData } from '../../services/salesOrderService';
@@ -1662,34 +1663,30 @@ export const SalesOrdersPage: React.FC = () => {
         </Modal>
       )}
 
-      {/* Void Order Confirmation Modal */}
-      {orderToVoid && (
-        <Modal
-          isOpen={true}
-          onClose={() => !isVoiding && setOrderToVoid(null)}
-          title="Void Sales Order?"
-          maxWidth="440px"
-          footer={
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', width: '100%' }}>
-              <Button variant="secondary" size="sm" onClick={() => setOrderToVoid(null)} disabled={isVoiding}>
-                Cancel
-              </Button>
-              <Button variant="danger" size="sm" onClick={handleConfirmVoid} disabled={isVoiding}>
-                {isVoiding ? 'Voiding...' : 'Void Order'}
-              </Button>
+      {/* Void Order Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(orderToVoid)}
+        onClose={() => !isVoiding && setOrderToVoid(null)}
+        onConfirm={handleConfirmVoid}
+        title="Void Sales Order"
+        description={
+          orderToVoid ? (
+            <div>
+              <p style={{ margin: 0, fontWeight: 500, color: 'var(--yz-text-primary)' }}>
+                Are you sure you want to void <strong>{orderToVoid.orderNumber}</strong>?
+              </p>
+              <p style={{ margin: '8px 0 0', fontSize: '11.5px', color: 'var(--yz-text-secondary)', lineHeight: 1.45 }}>
+                This will void <strong>{orderToVoid.orderNumber}</strong> and preserve it in the order history.
+                Any previously deducted stock will be reversed and returned to the showroom inventory ledger with an immutable audit record.
+              </p>
             </div>
-          }
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
-            <p style={{ margin: 0, color: 'var(--yz-text-primary)' }}>
-              This will void <strong>{orderToVoid.orderNumber}</strong> and preserve it in the order history.
-            </p>
-            <p style={{ margin: 0, color: 'var(--yz-text-secondary)', fontSize: '11px' }}>
-              Any previously deducted stock will be reversed and returned to the showroom inventory ledger with an immutable audit record.
-            </p>
-          </div>
-        </Modal>
-      )}
+          ) : null
+        }
+        confirmLabel="Void Order"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={isVoiding}
+      />
     </div>
   );
 };

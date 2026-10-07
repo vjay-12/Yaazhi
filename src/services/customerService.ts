@@ -86,7 +86,10 @@ export interface CustomerData {
   measurementProfilesCount?: number;
   measurements: { label: string; value: string }[];
   isArchived?: boolean;
+  archivedAt?: string | null;
+  archivedBy?: string | null;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface CustomerDetailData extends CustomerData {

@@ -37,7 +37,11 @@ router.get('/dashboard', async (_req, res): Promise<void> => {
         },
       }),
       prisma.salesOrder.findMany({
-        where: { status: OrderStatus.DELIVERED },
+        where: {
+          status: {
+            notIn: [OrderStatus.CANCELLED, OrderStatus.VOIDED],
+          },
+        },
         include: { items: { include: { product: true } } },
       }),
       prisma.purchaseOrder.findMany({
@@ -62,7 +66,8 @@ router.get('/dashboard', async (_req, res): Promise<void> => {
 
     for (const b of stockBalances) {
       const qty = Number(b.current_quantity);
-      const cost = Number(b.avg_cost || b.product.purchase_price || 0);
+      const avgCost = Number(b.avg_cost);
+      const cost = avgCost > 0 ? avgCost : Number(b.product.purchase_price || 0);
       const retail = Number(b.product.sale_price || 0);
 
       totalStockUnits += qty;

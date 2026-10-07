@@ -18,7 +18,10 @@ import {
   Copy,
   Loader2,
   Trash2,
+  Archive,
+  RotateCcw,
 } from 'lucide-react';
+import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { AddMeasurementModal } from './AddMeasurementModal';
 import { MeasurementHistoryModal } from './MeasurementHistoryModal';
 
@@ -39,6 +42,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
 }) => {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'measurements' | 'orders' | 'profile'>('measurements');
+  const [currentCustomer, setCurrentCustomer] = useState<CustomerData | null>(customer);
   const [customerDetails, setCustomerDetails] = useState<CustomerDetailData | null>(null);
   const [profiles, setProfiles] = useState<CustomerMeasurementProfile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,6 +53,20 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
   const [profileForHistory, setProfileForHistory] = useState<CustomerMeasurementProfile | null>(null);
   const [isCloningId, setIsCloningId] = useState<string | null>(null);
 
+  // Confirmation dialog states
+  const [profileToArchive, setProfileToArchive] = useState<CustomerMeasurementProfile | null>(null);
+  const [isArchivingProfile, setIsArchivingProfile] = useState(false);
+  const [isRestoreCustomerOpen, setIsRestoreCustomerOpen] = useState(false);
+  const [isRestoringCustomer, setIsRestoringCustomer] = useState(false);
+  const [isArchiveCustomerOpen, setIsArchiveCustomerOpen] = useState(false);
+  const [isArchivingCustomer, setIsArchivingCustomer] = useState(false);
+
+  useEffect(() => {
+    if (customer) {
+      setCurrentCustomer(customer);
+    }
+  }, [customer]);
+
   const loadData = useCallback(async () => {
     if (!customer) return;
     setIsLoading(true);
@@ -58,6 +76,14 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
         customerService.getMeasurementProfiles(customer.id),
       ]);
       setCustomerDetails(details);
+      if (details) {
+        setCurrentCustomer((prev) => (prev ? {
+          ...prev,
+          isArchived: details.isArchived,
+          archivedAt: details.archivedAt,
+          archivedBy: details.archivedBy,
+        } : null));
+      }
       setProfiles(profs || []);
     } catch (err: any) {
       console.error('Failed to load customer details:', err);
@@ -72,7 +98,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
     }
   }, [isOpen, customer, loadData]);
 
-  if (!isOpen || !customer) return null;
+  if (!isOpen || !customer || !currentCustomer) return null;
 
   const handleOpenAddMeasurement = () => {
     setProfileForNewVersion(null);
@@ -110,15 +136,17 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
     }
   };
 
-  const handleDeleteProfile = async (prof: CustomerMeasurementProfile) => {
-    if (!confirm(`Are you sure you want to archive "${prof.profile_name}"?`)) return;
+  const handleConfirmArchiveProfile = async () => {
+    if (!profileToArchive) return;
     try {
-      await customerService.deleteMeasurementProfile(customer.id, prof.id);
+      setIsArchivingProfile(true);
+      await customerService.deleteMeasurementProfile(currentCustomer.id, profileToArchive.id);
       showToast({
         type: 'info',
         title: 'Profile Archived',
-        message: `Archived ${prof.profile_name}`,
+        message: `Archived ${profileToArchive.profile_name}`,
       });
+      setProfileToArchive(null);
       await loadData();
       onCustomerUpdated?.();
     } catch (err: any) {
@@ -127,6 +155,80 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
         title: 'Archive Failed',
         message: err.message || 'Could not archive profile',
       });
+    } finally {
+      setIsArchivingProfile(false);
+    }
+  };
+
+  const handleConfirmRestoreCustomer = async () => {
+    try {
+      setIsRestoringCustomer(true);
+      await customerService.unarchive(currentCustomer.id);
+      showToast({
+        type: 'success',
+        title: 'Customer Restored',
+        message: `${currentCustomer.name} restored to active directory.`,
+      });
+      setCurrentCustomer((prev) => (prev ? {
+        ...prev,
+        isArchived: false,
+        archivedAt: null,
+        archivedBy: null,
+      } : null));
+      setIsRestoreCustomerOpen(false);
+      await loadData();
+      onCustomerUpdated?.();
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Restore Failed',
+        message: err.message || 'Could not restore customer',
+      });
+    } finally {
+      setIsRestoringCustomer(false);
+    }
+  };
+
+  const handleConfirmArchiveCustomer = async () => {
+    try {
+      setIsArchivingCustomer(true);
+      await customerService.archive(currentCustomer.id);
+      showToast({
+        type: 'info',
+        title: 'Customer Archived',
+        message: `${currentCustomer.name} moved to archive. All history, orders, and measurements preserved.`,
+      });
+      setCurrentCustomer((prev) => (prev ? {
+        ...prev,
+        isArchived: true,
+        archivedAt: new Date().toISOString(),
+        archivedBy: 'Boutique Manager',
+      } : null));
+      setIsArchiveCustomerOpen(false);
+      await loadData();
+      onCustomerUpdated?.();
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Archive Failed',
+        message: err.message || 'Could not archive customer',
+      });
+    } finally {
+      setIsArchivingCustomer(false);
+    }
+  };
+
+  const formatDate = (dateStr?: string | null) => {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return String(dateStr);
     }
   };
 
@@ -139,8 +241,35 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title={`Customer: ${customer.name}`}
-        subtitle={`Phone: ${customer.phone || 'No phone recorded'} • Boutique Loyalty & Measurements`}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span>Customer: {currentCustomer.name}</span>
+            <span
+              style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                padding: '2px 7px',
+                borderRadius: '4px',
+                ...(currentCustomer.isArchived
+                  ? {
+                      backgroundColor: '#F1F5F9',
+                      color: '#475569',
+                      border: '1px solid #CBD5E1',
+                    }
+                  : {
+                      backgroundColor: '#ECFDF5',
+                      color: '#065F46',
+                      border: '1px solid #A7F3D0',
+                    }),
+              }}
+            >
+              {currentCustomer.isArchived ? 'ARCHIVED' : 'ACTIVE'}
+            </span>
+          </div>
+        }
+        subtitle={`Phone: ${currentCustomer.phone || 'No phone recorded'} • Boutique Loyalty & Measurements`}
         maxWidth="820px"
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -242,6 +371,74 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
             </button>
           </div>
 
+          {/* Subtle Archived Status Bar */}
+          {currentCustomer.isArchived && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 12px',
+                borderRadius: 'var(--yz-radius-sm)',
+                backgroundColor: 'var(--yz-bg-subtle, #F8FAFC)',
+                border: '1px solid var(--yz-border, #E2E8F0)',
+                fontSize: '11.5px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                <div>
+                  <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--yz-text-muted)', display: 'block', textTransform: 'uppercase' }}>
+                    Customer Status
+                  </span>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      marginTop: '2px',
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      letterSpacing: '0.04em',
+                      padding: '1px 6px',
+                      borderRadius: '3px',
+                      backgroundColor: '#F1F5F9',
+                      color: '#475569',
+                      border: '1px solid #CBD5E1',
+                    }}
+                  >
+                    ARCHIVED
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--yz-text-muted)', display: 'block', textTransform: 'uppercase' }}>
+                    Archived on
+                  </span>
+                  <span style={{ fontWeight: 600, color: 'var(--yz-text-primary)', fontFamily: 'var(--yz-font-mono)', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                    {formatDate(currentCustomer.archivedAt || currentCustomer.updatedAt)}
+                  </span>
+                </div>
+                {currentCustomer.archivedBy && (
+                  <div>
+                    <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--yz-text-muted)', display: 'block', textTransform: 'uppercase' }}>
+                      Archived by
+                    </span>
+                    <span style={{ fontWeight: 600, color: 'var(--yz-text-primary)', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                      {currentCustomer.archivedBy}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<RotateCcw size={12} />}
+                onClick={() => setIsRestoreCustomerOpen(true)}
+                style={{ fontSize: '11px' }}
+              >
+                Restore Customer
+              </Button>
+            </div>
+          )}
+
           {/* TAB 1: BOUTIQUE MEASUREMENTS */}
           {activeTab === 'measurements' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -288,7 +485,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                   onClick={handleOpenAddMeasurement}
                   style={{ fontSize: '11px' }}
                 >
-                  + Add Measurement
+                  Add Measurement
                 </Button>
               </div>
 
@@ -537,7 +734,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                             </Button>
                             <button
                               type="button"
-                              onClick={() => handleDeleteProfile(prof)}
+                              onClick={() => setProfileToArchive(prof)}
                               style={{
                                 border: 'none',
                                 background: 'none',
@@ -753,18 +950,39 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                 </div>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
                 <Button
                   variant="secondary"
                   size="sm"
                   icon={<Edit size={12} />}
                   onClick={() => {
                     onClose();
-                    onEditCustomer?.(customer);
+                    onEditCustomer?.(currentCustomer);
                   }}
                 >
                   Edit Customer Profile
                 </Button>
+
+                {currentCustomer.isArchived ? (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    icon={<RotateCcw size={12} />}
+                    onClick={() => setIsRestoreCustomerOpen(true)}
+                  >
+                    Restore Customer
+                  </Button>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon={<Archive size={12} />}
+                    onClick={() => setIsArchiveCustomerOpen(true)}
+                    style={{ color: '#B45309', borderColor: '#FDE68A' }}
+                  >
+                    Archive Customer
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -801,8 +1019,8 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
         <MeasurementHistoryModal
           isOpen={Boolean(profileForHistory)}
           onClose={() => setProfileForHistory(null)}
-          customerId={customer.id}
-          customerName={customer.name}
+          customerId={currentCustomer.id}
+          customerName={currentCustomer.name}
           profile={profileForHistory}
           onRecordNewVersion={() => {
             const p = profileForHistory;
@@ -815,6 +1033,74 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
           }}
         />
       )}
+
+      {/* Archive Garment Profile Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(profileToArchive)}
+        onClose={() => !isArchivingProfile && setProfileToArchive(null)}
+        onConfirm={handleConfirmArchiveProfile}
+        title="Archive Garment Profile"
+        description={
+          profileToArchive ? (
+            <div>
+              <p style={{ margin: 0, fontWeight: 500, color: 'var(--yz-text-primary)' }}>
+                Are you sure you want to archive <strong>"{profileToArchive.profile_name}"</strong>?
+              </p>
+              <p style={{ margin: '8px 0 0', fontSize: '11.5px', color: 'var(--yz-text-secondary)', lineHeight: 1.45 }}>
+                This tailored garment profile will be moved to archived status. All historical versions and linked order records remain intact.
+              </p>
+            </div>
+          ) : null
+        }
+        confirmLabel="Archive"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={isArchivingProfile}
+      />
+
+      {/* Restore Customer Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isRestoreCustomerOpen}
+        onClose={() => !isRestoringCustomer && setIsRestoreCustomerOpen(false)}
+        onConfirm={handleConfirmRestoreCustomer}
+        title="Restore Customer"
+        description={
+          <div>
+            <p style={{ margin: 0, fontWeight: 500, color: 'var(--yz-text-primary)' }}>
+              Are you sure you want to restore <strong>{currentCustomer.name}</strong>?
+            </p>
+            <p style={{ margin: '8px 0 0', fontSize: '11.5px', color: 'var(--yz-text-secondary)', lineHeight: 1.45 }}>
+              This customer will reappear in the active customer directory. All tailoring measurements, orders, and payment records remain preserved.
+            </p>
+          </div>
+        }
+        confirmLabel="Restore Customer"
+        cancelLabel="Cancel"
+        variant="primary"
+        isLoading={isRestoringCustomer}
+      />
+
+      {/* Archive Customer Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isArchiveCustomerOpen}
+        onClose={() => !isArchivingCustomer && setIsArchiveCustomerOpen(false)}
+        onConfirm={handleConfirmArchiveCustomer}
+        title="Archive Customer"
+        description={
+          <div>
+            <p style={{ margin: 0, fontWeight: 500, color: 'var(--yz-text-primary)' }}>
+              Are you sure you want to archive <strong>"{currentCustomer.name}"</strong>?
+            </p>
+            <p style={{ margin: '8px 0 0', fontSize: '11.5px', color: 'var(--yz-text-secondary)', lineHeight: 1.45 }}>
+              This customer will be moved to Archived and won't appear in the active customer list. All measurements, orders, and payment records are preserved.
+            </p>
+          </div>
+        }
+        confirmLabel="Archive"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={isArchivingCustomer}
+      />
     </>
   );
 };

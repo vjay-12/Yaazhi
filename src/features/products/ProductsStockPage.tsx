@@ -6,7 +6,6 @@ import {
   RotateCcw,
   Package,
   RefreshCw,
-  Loader2,
 } from 'lucide-react';
 import type { YaazhiProduct, StockStatus } from '../../types/product';
 import type { StockSummary } from '../../types/inventory';
@@ -14,7 +13,7 @@ import { productService } from '../../services/productService';
 import { inventoryService } from '../../services/inventoryService';
 import { StockBadge, CategoryBadge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
-import { Modal } from '../../components/common/Modal';
+import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { TableSkeleton } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { CustomDropdown, type DropdownOption } from '../../components/common/CustomDropdown';
@@ -581,50 +580,29 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
         productToEdit={productToEdit}
       />
 
-      {/* Archive Product Confirmation Modal */}
-      {productToArchive && (
-        <Modal
-          isOpen={Boolean(productToArchive)}
-          onClose={() => !isArchiving && setProductToArchive(null)}
-          title="Archive Product"
-          maxWidth="460px"
-          footer={
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setProductToArchive(null)}
-                disabled={isArchiving}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleConfirmArchive}
-                disabled={isArchiving}
-              >
-                {isArchiving ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Loader2 size={13} className="animate-spin" /> Archiving...
-                  </span>
-                ) : (
-                  'Archive Product'
-                )}
-              </Button>
-            </>
-          }
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
-            <p style={{ margin: 0, color: 'var(--yz-text-primary)' }}>
-              Are you sure you want to archive <strong>{productToArchive.name}</strong> (SKU: {productToArchive.sku})?
-            </p>
-            <p style={{ margin: 0, color: 'var(--yz-text-secondary)', fontSize: '11px', lineHeight: 1.4 }}>
-              The product will be removed from the active catalog and moved to the <strong>Archived</strong> view. All SKU data, stock history, and transaction references will remain fully preserved.
-            </p>
-          </div>
-        </Modal>
-      )}
+      {/* Archive Product Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(productToArchive)}
+        onClose={() => !isArchiving && setProductToArchive(null)}
+        onConfirm={handleConfirmArchive}
+        title="Archive Product"
+        description={
+          productToArchive ? (
+            <div>
+              <p style={{ margin: 0, fontWeight: 500, color: 'var(--yz-text-primary)' }}>
+                Are you sure you want to archive <strong>{productToArchive.name}</strong> (SKU: {productToArchive.sku})?
+              </p>
+              <p style={{ margin: '8px 0 0', fontSize: '11.5px', color: 'var(--yz-text-secondary)', lineHeight: 1.45 }}>
+                The product will be removed from the active catalog and moved to the <strong>Archived</strong> view. All SKU data, stock history, and transaction references will remain fully preserved.
+              </p>
+            </div>
+          ) : null
+        }
+        confirmLabel="Archive Product"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={isArchiving}
+      />
     </div>
   );
 };
