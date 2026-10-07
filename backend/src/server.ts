@@ -65,8 +65,9 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   });
 });
 
-const server = app.listen(PORT, () => {
+const server = app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`✨ Yaazhi Boutique Backend API running on http://localhost:${PORT}`);
+  console.log(`✨ Network access enabled on 0.0.0.0:${PORT}`);
   console.log(`✨ Database: PostgreSQL (Port 5436)`);
 });
 

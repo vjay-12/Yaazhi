@@ -1,4 +1,19 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api';
+function getApiBaseUrl(): string {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (typeof window !== 'undefined') {
+    // If accessing from another machine on the local network/WiFi (not localhost)
+    // and VITE_API_URL is hardcoded to localhost, use relative '/api'
+    // so requests are smoothly proxied by Vite to the backend.
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
+        return '/api';
+      }
+    }
+  }
+  return envUrl || '/api';
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 export class ApiError extends Error {
   public status: number;
