@@ -199,9 +199,10 @@ export const CustomersPage: React.FC = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           backgroundColor: 'var(--yz-bg-surface)',
-          padding: '8px 10px',
-          borderRadius: 'var(--yz-radius-sm)',
+          padding: '8px 12px',
+          borderRadius: 'var(--yz-radius-md)',
           border: '1px solid var(--yz-border)',
+          boxShadow: 'var(--yz-shadow-2xs)',
           gap: '8px',
           flexWrap: 'wrap',
         }}
@@ -210,10 +211,10 @@ export const CustomersPage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ position: 'relative', width: '270px' }}>
             <Search
-              size={13}
+              size={14}
               style={{
                 position: 'absolute',
-                left: '8px',
+                left: '9px',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 color: 'var(--yz-text-muted)',
@@ -225,7 +226,7 @@ export const CustomersPage: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="yz-input"
-              style={{ paddingLeft: '26px', height: '28px', fontSize: '11px', width: '100%' }}
+              style={{ paddingLeft: '28px', height: '32px', fontSize: '11.5px', width: '100%' }}
             />
           </div>
 
@@ -240,15 +241,15 @@ export const CustomersPage: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: '8px',
-                height: '28px',
-                padding: '0 8px',
-                fontSize: '11px',
+                height: '32px',
+                padding: '0 10px',
+                fontSize: '11.5px',
                 cursor: 'pointer',
                 backgroundColor: 'var(--yz-bg-surface)',
                 border: '1px solid var(--yz-border)',
-                borderRadius: 'var(--yz-radius-sm)',
+                borderRadius: 'var(--yz-radius-md)',
                 color: 'var(--yz-text-primary)',
-                minWidth: '105px',
+                minWidth: '115px',
                 userSelect: 'none',
               }}
             >
@@ -257,7 +258,7 @@ export const CustomersPage: React.FC = () => {
                 <strong>{STATUS_FILTER_OPTIONS.find((s) => s.id === statusFilter)?.label || 'All'}</strong>
               </span>
               <ChevronDown
-                size={12}
+                size={13}
                 style={{
                   color: 'var(--yz-text-muted)',
                   transform: isStatusDropdownOpen ? 'rotate(180deg)' : 'none',
@@ -274,10 +275,10 @@ export const CustomersPage: React.FC = () => {
                   left: 0,
                   backgroundColor: 'var(--yz-bg-surface)',
                   border: '1px solid var(--yz-border)',
-                  borderRadius: 'var(--yz-radius-sm)',
-                  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.08)',
+                  borderRadius: 'var(--yz-radius-md)',
+                  boxShadow: 'var(--yz-shadow-md)',
                   zIndex: 50,
-                  minWidth: '120px',
+                  minWidth: '125px',
                   padding: '4px 0',
                 }}
               >
@@ -351,7 +352,7 @@ export const CustomersPage: React.FC = () => {
             size="sm"
             icon={<SlidersHorizontal size={13} />}
             onClick={() => setIsTemplateModalOpen(true)}
-            style={{ height: '28px', fontSize: '11px', fontWeight: 600 }}
+            style={{ height: '32px', fontSize: '11.5px', fontWeight: 600 }}
             title="Manage garment templates and measurement parameters"
           >
             Measurement Templates
@@ -364,7 +365,7 @@ export const CustomersPage: React.FC = () => {
               setCustomerToEdit(null);
               setIsAddModalOpen(true);
             }}
-            style={{ height: '28px', fontSize: '11px', fontWeight: 600 }}
+            style={{ height: '32px', fontSize: '11.5px', fontWeight: 600 }}
           >
             + Add Customer
           </Button>
@@ -421,9 +422,9 @@ export const CustomersPage: React.FC = () => {
                           style={{
                             display: 'inline-block',
                             fontSize: '9.5px',
-                            fontWeight: 600,
-                            padding: '1px 5px',
-                            borderRadius: '3px',
+                            fontWeight: 700,
+                            padding: '1px 6px',
+                            borderRadius: 'var(--yz-radius-full)',
                             backgroundColor: '#F1F5F9',
                             color: '#64748B',
                             border: '1px solid #CBD5E1',
@@ -473,13 +474,13 @@ export const CustomersPage: React.FC = () => {
                         color: 'var(--yz-primary, #832729)',
                         backgroundColor: '#FEF2F2',
                         border: '1px solid #FECACA',
-                        padding: '2px 6px',
-                        borderRadius: 'var(--yz-radius-sm)',
+                        padding: '2px 8px',
+                        borderRadius: 'var(--yz-radius-full)',
                         maxWidth: '220px',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        fontWeight: 500,
+                        fontWeight: 600,
                       }}
                       title={c.fittingProfile}
                     >
@@ -498,8 +499,8 @@ export const CustomersPage: React.FC = () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '4px',
-                        width: '56px',
-                        height: '22px',
+                        width: '60px',
+                        height: '26px',
                       }}
                     >
                       {!c.isArchived ? (
@@ -508,9 +509,10 @@ export const CustomersPage: React.FC = () => {
                             type="button"
                             className="yz-btn yz-btn-ghost yz-btn-sm"
                             style={{
-                              width: '24px',
-                              height: '22px',
+                              width: '26px',
+                              height: '26px',
                               padding: 0,
+                              borderRadius: 'var(--yz-radius-sm)',
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -527,9 +529,10 @@ export const CustomersPage: React.FC = () => {
                             type="button"
                             className="yz-btn yz-btn-ghost yz-btn-sm"
                             style={{
-                              width: '24px',
-                              height: '22px',
+                              width: '26px',
+                              height: '26px',
                               padding: 0,
+                              borderRadius: 'var(--yz-radius-sm)',
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -551,9 +554,10 @@ export const CustomersPage: React.FC = () => {
                             type="button"
                             className="yz-btn yz-btn-ghost yz-btn-sm"
                             style={{
-                              width: '24px',
-                              height: '22px',
+                              width: '26px',
+                              height: '26px',
                               padding: 0,
+                              borderRadius: 'var(--yz-radius-sm)',
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',

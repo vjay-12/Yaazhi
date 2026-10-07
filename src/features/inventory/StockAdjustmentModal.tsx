@@ -134,9 +134,10 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr',
             gap: '8px',
-            padding: '8px 10px',
+            padding: '10px 12px',
             backgroundColor: 'var(--yz-bg-subtle)',
-            borderRadius: 'var(--yz-radius-sm)',
+            borderRadius: 'var(--yz-radius-md)',
+            border: '1px solid var(--yz-border-subtle)',
             textAlign: 'center',
           }}
         >
@@ -144,7 +145,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
               System Stock
             </div>
-            <div style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'var(--yz-font-display)', marginTop: '2px' }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)', marginTop: '2px' }} className="tabular-nums">
               {currentCount}
             </div>
           </div>
@@ -158,8 +159,8 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
               min="0"
               value={newStock}
               onChange={(e) => setNewStock(e.target.value)}
-              className="yz-input tabular-nums"
-              style={{ textAlign: 'center', fontSize: '13px', fontWeight: 700, height: '26px', marginTop: '2px' }}
+              className="yz-input tabular-nums font-mono"
+              style={{ textAlign: 'center', fontSize: '14px', fontWeight: 700, height: '30px', marginTop: '2px' }}
             />
           </div>
 
@@ -169,12 +170,13 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             </div>
             <div
               style={{
-                fontSize: '15px',
+                fontSize: '16px',
                 fontWeight: 700,
-                fontFamily: 'var(--yz-font-display)',
+                fontFamily: 'var(--yz-font-mono)',
                 marginTop: '2px',
                 color: delta > 0 ? 'var(--yz-status-in-stock)' : delta < 0 ? 'var(--yz-status-out-stock)' : 'var(--yz-text-muted)',
               }}
+              className="tabular-nums"
             >
               {delta > 0 ? `+${delta}` : delta}
             </div>

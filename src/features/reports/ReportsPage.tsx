@@ -579,8 +579,9 @@ export const ReportsPage: React.FC = () => {
           alignItems: 'center',
           backgroundColor: 'var(--yz-bg-surface)',
           padding: '8px 12px',
-          borderRadius: 'var(--yz-radius-sm)',
+          borderRadius: 'var(--yz-radius-md)',
           border: '1px solid var(--yz-border)',
+          boxShadow: 'var(--yz-shadow-2xs)',
           flexWrap: 'wrap',
           gap: '8px',
         }}
@@ -971,8 +972,8 @@ export const ReportsPage: React.FC = () => {
                     fontSize: '10.5px',
                     color: '#065F46',
                     backgroundColor: '#ECFDF5',
-                    padding: '1px 6px',
-                    borderRadius: 'var(--yz-radius-sm)',
+                    padding: '2px 8px',
+                    borderRadius: 'var(--yz-radius-full)',
                     fontWeight: 600,
                   }}
                 >
@@ -1112,8 +1113,8 @@ export const ReportsPage: React.FC = () => {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       backgroundColor: 'var(--yz-bg-base, #F8FAFC)',
-                      padding: '8px 10px',
-                      borderRadius: 'var(--yz-radius-sm)',
+                      padding: '8px 12px',
+                      borderRadius: 'var(--yz-radius-md)',
                     }}
                   >
                     <div>
@@ -1224,8 +1225,8 @@ export const ReportsPage: React.FC = () => {
                   gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: '8px',
                   backgroundColor: 'var(--yz-bg-base, #F8FAFC)',
-                  padding: '8px',
-                  borderRadius: 'var(--yz-radius-sm)',
+                  padding: '10px 12px',
+                  borderRadius: 'var(--yz-radius-md)',
                 }}
               >
                 <div>
@@ -1374,10 +1375,10 @@ export const ReportsPage: React.FC = () => {
                               <span
                                 style={{
                                   display: 'inline-block',
-                                  fontSize: '10px',
-                                  fontWeight: 700,
-                                  padding: '1px 5px',
-                                  borderRadius: 'var(--yz-radius-sm)',
+                                  fontSize: '10.5px',
+                                  fontWeight: 600,
+                                  padding: '2px 8px',
+                                  borderRadius: 'var(--yz-radius-full)',
                                   backgroundColor: isOut ? '#FEF2F2' : '#FFFBEB',
                                   color: isOut ? '#991B1B' : '#92400E',
                                   border: isOut ? '1px solid #FECACA' : '1px solid #FDE68A',
@@ -1570,8 +1571,8 @@ export const ReportsPage: React.FC = () => {
                               fontSize: '10.5px',
                               color: '#166534',
                               backgroundColor: '#DCFCE7',
-                              padding: '1px 6px',
-                              borderRadius: 'var(--yz-radius-sm)',
+                              padding: '2px 8px',
+                              borderRadius: 'var(--yz-radius-full)',
                               fontWeight: 600,
                             }}
                           >

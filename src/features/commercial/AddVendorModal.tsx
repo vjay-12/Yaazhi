@@ -277,8 +277,10 @@ export const AddVendorModal: React.FC<AddVendorModalProps> = ({
         {/* BANK & PAYMENT SECTION */}
         <div
           style={{
-            borderTop: '1px solid var(--yz-border)',
-            paddingTop: '10px',
+            border: '1px solid var(--yz-border)',
+            borderRadius: 'var(--yz-radius-md)',
+            backgroundColor: 'var(--yz-bg-subtle)',
+            padding: '10px 12px',
             marginTop: '2px',
           }}
         >

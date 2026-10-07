@@ -105,10 +105,10 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gap: '10px',
+            gap: '12px',
             backgroundColor: 'var(--yz-bg-subtle)',
-            padding: '10px 12px',
-            borderRadius: 'var(--yz-radius-sm)',
+            padding: '12px 14px',
+            borderRadius: 'var(--yz-radius-md)',
             border: '1px solid var(--yz-border)',
             fontSize: '11.5px',
           }}
@@ -251,10 +251,10 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
 
           <div
             style={{
-              width: '220px',
+              width: '230px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '3px',
+              gap: '4px',
               fontSize: '11.5px',
             }}
           >
@@ -285,15 +285,15 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 fontWeight: 700,
-                fontSize: '13px',
+                fontSize: '13.5px',
                 color: 'var(--yz-text-primary)',
                 borderTop: '1px solid var(--yz-border)',
-                paddingTop: '4px',
+                paddingTop: '6px',
                 marginTop: '2px',
               }}
             >
               <span>Grand Total:</span>
-              <span style={{ fontFamily: 'var(--yz-font-mono)' }}>
+              <span style={{ fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-primary)' }}>
                 ₹{order.totalAmount.toLocaleString('en-IN')}
               </span>
             </div>
@@ -305,20 +305,21 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           style={{
             backgroundColor: 'var(--yz-bg-surface)',
             border: '1px solid var(--yz-border)',
-            borderRadius: 'var(--yz-radius-sm)',
-            padding: '8px 12px',
+            borderRadius: 'var(--yz-radius-md)',
+            padding: '10px 14px',
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
             gap: '8px',
             textAlign: 'center',
             fontSize: '11px',
+            boxShadow: 'var(--yz-shadow-2xs)',
           }}
         >
           <div>
             <span style={{ color: 'var(--yz-text-muted)', display: 'block', fontSize: '10px' }}>
               TOTAL AMOUNT
             </span>
-            <strong style={{ fontSize: '13px', fontFamily: 'var(--yz-font-mono)' }}>
+            <strong style={{ fontSize: '14px', fontFamily: 'var(--yz-font-mono)' }}>
               ₹{order.totalAmount.toLocaleString('en-IN')}
             </strong>
           </div>
@@ -326,7 +327,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             <span style={{ color: 'var(--yz-text-muted)', display: 'block', fontSize: '10px' }}>
               PAID AMOUNT
             </span>
-            <strong style={{ fontSize: '13px', color: '#166534', fontFamily: 'var(--yz-font-mono)' }}>
+            <strong style={{ fontSize: '14px', color: '#166534', fontFamily: 'var(--yz-font-mono)' }}>
               ₹{order.paidAmount.toLocaleString('en-IN')}
             </strong>
           </div>
@@ -336,7 +337,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             </span>
             <strong
               style={{
-                fontSize: '13px',
+                fontSize: '14px',
                 color: order.pendingAmount > 0 ? '#B45309' : 'var(--yz-text-secondary)',
                 fontFamily: 'var(--yz-font-mono)',
               }}
@@ -348,14 +349,14 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             <span style={{ color: 'var(--yz-text-muted)', display: 'block', fontSize: '10px' }}>
               PAYMENT STATUS
             </span>
-            <div style={{ marginTop: '2px' }}>
+            <div style={{ marginTop: '3px' }}>
               <span
                 style={{
                   display: 'inline-block',
-                  padding: '2px 8px',
-                  borderRadius: '3px',
-                  fontSize: '10px',
-                  fontWeight: 600,
+                  padding: '2px 10px',
+                  borderRadius: 'var(--yz-radius-full)',
+                  fontSize: '10.5px',
+                  fontWeight: 700,
                   backgroundColor: statusBg,
                   color: statusColor,
                   border: `1px solid ${statusBorder}`,
@@ -376,8 +377,8 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '7px 12px',
-              borderRadius: 'var(--yz-radius-sm)',
+              padding: '8px 12px',
+              borderRadius: 'var(--yz-radius-md)',
               backgroundColor: order.paidAmount > 0 ? '#FFFBEB' : '#F8FAFC',
               border: `1px solid ${order.paidAmount > 0 ? '#FDE68A' : '#E2E8F0'}`,
               fontSize: '11px',
@@ -387,10 +388,10 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
               <span
                 style={{
                   display: 'inline-block',
-                  padding: '1px 6px',
-                  borderRadius: '3px',
+                  padding: '2px 8px',
+                  borderRadius: 'var(--yz-radius-full)',
                   fontSize: '10px',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   backgroundColor: order.paidAmount > 0 ? '#FEF3C7' : '#E2E8F0',
                   color: order.paidAmount > 0 ? '#92400E' : '#475569',
                 }}
@@ -440,8 +441,8 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
               style={{
                 backgroundColor: '#FEF2F2',
                 border: '1px solid #FECACA',
-                borderRadius: 'var(--yz-radius-sm)',
-                padding: '6px 10px',
+                borderRadius: 'var(--yz-radius-md)',
+                padding: '8px 12px',
                 fontSize: '11px',
                 color: '#991B1B',
                 marginBottom: '8px',

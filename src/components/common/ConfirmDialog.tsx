@@ -127,8 +127,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         style={{
           maxWidth,
           backgroundColor: 'var(--yz-bg-surface, #ffffff)',
-          borderRadius: 'var(--yz-radius-md, 8px)',
-          boxShadow: 'var(--yz-shadow-modal, 0 10px 25px -4px rgba(15, 23, 42, 0.16))',
+          borderRadius: 'var(--yz-modal-radius, 16px)',
+          boxShadow: 'var(--yz-shadow-modal)',
           border: '1px solid var(--yz-border, #E2E8F0)',
         }}
         onClick={(e) => e.stopPropagation()}
@@ -136,38 +136,40 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         {/* Header */}
         <div
           style={{
-            padding: '1rem 1.25rem',
+            padding: '12px 18px',
             borderBottom: '1px solid var(--yz-border, #E2E8F0)',
+            backgroundColor: '#F8FAFC',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '0.75rem',
+            gap: '12px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {variant === 'danger' && (
               <span
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: 'var(--yz-radius-full)',
                   backgroundColor: '#FEE2E2',
                   color: '#DC2626',
                   flexShrink: 0,
                 }}
               >
-                <AlertCircle size={14} />
+                <AlertCircle size={15} />
               </span>
             )}
             <h2
               id="confirm-dialog-title"
               style={{
-                fontSize: '1rem',
-                fontWeight: 700,
+                fontSize: '15px',
+                fontWeight: 800,
                 color: 'var(--yz-text-primary, #0F172A)',
+                letterSpacing: '-0.02em',
                 margin: 0,
               }}
             >
@@ -183,12 +185,12 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               border: 'none',
               cursor: isLoading ? 'not-allowed' : 'pointer',
               color: 'var(--yz-text-muted, #94A3B8)',
-              padding: '0.25rem',
-              borderRadius: 'var(--yz-radius-sm, 4px)',
+              padding: '4px',
+              borderRadius: 'var(--yz-radius-sm, 8px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'color 0.15s ease',
+              transition: 'all 0.12s ease',
             }}
             aria-label="Close dialog"
           >
@@ -200,8 +202,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         <div
           id="confirm-dialog-description"
           style={{
-            padding: '1.25rem',
-            fontSize: '0.85rem',
+            padding: '16px 18px',
+            fontSize: '12.5px',
             lineHeight: 1.5,
             color: 'var(--yz-text-secondary, #475569)',
           }}
@@ -211,19 +213,19 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               {description}
             </div>
           )}
-          {children && <div style={{ marginTop: description ? '0.5rem' : 0 }}>{children}</div>}
+          {children && <div style={{ marginTop: description ? '8px' : 0 }}>{children}</div>}
         </div>
 
         {/* Footer */}
         <div
           style={{
-            padding: '0.75rem 1.25rem',
+            padding: '12px 18px',
             borderTop: '1px solid var(--yz-border, #E2E8F0)',
-            backgroundColor: 'var(--yz-bg-subtle, #F8FAFC)',
+            backgroundColor: '#F8FAFC',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',
-            gap: '0.5rem',
+            gap: '8px',
           }}
         >
           <Button

@@ -338,12 +338,12 @@ export const SettingsPage: React.FC = () => {
                   height: '120px',
                   backgroundColor: '#FFFFFF',
                   border: '1px solid var(--yz-border)',
-                  borderRadius: 'var(--yz-radius-sm)',
+                  borderRadius: 'var(--yz-radius-md)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   padding: '6px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  boxShadow: 'var(--yz-shadow-2xs)',
                   position: 'relative',
                 }}
               >

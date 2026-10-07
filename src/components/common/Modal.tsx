@@ -62,20 +62,39 @@ export const Modal: React.FC<ModalProps> = ({
         {/* Header */}
         <div
           style={{
-            padding: '1.25rem 1.5rem',
+            padding: '14px 18px',
             borderBottom: '1px solid var(--yz-border)',
+            backgroundColor: '#F8FAFC',
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
-            gap: '1rem',
+            gap: '12px',
           }}
         >
           <div>
-            <h2 id="modal-title" style={{ fontSize: '1.15rem', fontWeight: 700 }}>
+            <h2
+              id="modal-title"
+              style={{
+                fontSize: '15px',
+                fontWeight: 800,
+                color: 'var(--yz-text-primary)',
+                letterSpacing: '-0.02em',
+                lineHeight: 1.25,
+                margin: 0,
+              }}
+            >
               {title}
             </h2>
             {subtitle && (
-              <p style={{ fontSize: '0.8125rem', color: 'var(--yz-text-secondary)', marginTop: '0.2rem' }}>
+              <p
+                style={{
+                  fontSize: '11.5px',
+                  color: 'var(--yz-text-muted)',
+                  marginTop: '2px',
+                  fontWeight: 500,
+                  lineHeight: 1.35,
+                }}
+              >
                 {subtitle}
               </p>
             )}
@@ -87,32 +106,41 @@ export const Modal: React.FC<ModalProps> = ({
               border: 'none',
               cursor: 'pointer',
               color: 'var(--yz-text-muted)',
-              padding: '0.25rem',
-              borderRadius: 'var(--yz-radius-sm)',
+              padding: '4px',
+              borderRadius: 'var(--yz-radius-sm, 8px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              transition: 'all 0.12s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--yz-bg-subtle-hover, #E2E8F0)';
+              e.currentTarget.style.color = 'var(--yz-text-primary, #0F172A)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--yz-text-muted)';
             }}
             aria-label="Close modal"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Body */}
-        <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>{children}</div>
+        <div style={{ padding: '18px', overflowY: 'auto', flex: 1 }}>{children}</div>
 
         {/* Footer */}
         {footer && (
           <div
             style={{
-              padding: '1rem 1.5rem',
+              padding: '12px 18px',
               borderTop: '1px solid var(--yz-border)',
-              backgroundColor: 'var(--yz-bg-subtle)',
+              backgroundColor: '#F8FAFC',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-end',
-              gap: '0.75rem',
+              gap: '10px',
             }}
           >
             {footer}

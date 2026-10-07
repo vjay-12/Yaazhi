@@ -845,8 +845,8 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                         display: 'grid',
                         gridTemplateColumns: 'minmax(0, 1.8fr) 70px 70px',
                         alignItems: 'center',
-                        padding: '6px',
-                        borderRadius: 'var(--yz-radius-sm)',
+                        padding: '6px 8px',
+                        borderRadius: 'var(--yz-radius-sm, 8px)',
                         fontSize: '11.5px',
                         cursor: 'pointer',
                         transition: 'background-color 0.1s ease',
@@ -867,7 +867,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                         >
                           {p.name}
                         </div>
-                        <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)', fontFamily: 'var(--yz-font-mono)' }}>
+                        <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)', fontFamily: 'var(--yz-font-mono)', fontWeight: 600 }}>
                           {p.sku}
                         </div>
                       </div>
@@ -876,13 +876,14 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                         <span
                           style={{
                             display: 'inline-block',
-                            padding: '1px 6px',
-                            borderRadius: 'var(--yz-radius-sm)',
+                            padding: '2px 8px',
+                            borderRadius: 'var(--yz-radius-full)',
                             fontSize: '10px',
-                            fontWeight: 600,
+                            fontWeight: 700,
                             fontFamily: 'var(--yz-font-mono)',
                             backgroundColor: isOut ? '#FEE2E2' : '#FEF3C7',
                             color: isOut ? '#B91C1C' : '#B45309',
+                            border: `1px solid ${isOut ? '#FECACA' : '#FDE68A'}`,
                           }}
                         >
                           {current}
@@ -1029,10 +1030,10 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                           <span
                             style={{
                               display: 'inline-block',
-                              padding: '1px 6px',
-                              borderRadius: 'var(--yz-radius-sm)',
-                              fontSize: '9.5px',
-                              fontWeight: 600,
+                              padding: '2px 8px',
+                              borderRadius: 'var(--yz-radius-full)',
+                              fontSize: '10px',
+                              fontWeight: 700,
                               backgroundColor: isPaid ? '#DCFCE7' : '#FEF3C7',
                               color: isPaid ? '#166534' : '#92400E',
                               border: `1px solid ${isPaid ? '#BBF7D0' : '#FDE68A'}`,

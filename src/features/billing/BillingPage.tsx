@@ -406,7 +406,7 @@ export const BillingPage: React.FC = () => {
             </div>
 
             {/* Dynamic Category Quick Pills */}
-            <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '2px' }}>
+            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px' }}>
               {availableCategories.map((c) => {
                 const isSelected = effectiveCategory === c;
                 return (
@@ -415,18 +415,21 @@ export const BillingPage: React.FC = () => {
                     type="button"
                     onClick={() => setSelectedCategory(c)}
                     style={{
-                      padding: '2px 9px',
-                      borderRadius: 'var(--yz-radius-full)',
+                      padding: '4px 12px',
+                      borderRadius: 'var(--yz-radius-lg, 12px)',
                       border: '1px solid',
-                      borderColor: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-border)',
-                      backgroundColor: isSelected ? 'var(--yz-primary-subtle, #FDF2F4)' : 'var(--yz-bg-surface)',
-                      color: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-text-secondary)',
-                      fontSize: '11px',
-                      fontWeight: isSelected ? 600 : 500,
+                      borderColor: isSelected ? 'var(--yz-primary, #852237)' : 'var(--yz-border)',
+                      backgroundColor: isSelected ? 'var(--yz-primary, #852237)' : 'var(--yz-bg-subtle)',
+                      color: isSelected ? '#FFFFFF' : 'var(--yz-text-secondary)',
+                      fontSize: '11.5px',
+                      fontWeight: isSelected ? 700 : 600,
+                      boxShadow: isSelected ? 'var(--yz-shadow-2xs)' : 'none',
                       cursor: 'pointer',
                       whiteSpace: 'nowrap',
-                      transition: 'all 0.1s ease',
-                      height: '24px',
+                      transition: 'all 0.12s ease',
+                      height: '28px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
                     }}
                   >
                     {c === 'ALL' ? 'All' : c}
@@ -443,9 +446,9 @@ export const BillingPage: React.FC = () => {
               minHeight: 0,
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: '8px',
+              gap: '10px',
               overflowY: 'auto',
-              padding: '2px 3px 2px 2px',
+              padding: '2px 4px 2px 2px',
               alignContent: 'start',
             }}
           >
@@ -460,16 +463,18 @@ export const BillingPage: React.FC = () => {
                     backgroundColor: 'var(--yz-bg-surface)',
                     border: '1px solid',
                     borderColor: cartItem ? 'var(--yz-primary, #852237)' : 'var(--yz-border)',
-                    borderRadius: 'var(--yz-radius-xl, 8px)',
-                    padding: '5px 7px',
+                    borderRadius: 'var(--yz-card-radius, 16px)',
+                    padding: '8px 9px',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    gap: '2px',
+                    gap: '4px',
                     cursor: 'default',
                     opacity: inStock ? 1 : 0.55,
-                    transition: 'all 0.12s ease',
-                    boxShadow: cartItem ? 'inset 0 0 0 1px var(--yz-primary, #852237)' : 'none',
+                    transition: 'all 0.14s ease',
+                    boxShadow: cartItem
+                      ? '0 0 0 2px rgba(133, 34, 55, 0.15), var(--yz-shadow-xs)'
+                      : 'var(--yz-shadow-2xs)',
                     position: 'relative',
                     userSelect: 'none',
                   }}
@@ -480,11 +485,11 @@ export const BillingPage: React.FC = () => {
                       alt={p.name}
                       productName={p.name}
                       category={p.category}
-                      height={88}
+                      height={92}
                       width="100%"
                       rounded="md"
                       iconSize={18}
-                      style={{ marginBottom: '4px' }}
+                      style={{ marginBottom: '6px' }}
                     />
 
                     <div
@@ -492,14 +497,15 @@ export const BillingPage: React.FC = () => {
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        marginBottom: '2px',
+                        marginBottom: '3px',
                       }}
                     >
                       <span
                         style={{
-                          fontSize: '9.5px',
+                          fontSize: '10px',
                           fontFamily: 'var(--yz-font-mono)',
                           color: 'var(--yz-text-muted)',
+                          fontWeight: 600,
                           letterSpacing: '0.2px',
                         }}
                       >
@@ -513,14 +519,14 @@ export const BillingPage: React.FC = () => {
 
                     <div
                       style={{
-                        fontWeight: 600,
-                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        fontSize: '12px',
                         lineHeight: 1.3,
                         color: 'var(--yz-text-primary)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        marginBottom: '2px',
+                        marginBottom: '4px',
                       }}
                       title={p.name}
                     >
@@ -534,14 +540,14 @@ export const BillingPage: React.FC = () => {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       borderTop: '1px solid var(--yz-border-subtle)',
-                      paddingTop: '3px',
+                      paddingTop: '6px',
                       marginTop: 'auto',
                     }}
                   >
                     <div
                       style={{
-                        fontSize: '12px',
-                        fontWeight: 700,
+                        fontSize: '13px',
+                        fontWeight: 800,
                         fontFamily: 'var(--yz-font-mono)',
                         color: 'var(--yz-text-primary)',
                       }}
@@ -555,12 +561,12 @@ export const BillingPage: React.FC = () => {
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '1px',
+                        gap: '2px',
                         backgroundColor: currentQty > 0 ? 'var(--yz-primary-subtle, #FDF2F4)' : 'var(--yz-bg-subtle, #F1F5F9)',
                         border: '1px solid',
                         borderColor: currentQty > 0 ? 'var(--yz-primary-border, #F3D2D9)' : 'var(--yz-border, #E2E8F0)',
-                        borderRadius: 'var(--yz-radius-sm, 4px)',
-                        padding: '1px',
+                        borderRadius: 'var(--yz-radius-full)',
+                        padding: '2px 4px',
                       }}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -574,11 +580,10 @@ export const BillingPage: React.FC = () => {
                           }
                         }}
                         style={{
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '3px',
-                          border: '1px solid',
-                          borderColor: currentQty > 0 ? 'var(--yz-primary-border, #F3D2D9)' : 'var(--yz-border, #CBD5E1)',
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: 'var(--yz-radius-full)',
+                          border: 'none',
                           backgroundColor: currentQty > 0 ? '#FFFFFF' : 'transparent',
                           color: currentQty > 0 ? 'var(--yz-primary, #852237)' : 'var(--yz-text-muted, #94A3B8)',
                           cursor: currentQty > 0 && inStock ? 'pointer' : 'not-allowed',
@@ -587,24 +592,25 @@ export const BillingPage: React.FC = () => {
                           alignItems: 'center',
                           justifyContent: 'center',
                           padding: 0,
-                          transition: 'all 0.1s ease',
+                          boxShadow: currentQty > 0 ? 'var(--yz-shadow-2xs)' : 'none',
+                          transition: 'all 0.12s ease',
                         }}
                         title="Decrease quantity"
                         aria-label={`Decrease ${p.name} quantity`}
                       >
-                        <Minus size={10} strokeWidth={2.5} />
+                        <Minus size={11} strokeWidth={2.5} />
                       </button>
 
                       <span
                         style={{
-                          minWidth: '16px',
+                          minWidth: '18px',
                           textAlign: 'center',
-                          fontSize: '10.5px',
-                          fontWeight: 700,
+                          fontSize: '11px',
+                          fontWeight: 800,
                           fontFamily: 'var(--yz-font-mono)',
                           color: currentQty > 0 ? 'var(--yz-primary, #852237)' : 'var(--yz-text-muted, #64748B)',
                           userSelect: 'none',
-                          padding: '0 1px',
+                          padding: '0 2px',
                         }}
                         className="tabular-nums"
                       >
@@ -625,11 +631,10 @@ export const BillingPage: React.FC = () => {
                           }
                         }}
                         style={{
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '3px',
-                          border: '1px solid',
-                          borderColor: inStock && currentQty < p.currentStock ? 'var(--yz-primary, #852237)' : 'var(--yz-border, #CBD5E1)',
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: 'var(--yz-radius-full)',
+                          border: 'none',
                           backgroundColor: inStock && currentQty < p.currentStock ? 'var(--yz-primary, #852237)' : 'transparent',
                           color: inStock && currentQty < p.currentStock ? '#FFFFFF' : 'var(--yz-text-muted, #94A3B8)',
                           cursor: inStock && currentQty < p.currentStock ? 'pointer' : 'not-allowed',
@@ -638,12 +643,13 @@ export const BillingPage: React.FC = () => {
                           alignItems: 'center',
                           justifyContent: 'center',
                           padding: 0,
-                          transition: 'all 0.1s ease',
+                          boxShadow: inStock && currentQty < p.currentStock ? 'var(--yz-shadow-2xs)' : 'none',
+                          transition: 'all 0.12s ease',
                         }}
                         title="Increase quantity"
                         aria-label={`Increase ${p.name} quantity`}
                       >
-                        <Plus size={10} strokeWidth={2.5} />
+                        <Plus size={11} strokeWidth={2.5} />
                       </button>
                     </div>
                   </div>
@@ -657,7 +663,7 @@ export const BillingPage: React.FC = () => {
         <div
           className="yz-card"
           style={{
-            padding: '10px',
+            padding: '14px',
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
@@ -666,10 +672,10 @@ export const BillingPage: React.FC = () => {
           }}
         >
         {/* Cart Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--yz-border)', paddingBottom: '6px', marginBottom: '6px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--yz-border)', paddingBottom: '8px', marginBottom: '8px' }}>
           <div>
-            <h3 style={{ fontSize: '13px', fontWeight: 600 }}>Counter Bill</h3>
-            <span style={{ fontSize: '11px', color: 'var(--yz-text-muted)' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--yz-text-primary)' }}>Counter Bill</h3>
+            <span style={{ fontSize: '11px', color: 'var(--yz-text-muted)', fontWeight: 500 }}>
               {cart.reduce((sum, item) => sum + item.quantity, 0)} items selected
             </span>
           </div>
@@ -678,7 +684,7 @@ export const BillingPage: React.FC = () => {
             <button
               onClick={clearCart}
               className="yz-btn yz-btn-ghost yz-btn-sm"
-              style={{ color: 'var(--yz-status-out-stock)', fontSize: '11px', padding: '0 4px', height: '20px' }}
+              style={{ color: 'var(--yz-status-out-stock)', fontSize: '11px', padding: '0 6px', height: '22px' }}
             >
               Clear
             </button>
@@ -686,9 +692,9 @@ export const BillingPage: React.FC = () => {
         </div>
 
         {/* Customer Section */}
-        <div ref={dropdownRef} style={{ position: 'relative', marginBottom: '8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--yz-text-secondary)' }}>
+        <div ref={dropdownRef} style={{ position: 'relative', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--yz-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Customer
             </span>
             {selectedCustomerId && (
@@ -700,7 +706,7 @@ export const BillingPage: React.FC = () => {
                   setCustomerPhone('');
                 }}
                 className="yz-btn yz-btn-ghost yz-btn-sm"
-                style={{ fontSize: '10px', height: '16px', padding: '0 2px', color: 'var(--yz-text-muted)' }}
+                style={{ fontSize: '10.5px', height: '18px', padding: '0 4px', color: 'var(--yz-text-muted)' }}
                 title="Clear selected customer"
               >
                 Clear
@@ -717,19 +723,21 @@ export const BillingPage: React.FC = () => {
               alignItems: 'center',
               justifyContent: 'space-between',
               cursor: 'pointer',
-              height: '28px',
-              padding: '0 8px',
-              fontSize: '11px',
+              height: 'var(--yz-control-height-md, 34px)',
+              padding: '0 10px',
+              fontSize: '12px',
               backgroundColor: 'var(--yz-bg-surface)',
               width: '100%',
               textAlign: 'left',
-              border: '1px solid var(--yz-border)',
-              borderRadius: 'var(--yz-radius-sm)',
+              border: isCustomerDropdownOpen ? '1px solid var(--yz-primary, #852237)' : '1px solid var(--yz-border)',
+              borderRadius: 'var(--yz-input-radius, 12px)',
+              boxShadow: isCustomerDropdownOpen ? '0 0 0 2px rgba(133, 34, 55, 0.12)' : 'var(--yz-shadow-2xs)',
+              transition: 'all 0.14s ease',
             }}
           >
             <span
               style={{
-                fontWeight: selectedCustomerId ? 600 : 400,
+                fontWeight: selectedCustomerId ? 600 : 500,
                 color: selectedCustomerId ? 'var(--yz-text-primary)' : 'var(--yz-text-muted)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -739,7 +747,7 @@ export const BillingPage: React.FC = () => {
               {selectedCustomerId ? (
                 `${customerName}${customerPhone ? ` (${customerPhone})` : ''}`
               ) : (
-                'Select customer'
+                'Select customer...'
               )}
             </span>
             <ChevronDown
@@ -758,28 +766,28 @@ export const BillingPage: React.FC = () => {
             <div
               style={{
                 position: 'absolute',
-                top: 'calc(100% + 3px)',
+                top: 'calc(100% + 4px)',
                 left: 0,
                 right: 0,
                 backgroundColor: 'var(--yz-bg-surface)',
                 border: '1px solid var(--yz-border)',
-                borderRadius: 'var(--yz-radius-sm)',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+                borderRadius: 'var(--yz-dropdown-radius, 12px)',
+                boxShadow: 'var(--yz-shadow-lg)',
                 zIndex: 80,
-                padding: '6px',
+                padding: '8px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '4px',
-                maxHeight: '260px',
+                gap: '5px',
+                maxHeight: '270px',
               }}
             >
               {/* Search customers... */}
               <div style={{ position: 'relative' }}>
                 <Search
-                  size={12}
+                  size={13}
                   style={{
                     position: 'absolute',
-                    left: '7px',
+                    left: '8px',
                     top: '50%',
                     transform: 'translateY(-50%)',
                     color: 'var(--yz-text-muted)',
@@ -792,7 +800,7 @@ export const BillingPage: React.FC = () => {
                   value={customerSearch}
                   onChange={(e) => setCustomerSearch(e.target.value)}
                   className="yz-input"
-                  style={{ height: '26px', fontSize: '11px', paddingLeft: '24px' }}
+                  style={{ height: '30px', fontSize: '11.5px', paddingLeft: '28px', borderRadius: 'var(--yz-radius-sm, 8px)' }}
                 />
               </div>
 
@@ -803,7 +811,7 @@ export const BillingPage: React.FC = () => {
                   maxHeight: '160px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '1px',
+                  gap: '2px',
                 }}
               >
                 {filteredCustomers.length === 0 ? (
@@ -828,29 +836,30 @@ export const BillingPage: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          padding: '5px 8px',
-                          borderRadius: 'var(--yz-radius-sm)',
+                          padding: '6px 8px',
+                          borderRadius: 'var(--yz-radius-sm, 8px)',
                           border: 'none',
-                          backgroundColor: isSelected ? 'var(--yz-primary-subtle, #FDF2F2)' : 'transparent',
+                          backgroundColor: isSelected ? 'var(--yz-primary-subtle, #FDF2F4)' : 'transparent',
                           cursor: 'pointer',
                           textAlign: 'left',
-                          fontSize: '11px',
-                          color: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-text-primary)',
+                          fontSize: '11.5px',
+                          color: isSelected ? 'var(--yz-primary, #852237)' : 'var(--yz-text-primary)',
+                          transition: 'background-color 0.1s ease',
                         }}
                         onMouseEnter={(e) => {
-                          if (!isSelected) e.currentTarget.style.backgroundColor = '#F1F5F9';
+                          if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--yz-bg-subtle)';
                         }}
                         onMouseLeave={(e) => {
                           if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
                         }}
                       >
                         <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          <div style={{ fontWeight: isSelected ? 600 : 500 }}>{c.name}</div>
+                          <div style={{ fontWeight: isSelected ? 700 : 500 }}>{c.name}</div>
                           {c.phone && (
                             <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)', fontFamily: 'var(--yz-font-mono)' }}>{c.phone}</div>
                           )}
                         </div>
-                        {isSelected && <span style={{ fontSize: '10px', color: 'var(--yz-primary, #832729)' }}>✓</span>}
+                        {isSelected && <span style={{ fontSize: '11px', color: 'var(--yz-primary, #852237)', fontWeight: 700 }}>✓</span>}
                       </button>
                     );
                   })
@@ -858,7 +867,7 @@ export const BillingPage: React.FC = () => {
               </div>
 
               {/* + Create New Customer */}
-              <div style={{ borderTop: '1px solid var(--yz-border)', paddingTop: '4px', marginTop: '2px' }}>
+              <div style={{ borderTop: '1px solid var(--yz-border-subtle)', paddingTop: '6px', marginTop: '2px' }}>
                 <button
                   type="button"
                   onClick={() => {
@@ -869,15 +878,16 @@ export const BillingPage: React.FC = () => {
                   style={{
                     width: '100%',
                     justifyContent: 'flex-start',
-                    color: 'var(--yz-primary, #832729)',
-                    fontWeight: 600,
-                    fontSize: '11px',
-                    height: '26px',
-                    padding: '0 6px',
-                    gap: '4px',
+                    color: 'var(--yz-primary, #852237)',
+                    fontWeight: 700,
+                    fontSize: '11.5px',
+                    height: '28px',
+                    padding: '0 8px',
+                    gap: '5px',
+                    borderRadius: 'var(--yz-radius-sm, 8px)',
                   }}
                 >
-                  <Plus size={12} />
+                  <Plus size={13} />
                   <span>Create New Customer</span>
                 </button>
               </div>
@@ -914,10 +924,11 @@ export const BillingPage: React.FC = () => {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  padding: '4px 6px',
+                  padding: '6px 8px',
                   backgroundColor: 'var(--yz-bg-subtle)',
-                  borderRadius: 'var(--yz-radius-sm)',
-                  gap: '6px',
+                  borderRadius: 'var(--yz-radius-md)',
+                  border: '1px solid var(--yz-border-subtle)',
+                  gap: '8px',
                 }}
               >
                 <ProductImage
@@ -925,58 +936,60 @@ export const BillingPage: React.FC = () => {
                   alt={item.product.name}
                   productName={item.product.name}
                   category={item.product.category}
-                  width={30}
-                  height={30}
+                  width={32}
+                  height={32}
                   rounded="sm"
-                  iconSize={13}
+                  iconSize={14}
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600, fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {item.product.name}
                   </div>
-                  <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)' }}>
+                  <div style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)' }}>
                     ₹{item.unitPrice.toLocaleString('en-IN')} × {item.quantity} (GST {item.gstRate}%)
                   </div>
                 </div>
 
                 {/* Quantity Controls */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                   <button
                     onClick={() => updateQuantity(item.product.id, -1)}
                     style={{
-                      width: '20px',
-                      height: '20px',
-                      borderRadius: '3px',
+                      width: '22px',
+                      height: '22px',
+                      borderRadius: 'var(--yz-radius-sm)',
                       border: '1px solid var(--yz-border)',
                       backgroundColor: 'var(--yz-bg-surface)',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      boxShadow: 'var(--yz-shadow-2xs)',
                     }}
                   >
-                    <Minus size={10} />
+                    <Minus size={11} />
                   </button>
 
-                  <span style={{ fontSize: '11px', fontWeight: 700, width: '18px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, width: '20px', textAlign: 'center', fontFamily: 'var(--yz-font-mono)' }} className="tabular-nums">
                     {item.quantity}
                   </span>
 
                   <button
                     onClick={() => updateQuantity(item.product.id, 1)}
                     style={{
-                      width: '20px',
-                      height: '20px',
-                      borderRadius: '3px',
+                      width: '22px',
+                      height: '22px',
+                      borderRadius: 'var(--yz-radius-sm)',
                       border: '1px solid var(--yz-border)',
                       backgroundColor: 'var(--yz-bg-surface)',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      boxShadow: 'var(--yz-shadow-2xs)',
                     }}
                   >
-                    <Plus size={10} />
+                    <Plus size={11} />
                   </button>
 
                   <button
@@ -987,13 +1000,18 @@ export const BillingPage: React.FC = () => {
                       color: 'var(--yz-text-muted)',
                       cursor: 'pointer',
                       marginLeft: '2px',
+                      padding: '3px',
+                      borderRadius: 'var(--yz-radius-sm)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
-                    <Trash2 size={12} />
+                    <Trash2 size={13} />
                   </button>
                 </div>
 
-                <div style={{ fontWeight: 700, fontSize: '11px', minWidth: '55px', textAlign: 'right', fontFamily: 'var(--yz-font-mono)' }} className="tabular-nums">
+                <div style={{ fontWeight: 700, fontSize: '12px', minWidth: '60px', textAlign: 'right', fontFamily: 'var(--yz-font-mono)' }} className="tabular-nums">
                   ₹{(item.unitPrice * item.quantity).toLocaleString('en-IN')}
                 </div>
               </div>
@@ -1003,10 +1021,10 @@ export const BillingPage: React.FC = () => {
 
         {/* Bill Financial Breakdown */}
         {cart.length > 0 && (
-          <div style={{ borderTop: '1px solid var(--yz-border)', paddingTop: '6px', marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '11px' }}>
+          <div style={{ borderTop: '1px solid var(--yz-border)', paddingTop: '8px', marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11.5px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--yz-text-secondary)' }}>
               <span>Items Subtotal</span>
-              <span className="tabular-nums">₹{grossSubtotal.toLocaleString('en-IN')}</span>
+              <span className="tabular-nums font-mono font-medium">₹{grossSubtotal.toLocaleString('en-IN')}</span>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1022,9 +1040,9 @@ export const BillingPage: React.FC = () => {
                     { value: 15, label: '15% VIP' },
                   ]}
                   minWidth="105px"
-                  style={{ height: '24px' }}
+                  style={{ height: '26px' }}
                 />
-                <span className="tabular-nums" style={{ color: 'var(--yz-primary)' }}>
+                <span className="tabular-nums font-mono font-semibold" style={{ color: 'var(--yz-primary)' }}>
                   -₹{discountAmount.toLocaleString('en-IN')}
                 </span>
               </div>
@@ -1032,7 +1050,7 @@ export const BillingPage: React.FC = () => {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--yz-text-secondary)' }}>
               <span>GST (CGST + SGST)</span>
-              <span className="tabular-nums">₹{Math.round(totalTax).toLocaleString('en-IN')}</span>
+              <span className="tabular-nums font-mono font-medium">₹{Math.round(totalTax).toLocaleString('en-IN')}</span>
             </div>
 
             <div
@@ -1040,15 +1058,15 @@ export const BillingPage: React.FC = () => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 borderTop: '1px dashed var(--yz-border)',
-                paddingTop: '4px',
-                marginTop: '2px',
+                paddingTop: '6px',
+                marginTop: '3px',
                 fontSize: '14px',
                 fontWeight: 700,
                 color: 'var(--yz-text-primary)',
               }}
             >
               <span>Grand Total</span>
-              <span className="tabular-nums" style={{ color: 'var(--yz-primary)' }}>
+              <span className="tabular-nums font-mono font-extrabold" style={{ color: 'var(--yz-primary)' }}>
                 ₹{grandTotal.toLocaleString('en-IN')}
               </span>
             </div>
@@ -1069,7 +1087,7 @@ export const BillingPage: React.FC = () => {
                 setCashTenderedInput(String(grandTotal));
                 setIsPaymentOpen(true);
               }}
-              style={{ width: '100%', marginTop: '4px', height: '32px' }}
+              style={{ width: '100%', marginTop: '6px', height: '34px', borderRadius: 'var(--yz-btn-radius)' }}
             >
               Collect ₹{grandTotal.toLocaleString('en-IN')}
             </Button>
@@ -1091,7 +1109,7 @@ export const BillingPage: React.FC = () => {
         maxWidth="440px"
         footer={
           isCompleted ? (
-            <div style={{ display: 'flex', gap: '6px', width: '100%', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: 'space-between' }}>
               <Button variant="secondary" size="sm" icon={<Printer size={13} />} onClick={() => window.print()}>
                 Print Bill
               </Button>
@@ -1142,29 +1160,30 @@ export const BillingPage: React.FC = () => {
               style={{
                 width: '100%',
                 backgroundColor: 'var(--yz-bg-subtle)',
-                borderRadius: 'var(--yz-radius-sm)',
-                padding: '8px 10px',
-                fontSize: '11px',
+                borderRadius: 'var(--yz-radius-md)',
+                border: '1px solid var(--yz-border-subtle)',
+                padding: '10px 12px',
+                fontSize: '11.5px',
                 textAlign: 'left',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '4px',
+                gap: '5px',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Boutique:</span>
+                <span style={{ color: 'var(--yz-text-secondary)' }}>Boutique:</span>
                 <strong>Yaazhi Boutique & Weaves</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Bill / SO Number:</span>
+                <span style={{ color: 'var(--yz-text-secondary)' }}>Bill / SO Number:</span>
                 <strong style={{ fontFamily: 'var(--yz-font-mono)' }}>{completedBillNo}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Client:</span>
+                <span style={{ color: 'var(--yz-text-secondary)' }}>Client:</span>
                 <span>{customerName} {customerPhone ? `(${customerPhone})` : ''}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Payment Status:</span>
+                <span style={{ color: 'var(--yz-text-secondary)' }}>Payment Status:</span>
                 <span
                   style={{
                     fontWeight: 600,
@@ -1175,7 +1194,7 @@ export const BillingPage: React.FC = () => {
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Items Count:</span>
+                <span style={{ color: 'var(--yz-text-secondary)' }}>Items Count:</span>
                 <span>{cart.reduce((s, i) => s + i.quantity, 0)} pieces</span>
               </div>
             </div>
@@ -1187,7 +1206,7 @@ export const BillingPage: React.FC = () => {
               style={{
                 backgroundColor: 'var(--yz-bg-subtle)',
                 border: '1px solid var(--yz-border)',
-                borderRadius: 'var(--yz-radius-sm)',
+                borderRadius: 'var(--yz-radius-md)',
                 padding: '10px 12px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -1198,13 +1217,13 @@ export const BillingPage: React.FC = () => {
                 <span style={{ fontSize: '11.5px', color: 'var(--yz-text-secondary)', fontWeight: 500 }}>
                   Total Bill Amount
                 </span>
-                <span style={{ fontSize: '16px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-text-primary)' }}>
+                <span style={{ fontSize: '16px', fontWeight: 800, fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-text-primary)' }}>
                   ₹{grandTotal.toLocaleString('en-IN')}
                 </span>
               </div>
 
               {/* Payment Status Dropdown */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--yz-text-secondary)' }}>
                   Payment Status
                 </label>
@@ -1255,17 +1274,17 @@ export const BillingPage: React.FC = () => {
                       setReceivedAmountInput(e.target.value);
                       setCashTenderedInput(e.target.value);
                     }}
-                    className="yz-input tabular-nums"
+                    className="yz-input tabular-nums font-mono"
                     placeholder="Enter received advance amount"
-                    style={{ height: '28px', fontSize: '12px', fontWeight: 600 }}
+                    style={{ height: '32px', fontSize: '12px', fontWeight: 600 }}
                   />
                   <div
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
-                      fontSize: '11px',
+                      fontSize: '11.5px',
                       backgroundColor: 'var(--yz-bg-surface)',
-                      padding: '5px 8px',
+                      padding: '6px 10px',
                       borderRadius: 'var(--yz-radius-sm)',
                       border: '1px solid var(--yz-border-subtle)',
                       marginTop: '2px',
@@ -1278,7 +1297,7 @@ export const BillingPage: React.FC = () => {
                   </div>
                 </div>
               ) : billPaymentStatus === 'PAID' ? (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--yz-text-secondary)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: 'var(--yz-text-secondary)' }}>
                   <span>Amount Received:</span>
                   <strong style={{ color: '#166534', fontFamily: 'var(--yz-font-mono)' }}>
                     ₹{grandTotal.toLocaleString('en-IN')}
@@ -1286,11 +1305,11 @@ export const BillingPage: React.FC = () => {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--yz-text-secondary)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: 'var(--yz-text-secondary)' }}>
                     <span>Amount Received:</span>
                     <strong style={{ fontFamily: 'var(--yz-font-mono)' }}>₹0</strong>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--yz-text-secondary)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: 'var(--yz-text-secondary)' }}>
                     <span>Pending Amount:</span>
                     <strong style={{ color: '#B45309', fontFamily: 'var(--yz-font-mono)' }}>
                       ₹{grandTotal.toLocaleString('en-IN')}
@@ -1307,13 +1326,13 @@ export const BillingPage: React.FC = () => {
                   Payment Method:
                 </div>
                 {/* 2 Payment Methods: Cash and UPI (Card removed) */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                   <button
                     type="button"
                     onClick={() => setPaymentMode('CASH')}
                     style={{
-                      padding: '8px 4px',
-                      borderRadius: 'var(--yz-radius-sm)',
+                      padding: '8px 6px',
+                      borderRadius: 'var(--yz-radius-md)',
                       border: '1px solid',
                       borderColor: paymentMode === 'CASH' ? 'var(--yz-primary)' : 'var(--yz-border)',
                       backgroundColor: paymentMode === 'CASH' ? 'var(--yz-primary-subtle)' : 'var(--yz-bg-surface)',
@@ -1321,10 +1340,11 @@ export const BillingPage: React.FC = () => {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '3px',
+                      gap: '4px',
                       cursor: 'pointer',
                       fontWeight: 600,
-                      fontSize: '11px',
+                      fontSize: '11.5px',
+                      boxShadow: paymentMode === 'CASH' ? 'var(--yz-shadow-xs)' : 'none',
                     }}
                   >
                     <Banknote size={18} color={paymentMode === 'CASH' ? 'var(--yz-primary)' : 'inherit'} />
@@ -1335,8 +1355,8 @@ export const BillingPage: React.FC = () => {
                     type="button"
                     onClick={() => setPaymentMode('UPI')}
                     style={{
-                      padding: '8px 4px',
-                      borderRadius: 'var(--yz-radius-sm)',
+                      padding: '8px 6px',
+                      borderRadius: 'var(--yz-radius-md)',
                       border: '1px solid',
                       borderColor: paymentMode === 'UPI' ? 'var(--yz-primary)' : 'var(--yz-border)',
                       backgroundColor: paymentMode === 'UPI' ? 'var(--yz-primary-subtle)' : 'var(--yz-bg-surface)',
@@ -1344,10 +1364,11 @@ export const BillingPage: React.FC = () => {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '3px',
+                      gap: '4px',
                       cursor: 'pointer',
                       fontWeight: 600,
-                      fontSize: '11px',
+                      fontSize: '11.5px',
+                      boxShadow: paymentMode === 'UPI' ? 'var(--yz-shadow-xs)' : 'none',
                     }}
                   >
                     <QrCode size={18} color={paymentMode === 'UPI' ? 'var(--yz-primary)' : 'inherit'} />
@@ -1364,7 +1385,7 @@ export const BillingPage: React.FC = () => {
                       gap: '8px',
                       backgroundColor: 'var(--yz-bg-subtle)',
                       padding: '10px 12px',
-                      borderRadius: 'var(--yz-radius-sm)',
+                      borderRadius: 'var(--yz-radius-md)',
                       border: '1px solid var(--yz-border)',
                     }}
                   >
@@ -1378,7 +1399,7 @@ export const BillingPage: React.FC = () => {
                     </div>
 
                     <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                         <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--yz-text-secondary)' }}>
                           Cash Received (Tendered)
                         </label>
@@ -1391,12 +1412,12 @@ export const BillingPage: React.FC = () => {
                         onChange={(e) => setCashTenderedInput(e.target.value)}
                         className="yz-input tabular-nums"
                         placeholder={`₹${computedReceivedAmount.toLocaleString('en-IN')}`}
-                        style={{ height: '30px', fontSize: '13px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)' }}
+                        style={{ height: '32px', fontSize: '13px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)' }}
                       />
                     </div>
 
                     {/* Quick Presets */}
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                       <button
                         type="button"
                         onClick={() => setCashTenderedInput(String(computedReceivedAmount))}
@@ -1404,7 +1425,7 @@ export const BillingPage: React.FC = () => {
                           padding: '3px 8px',
                           fontSize: '10.5px',
                           fontWeight: 600,
-                          borderRadius: '4px',
+                          borderRadius: 'var(--yz-radius-sm)',
                           border: '1px solid var(--yz-primary)',
                           backgroundColor: 'var(--yz-primary-subtle)',
                           color: 'var(--yz-primary)',
@@ -1423,7 +1444,7 @@ export const BillingPage: React.FC = () => {
                             style={{
                               padding: '3px 8px',
                               fontSize: '10.5px',
-                              borderRadius: '4px',
+                              borderRadius: 'var(--yz-radius-sm)',
                               border: '1px solid var(--yz-border)',
                               backgroundColor: 'var(--yz-bg-surface)',
                               color: 'var(--yz-text-secondary)',
@@ -1449,7 +1470,7 @@ export const BillingPage: React.FC = () => {
                               alignItems: 'center',
                               backgroundColor: '#DCFCE7',
                               border: '1px solid #86EFAC',
-                              borderRadius: '4px',
+                              borderRadius: 'var(--yz-radius-sm)',
                               padding: '6px 10px',
                               fontSize: '11.5px',
                               color: '#166534',
@@ -1471,7 +1492,7 @@ export const BillingPage: React.FC = () => {
                               alignItems: 'center',
                               backgroundColor: '#FEF2F2',
                               border: '1px solid #FECACA',
-                              borderRadius: '4px',
+                              borderRadius: 'var(--yz-radius-sm)',
                               padding: '6px 10px',
                               fontSize: '11px',
                               color: '#991B1B',
@@ -1495,12 +1516,12 @@ export const BillingPage: React.FC = () => {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      padding: '10px 12px',
+                      padding: '12px 14px',
                       backgroundColor: 'var(--yz-bg-subtle)',
-                      borderRadius: 'var(--yz-radius-sm)',
+                      borderRadius: 'var(--yz-radius-md)',
                       border: '1px solid var(--yz-border)',
                       textAlign: 'center',
-                      gap: '6px',
+                      gap: '8px',
                     }}
                   >
                     <div
@@ -1509,12 +1530,12 @@ export const BillingPage: React.FC = () => {
                         height: '110px',
                         backgroundColor: '#FFFFFF',
                         border: '1px solid var(--yz-border)',
-                        borderRadius: '6px',
+                        borderRadius: 'var(--yz-radius-md)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         padding: '6px',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                        boxShadow: 'var(--yz-shadow-xs)',
                       }}
                     >
                       <img
@@ -1524,25 +1545,25 @@ export const BillingPage: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '11.5px', color: 'var(--yz-text-primary)', fontFamily: 'var(--yz-font-mono)' }}>
+                      <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--yz-text-primary)', fontFamily: 'var(--yz-font-mono)' }}>
                         {paymentSettings.upiId || 'yaazhi@oksbi'}
                       </div>
-                      <div style={{ fontSize: '10px', color: 'var(--yz-text-secondary)', marginTop: '1px' }}>
+                      <div style={{ fontSize: '10.5px', color: 'var(--yz-text-secondary)', marginTop: '1px' }}>
                         Scan & pay ₹{computedReceivedAmount.toLocaleString('en-IN')}
                       </div>
                     </div>
 
-                    <div style={{ width: '100%', textAlign: 'left', marginTop: '2px' }}>
-                      <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--yz-text-secondary)', display: 'block', marginBottom: '2px' }}>
+                    <div style={{ width: '100%', textAlign: 'left', marginTop: '4px' }}>
+                      <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--yz-text-secondary)', display: 'block', marginBottom: '3px' }}>
                         UPI Reference / UTR Number (Optional)
                       </label>
                       <input
                         type="text"
                         value={upiReference}
                         onChange={(e) => setUpiReference(e.target.value)}
-                        className="yz-input"
+                        className="yz-input font-mono"
                         placeholder="e.g. 428910482910"
-                        style={{ height: '26px', fontSize: '11px' }}
+                        style={{ height: '30px', fontSize: '11.5px' }}
                       />
                     </div>
                   </div>

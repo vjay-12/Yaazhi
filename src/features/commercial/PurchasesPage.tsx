@@ -406,9 +406,10 @@ export const PurchasesPage: React.FC = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           backgroundColor: 'var(--yz-bg-surface)',
-          padding: '8px 10px',
-          borderRadius: 'var(--yz-radius-sm)',
+          padding: '8px 12px',
+          borderRadius: 'var(--yz-radius-md)',
           border: '1px solid var(--yz-border)',
+          boxShadow: 'var(--yz-shadow-2xs)',
           gap: '8px',
           flexWrap: 'wrap',
         }}
@@ -417,10 +418,10 @@ export const PurchasesPage: React.FC = () => {
           {/* Search Box */}
           <div style={{ position: 'relative', width: '260px' }}>
             <Search
-              size={13}
+              size={14}
               style={{
                 position: 'absolute',
-                left: '8px',
+                left: '9px',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 color: 'var(--yz-text-muted)',
@@ -432,7 +433,7 @@ export const PurchasesPage: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="yz-input"
-              style={{ paddingLeft: '26px' }}
+              style={{ paddingLeft: '28px', height: '32px', fontSize: '11.5px', width: '100%' }}
             />
           </div>
 
@@ -475,6 +476,7 @@ export const PurchasesPage: React.FC = () => {
             size="sm"
             icon={<Plus size={14} />}
             onClick={handleOpenCreateModal}
+            style={{ height: '32px', fontSize: '11.5px', fontWeight: 600 }}
           >
             Create Purchase Order
           </Button>
@@ -562,8 +564,8 @@ export const PurchasesPage: React.FC = () => {
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '4px',
-                          padding: '2px 8px',
-                          borderRadius: 'var(--yz-radius-sm)',
+                          padding: '2px 10px',
+                          borderRadius: 'var(--yz-radius-full)',
                           fontSize: '10.5px',
                           fontWeight: 700,
                           backgroundColor:

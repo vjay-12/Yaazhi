@@ -277,95 +277,100 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
         >
           <div
             style={{
-              padding: '8px 10px',
+              padding: '10px 12px',
               backgroundColor: 'var(--yz-bg-subtle)',
-              borderRadius: 'var(--yz-radius-sm)',
+              borderRadius: 'var(--yz-radius-md)',
               border: '1px solid var(--yz-border-subtle)',
+              boxShadow: 'var(--yz-shadow-2xs)',
             }}
           >
             <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--yz-text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>
               Weaver Cost Price
             </div>
-            <div style={{ fontSize: '14px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-text-primary)', marginTop: '2px' }} className="tabular-nums">
+            <div style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-text-primary)', marginTop: '2px' }} className="tabular-nums">
               ₹{product.costPrice.toLocaleString('en-IN')}
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)', marginTop: '1px' }}>
+            <div style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)', marginTop: '2px' }}>
               Procurement Base Cost
             </div>
           </div>
 
           <div
             style={{
-              padding: '8px 10px',
+              padding: '10px 12px',
               backgroundColor: 'var(--yz-bg-subtle)',
-              borderRadius: 'var(--yz-radius-sm)',
+              borderRadius: 'var(--yz-radius-md)',
               border: '1px solid var(--yz-border-subtle)',
+              boxShadow: 'var(--yz-shadow-2xs)',
             }}
           >
             <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--yz-text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>
               Retail MRP
             </div>
-            <div style={{ fontSize: '14px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-text-primary)', marginTop: '2px' }} className="tabular-nums">
+            <div style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-text-primary)', marginTop: '2px' }} className="tabular-nums">
               ₹{(product.mrp || product.sellPrice).toLocaleString('en-IN')}
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)', marginTop: '1px' }}>
+            <div style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)', marginTop: '2px' }}>
               Maximum Retail Price
             </div>
           </div>
 
           <div
             style={{
-              padding: '8px 10px',
+              padding: '10px 12px',
               backgroundColor: 'var(--yz-bg-subtle)',
-              borderRadius: 'var(--yz-radius-sm)',
+              borderRadius: 'var(--yz-radius-md)',
               border: '1px solid var(--yz-border-subtle)',
+              boxShadow: 'var(--yz-shadow-2xs)',
             }}
           >
             <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--yz-text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>
               HSN / SAC Code
             </div>
-            <div style={{ fontSize: '14px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-text-primary)', marginTop: '2px' }}>
+            <div style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-text-primary)', marginTop: '2px' }}>
               {product.hsnCode}
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)', marginTop: '1px' }}>
+            <div style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)', marginTop: '2px' }}>
               Tariff Heading
             </div>
           </div>
 
           <div
             style={{
-              padding: '8px 10px',
+              padding: '10px 12px',
               backgroundColor: 'var(--yz-bg-subtle)',
-              borderRadius: 'var(--yz-radius-sm)',
+              borderRadius: 'var(--yz-radius-md)',
               border: '1px solid var(--yz-border-subtle)',
+              boxShadow: 'var(--yz-shadow-2xs)',
             }}
           >
             <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--yz-text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>
               GST Rate Applied
             </div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--yz-primary)', marginTop: '2px' }}>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--yz-primary)', marginTop: '2px' }}>
               {product.gstRate}%
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)', marginTop: '1px' }}>
+            <div style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)', marginTop: '2px' }}>
               CGST {(product.gstRate / 2).toFixed(1)}% + SGST {(product.gstRate / 2).toFixed(1)}%
             </div>
           </div>
 
           <div
             style={{
-              padding: '8px 10px',
+              padding: '10px 12px',
               backgroundColor: 'var(--yz-bg-subtle)',
-              borderRadius: 'var(--yz-radius-sm)',
+              borderRadius: 'var(--yz-radius-md)',
               border: '1px solid var(--yz-border-subtle)',
+              boxShadow: 'var(--yz-shadow-2xs)',
             }}
           >
             <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--yz-text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>
               Barcode
             </div>
-            <div style={{ fontSize: '14px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-text-primary)', marginTop: '2px', wordBreak: 'break-all' }}>
+            <div style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-text-primary)', marginTop: '2px', wordBreak: 'break-all' }}>
               {product.barcode}
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)', marginTop: '1px' }}>
+            <div style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)', marginTop: '2px' }}>
               Boutique Label / SKU
             </div>
           </div>

@@ -15,9 +15,6 @@ export const StockBadge: React.FC<StockBadgeProps> = ({ status, stockCount }) =>
           backgroundColor: '#F1F5F9',
           color: '#64748B',
           border: '1px solid #CBD5E1',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px',
         }}
         title="Product archived from active catalog"
       >
@@ -79,9 +76,6 @@ export const LifecycleBadge: React.FC<LifecycleBadgeProps> = ({ status }) => {
           backgroundColor: '#F1F5F9',
           color: '#64748B',
           border: '1px solid #CBD5E1',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px',
         }}
         title="Product archived from active catalog"
       >
@@ -98,9 +92,6 @@ export const LifecycleBadge: React.FC<LifecycleBadgeProps> = ({ status }) => {
         backgroundColor: '#ECFDF5',
         color: '#065F46',
         border: '1px solid #A7F3D0',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '4px',
       }}
       title="Active boutique product"
     >

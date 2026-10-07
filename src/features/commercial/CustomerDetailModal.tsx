@@ -290,8 +290,8 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                padding: '6px 12px',
-                borderRadius: 'var(--yz-radius-sm)',
+                padding: '6px 14px',
+                borderRadius: 'var(--yz-radius-md)',
                 border: activeTab === 'measurements' ? '1px solid var(--yz-primary, #832729)' : '1px solid transparent',
                 backgroundColor: activeTab === 'measurements' ? '#FEF2F2' : 'transparent',
                 color: activeTab === 'measurements' ? 'var(--yz-primary, #832729)' : 'var(--yz-text-secondary)',
@@ -306,8 +306,8 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                 style={{
                   fontSize: '10px',
                   fontFamily: 'var(--yz-font-mono)',
-                  padding: '1px 5px',
-                  borderRadius: '10px',
+                  padding: '1px 6px',
+                  borderRadius: 'var(--yz-radius-full)',
                   backgroundColor: activeTab === 'measurements' ? '#FDE8E8' : 'var(--yz-bg-subtle)',
                   color: activeTab === 'measurements' ? 'var(--yz-primary, #832729)' : 'var(--yz-text-muted)',
                 }}
@@ -323,8 +323,8 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                padding: '6px 12px',
-                borderRadius: 'var(--yz-radius-sm)',
+                padding: '6px 14px',
+                borderRadius: 'var(--yz-radius-md)',
                 border: activeTab === 'orders' ? '1px solid var(--yz-primary, #832729)' : '1px solid transparent',
                 backgroundColor: activeTab === 'orders' ? '#FEF2F2' : 'transparent',
                 color: activeTab === 'orders' ? 'var(--yz-primary, #832729)' : 'var(--yz-text-secondary)',
@@ -339,8 +339,8 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                 style={{
                   fontSize: '10px',
                   fontFamily: 'var(--yz-font-mono)',
-                  padding: '1px 5px',
-                  borderRadius: '10px',
+                  padding: '1px 6px',
+                  borderRadius: 'var(--yz-radius-full)',
                   backgroundColor: activeTab === 'orders' ? '#FDE8E8' : 'var(--yz-bg-subtle)',
                   color: activeTab === 'orders' ? 'var(--yz-primary, #832729)' : 'var(--yz-text-muted)',
                 }}
@@ -356,8 +356,8 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                padding: '6px 12px',
-                borderRadius: 'var(--yz-radius-sm)',
+                padding: '6px 14px',
+                borderRadius: 'var(--yz-radius-md)',
                 border: activeTab === 'profile' ? '1px solid var(--yz-primary, #832729)' : '1px solid transparent',
                 backgroundColor: activeTab === 'profile' ? '#FEF2F2' : 'transparent',
                 color: activeTab === 'profile' ? 'var(--yz-primary, #832729)' : 'var(--yz-text-secondary)',
@@ -448,26 +448,26 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  padding: '8px 12px',
+                  padding: '10px 14px',
                   backgroundColor: 'var(--yz-bg-subtle)',
-                  borderRadius: 'var(--yz-radius-sm)',
+                  borderRadius: 'var(--yz-radius-md)',
                   border: '1px solid var(--yz-border)',
                 }}
               >
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--yz-text-primary)' }}>
+                    <span style={{ fontSize: '12.5px', fontWeight: 700, color: 'var(--yz-text-primary)' }}>
                       Tailored Garment Profiles
                     </span>
                     <span
                       style={{
                         fontSize: '10px',
-                        fontWeight: 600,
+                        fontWeight: 700,
                         backgroundColor: '#FEF2F2',
                         color: 'var(--yz-primary, #832729)',
                         border: '1px solid #FECACA',
-                        padding: '1px 6px',
-                        borderRadius: '10px',
+                        padding: '1px 8px',
+                        borderRadius: 'var(--yz-radius-full)',
                       }}
                     >
                       {profiles.length} Garments
@@ -483,7 +483,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                   size="sm"
                   icon={<Plus size={12} />}
                   onClick={handleOpenAddMeasurement}
-                  style={{ fontSize: '11px' }}
+                  style={{ fontSize: '11px', height: '32px' }}
                 >
                   Add Measurement
                 </Button>
@@ -500,8 +500,8 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                   style={{
                     padding: '36px',
                     textAlign: 'center',
-                    border: '1px dashed var(--yz-border)',
-                    borderRadius: 'var(--yz-radius-sm)',
+                    border: '1.5px dashed var(--yz-border)',
+                    borderRadius: 'var(--yz-radius-md)',
                     backgroundColor: 'var(--yz-bg-surface)',
                   }}
                 >
@@ -541,12 +541,12 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                         style={{
                           backgroundColor: 'var(--yz-bg-surface)',
                           border: '1px solid var(--yz-border)',
-                          borderRadius: 'var(--yz-radius-sm)',
-                          padding: '10px 12px',
+                          borderRadius: 'var(--yz-radius-md)',
+                          padding: '12px 14px',
                           display: 'flex',
                           flexDirection: 'column',
                           justifyContent: 'space-between',
-                          boxShadow: 'var(--yz-shadow-sm)',
+                          boxShadow: 'var(--yz-shadow-2xs)',
                         }}
                       >
                         <div>

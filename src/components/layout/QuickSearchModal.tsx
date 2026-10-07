@@ -108,50 +108,53 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '0.75rem 1rem',
-                    border: '1px solid var(--yz-border-subtle)',
-                    borderRadius: 'var(--yz-radius-md)',
+                    border: '1px solid var(--yz-border)',
+                    borderRadius: 'var(--yz-radius-lg, 12px)',
                     backgroundColor: 'var(--yz-bg-surface)',
                     cursor: 'pointer',
-                    transition: 'all 0.12s ease',
+                    boxShadow: 'var(--yz-shadow-2xs)',
+                    transition: 'all 0.14s ease',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = 'var(--yz-primary)';
                     e.currentTarget.style.backgroundColor = 'var(--yz-bg-surface-hover)';
+                    e.currentTarget.style.boxShadow = 'var(--yz-shadow-xs)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--yz-border-subtle)';
+                    e.currentTarget.style.borderColor = 'var(--yz-border)';
                     e.currentTarget.style.backgroundColor = 'var(--yz-bg-surface)';
+                    e.currentTarget.style.boxShadow = 'var(--yz-shadow-2xs)';
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <ProductImage
                       src={product.imageUrl}
                       alt={product.name}
                       productName={product.name}
                       category={product.category}
-                      width={36}
-                      height={36}
+                      width={40}
+                      height={40}
                       rounded="sm"
-                      iconSize={16}
+                      iconSize={18}
                     />
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{product.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--yz-text-secondary)', display: 'flex', gap: '0.5rem' }}>
-                        <span>SKU: {product.sku}</span>
+                      <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--yz-text-primary)' }}>{product.name}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--yz-text-secondary)', display: 'flex', gap: '6px', marginTop: '1px' }}>
+                        <span style={{ fontFamily: 'var(--yz-font-mono)', fontWeight: 600 }}>SKU: {product.sku}</span>
                         <span>•</span>
                         <span>{product.category}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: 700, fontSize: '0.9375rem' }}>
+                      <div style={{ fontWeight: 800, fontSize: '14px', fontFamily: 'var(--yz-font-mono)', color: 'var(--yz-text-primary)' }}>
                         ₹{product.sellPrice.toLocaleString('en-IN')}
                       </div>
                       <StockBadge status={status} stockCount={product.currentStock} />
                     </div>
-                    <ArrowRight size={16} color="var(--yz-text-muted)" />
+                    <ArrowRight size={15} color="var(--yz-text-muted)" />
                   </div>
                 </div>
               );

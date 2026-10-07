@@ -316,9 +316,10 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         {/* Section 2: Pricing & GST */}
         <div
           style={{
-            padding: '8px 10px',
+            padding: '10px 12px',
             backgroundColor: 'var(--yz-bg-subtle)',
-            borderRadius: 'var(--yz-radius-sm)',
+            borderRadius: 'var(--yz-radius-md)',
+            border: '1px solid var(--yz-border-subtle)',
             display: 'flex',
             flexDirection: 'column',
             gap: '6px',
@@ -336,7 +337,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 placeholder="₹ Weaver cost"
                 value={costPrice}
                 onChange={(e) => setCostPrice(e.target.value)}
-                className="yz-input tabular-nums"
+                className="yz-input tabular-nums font-mono"
               />
               {errors.costPrice && <span className="yz-error-text">{errors.costPrice}</span>}
             </div>
@@ -348,7 +349,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 placeholder="₹ Retail price"
                 value={sellPrice}
                 onChange={(e) => setSellPrice(e.target.value)}
-                className="yz-input tabular-nums"
+                className="yz-input tabular-nums font-mono"
               />
               {errors.sellPrice && <span className="yz-error-text">{errors.sellPrice}</span>}
             </div>
@@ -360,7 +361,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 placeholder="₹ Printed MRP"
                 value={mrp}
                 onChange={(e) => setMrp(e.target.value)}
-                className="yz-input tabular-nums"
+                className="yz-input tabular-nums font-mono"
               />
             </div>
           </div>
@@ -373,7 +374,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 placeholder="e.g. 5007"
                 value={hsnCode}
                 onChange={(e) => setHsnCode(e.target.value)}
-                className="yz-input"
+                className="yz-input font-mono"
               />
               {errors.hsnCode && <span className="yz-error-text">{errors.hsnCode}</span>}
             </div>
@@ -400,7 +401,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               min="0"
               value={openingStock}
               onChange={(e) => setOpeningStock(e.target.value)}
-              className="yz-input tabular-nums"
+              className="yz-input tabular-nums font-mono"
               disabled={!!productToEdit}
             />
             {productToEdit && (
@@ -416,7 +417,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               min="1"
               value={reorderPoint}
               onChange={(e) => setReorderPoint(e.target.value)}
-              className="yz-input tabular-nums"
+              className="yz-input tabular-nums font-mono"
             />
           </div>
 
@@ -466,11 +467,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '8px 10px',
+                padding: '8px 12px',
                 border: '1px solid var(--yz-border)',
-                borderRadius: 'var(--yz-radius-sm)',
+                borderRadius: 'var(--yz-radius-md)',
                 backgroundColor: 'var(--yz-bg-surface)',
                 gap: '12px',
+                boxShadow: 'var(--yz-shadow-2xs)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
@@ -481,7 +483,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     width: '46px',
                     height: '46px',
                     objectFit: 'cover',
-                    borderRadius: '4px',
+                    borderRadius: 'var(--yz-radius-sm)',
                     border: '1px solid var(--yz-border)',
                     flexShrink: 0,
                   }}
@@ -517,7 +519,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   variant="secondary"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
-                  style={{ height: '26px', fontSize: '11px', padding: '0 8px' }}
+                  style={{ height: '28px', fontSize: '11px', padding: '0 10px' }}
                 >
                   Replace Image
                 </Button>
@@ -528,7 +530,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     if (fileInputRef.current) fileInputRef.current.value = '';
                   }}
                   className="yz-btn yz-btn-ghost yz-btn-sm"
-                  style={{ height: '26px', padding: '0 6px', color: 'var(--yz-error, #DC2626)' }}
+                  style={{ height: '28px', width: '28px', padding: 0, color: 'var(--yz-error, #DC2626)', borderRadius: 'var(--yz-radius-sm)' }}
                   title="Remove image"
                 >
                   <Trash2 size={13} />
@@ -545,9 +547,9 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '10px',
-                padding: '12px 14px',
+                padding: '14px 16px',
                 border: '1.5px dashed var(--yz-border)',
-                borderRadius: 'var(--yz-radius-sm)',
+                borderRadius: 'var(--yz-radius-md)',
                 backgroundColor: 'var(--yz-bg-subtle)',
                 cursor: 'pointer',
                 transition: 'border-color 0.15s ease',

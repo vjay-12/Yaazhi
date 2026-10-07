@@ -70,11 +70,11 @@ export const Header: React.FC<HeaderProps> = ({
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <h1
             style={{
-              fontSize: '15px',
-              fontWeight: 700,
+              fontSize: '16px',
+              fontWeight: 800,
               color: 'var(--yz-text-primary)',
               lineHeight: 1.25,
-              letterSpacing: '-0.01em',
+              letterSpacing: '-0.02em',
               margin: 0,
             }}
           >
@@ -82,11 +82,12 @@ export const Header: React.FC<HeaderProps> = ({
           </h1>
           <span
             style={{
-              fontSize: '11px',
+              fontSize: '11.5px',
               color: 'var(--yz-text-muted)',
               display: 'block',
               lineHeight: 1.35,
-              marginTop: '2px',
+              marginTop: '1px',
+              fontWeight: 500,
             }}
           >
             {currentInfo.subtitle}

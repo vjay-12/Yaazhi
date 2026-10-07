@@ -201,10 +201,10 @@ export const ProductImage: React.FC<ProductImageProps> = ({
 
   const borderRadius =
     rounded === 'md'
-      ? 'var(--yz-radius-md)'
+      ? 'var(--yz-radius-lg, 12px)'
       : rounded === 'none'
       ? '0px'
-      : 'var(--yz-radius-sm)';
+      : 'var(--yz-radius-sm, 8px)';
 
   if (hasError && !resolvedSrc) {
     return (

@@ -244,18 +244,19 @@ export const SalesOrdersPage: React.FC = () => {
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '64px',
-          height: '20px',
+          minWidth: '66px',
+          height: '22px',
           boxSizing: 'border-box',
-          borderRadius: '3px',
-          fontSize: '10px',
-          fontWeight: 600,
-          letterSpacing: '0.3px',
+          borderRadius: 'var(--yz-radius-full)',
+          fontSize: '10.5px',
+          fontWeight: 700,
+          letterSpacing: '0.02em',
           lineHeight: 1,
           backgroundColor: bg,
           color: color,
           border: `1px solid ${border}`,
           whiteSpace: 'nowrap',
+          padding: '0 8px',
           userSelect: 'none',
         }}
       >
@@ -268,7 +269,7 @@ export const SalesOrdersPage: React.FC = () => {
     const isVoided = o.status === 'VOIDED' || o.status === 'CANCELLED' || o.paymentStatus === 'VOIDED';
     const isPaid = !isVoided && (o.paymentStatus === 'PAID' || (o.totalAmount > 0 && o.pendingAmount === 0));
 
-    // Shared void icon button (exact same 22px x 22px footprint whether enabled or disabled)
+    // Shared void icon button (26px x 26px footprint)
     const renderVoidButton = () => {
       if (isVoided) {
         return (
@@ -277,9 +278,10 @@ export const SalesOrdersPage: React.FC = () => {
             className="yz-btn yz-btn-ghost yz-btn-sm"
             disabled
             style={{
-              width: '22px',
-              height: '22px',
+              width: '26px',
+              height: '26px',
               padding: 0,
+              borderRadius: 'var(--yz-radius-sm)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -303,9 +305,10 @@ export const SalesOrdersPage: React.FC = () => {
             type="button"
             className="yz-btn yz-btn-ghost yz-btn-sm"
             style={{
-              width: '22px',
-              height: '22px',
+              width: '26px',
+              height: '26px',
               padding: 0,
+              borderRadius: 'var(--yz-radius-sm)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -331,9 +334,10 @@ export const SalesOrdersPage: React.FC = () => {
           className="yz-btn yz-btn-ghost yz-btn-sm"
           disabled
           style={{
-            width: '22px',
-            height: '22px',
+            width: '26px',
+            height: '26px',
             padding: 0,
+            borderRadius: 'var(--yz-radius-sm)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -351,7 +355,7 @@ export const SalesOrdersPage: React.FC = () => {
       );
     };
 
-    // Primary action button (exact same 66px x 22px footprint across all states)
+    // Primary action button (exact same 70px x 26px footprint across all states)
     const renderPrimaryButton = () => {
       if (isPaid || isVoided) {
         return (
@@ -359,11 +363,12 @@ export const SalesOrdersPage: React.FC = () => {
             type="button"
             className="yz-btn yz-btn-secondary yz-btn-sm"
             style={{
-              width: '66px',
-              height: '22px',
-              padding: '0 4px',
-              fontSize: '10.5px',
-              gap: '3px',
+              width: '70px',
+              height: '26px',
+              padding: '0 6px',
+              fontSize: '11px',
+              borderRadius: 'var(--yz-radius-sm)',
+              gap: '4px',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -389,10 +394,11 @@ export const SalesOrdersPage: React.FC = () => {
           type="button"
           className="yz-btn yz-btn-primary yz-btn-sm"
           style={{
-            width: '66px',
-            height: '22px',
-            padding: '0 4px',
-            fontSize: '10.5px',
+            width: '70px',
+            height: '26px',
+            padding: '0 6px',
+            fontSize: '11px',
+            borderRadius: 'var(--yz-radius-sm)',
             fontWeight: 600,
             display: 'inline-flex',
             alignItems: 'center',
@@ -418,9 +424,9 @@ export const SalesOrdersPage: React.FC = () => {
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '4px',
-          width: '92px',
-          height: '22px',
+          gap: '5px',
+          width: '102px',
+          height: '26px',
         }}
       >
         {renderPrimaryButton()}
@@ -476,9 +482,10 @@ export const SalesOrdersPage: React.FC = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           backgroundColor: 'var(--yz-bg-surface)',
-          padding: '8px 10px',
-          borderRadius: 'var(--yz-radius-sm)',
+          padding: '8px 12px',
+          borderRadius: 'var(--yz-radius-md)',
           border: '1px solid var(--yz-border)',
+          boxShadow: 'var(--yz-shadow-2xs)',
           gap: '10px',
           flexWrap: 'wrap',
         }}
@@ -487,10 +494,10 @@ export const SalesOrdersPage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ position: 'relative', width: '280px' }}>
             <Search
-              size={13}
+              size={14}
               style={{
                 position: 'absolute',
-                left: '8px',
+                left: '9px',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 color: 'var(--yz-text-muted)',
@@ -502,7 +509,7 @@ export const SalesOrdersPage: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="yz-input"
-              style={{ paddingLeft: '26px', height: '28px', fontSize: '11px', width: '100%' }}
+              style={{ paddingLeft: '28px', height: '32px', fontSize: '11.5px', width: '100%' }}
             />
           </div>
         </div>
@@ -523,15 +530,15 @@ export const SalesOrdersPage: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: '8px',
-                height: '28px',
-                padding: '0 8px',
-                fontSize: '11px',
+                height: '32px',
+                padding: '0 10px',
+                fontSize: '11.5px',
                 cursor: 'pointer',
                 backgroundColor: 'var(--yz-bg-surface)',
                 border: '1px solid var(--yz-border)',
-                borderRadius: 'var(--yz-radius-sm)',
+                borderRadius: 'var(--yz-radius-md)',
                 color: 'var(--yz-text-primary)',
-                minWidth: '110px',
+                minWidth: '115px',
                 userSelect: 'none',
               }}
             >
@@ -540,7 +547,7 @@ export const SalesOrdersPage: React.FC = () => {
                 <strong>{STATUS_FILTER_OPTIONS.find((s) => s.id === statusFilter)?.label || 'All'}</strong>
               </span>
               <ChevronDown
-                size={12}
+                size={13}
                 style={{
                   color: 'var(--yz-text-muted)',
                   transform: isStatusDropdownOpen ? 'rotate(180deg)' : 'none',
@@ -557,10 +564,10 @@ export const SalesOrdersPage: React.FC = () => {
                   right: 0,
                   backgroundColor: 'var(--yz-bg-surface)',
                   border: '1px solid var(--yz-border)',
-                  borderRadius: 'var(--yz-radius-sm)',
-                  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.08)',
+                  borderRadius: 'var(--yz-radius-md)',
+                  boxShadow: 'var(--yz-shadow-md)',
                   zIndex: 50,
-                  minWidth: '130px',
+                  minWidth: '135px',
                   padding: '4px 0',
                 }}
               >

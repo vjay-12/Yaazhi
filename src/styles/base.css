@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Yaazhi Base Styles & Core Components - Compact Invenaro Proportions
+   Yaazhi Base Styles & Core Components - BillFlow Visual Reference Aligned
    ========================================================================== */
 
 *, *::before, *::after {
@@ -15,7 +15,7 @@ html, body {
   color: var(--yz-text-primary);
   font-family: var(--yz-font-body);
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -29,9 +29,9 @@ html, body {
 /* Typography styles */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--yz-font-display);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--yz-text-primary);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   line-height: 1.25;
 }
 
@@ -44,39 +44,39 @@ p, span, label, input, button, select, textarea {
   font-feature-settings: "tnum";
 }
 
-/* Scrollbars */
+/* Scrollbars - Clean & Subtle */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--yz-border-strong);
+  background: #CBD5E1;
   border-radius: var(--yz-radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--yz-text-muted);
+  background: #94A3B8;
 }
 
 /* ==========================================================================
-   Buttons - Compact Invenaro Scale (h-7 to h-8)
+   Buttons - BillFlow Soft Radius (12px) & Ergonomic Compact Scale
    ========================================================================== */
 .yz-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 0 9px;
-  height: 28px;
+  gap: 6px;
+  padding: 0 13px;
+  height: var(--yz-control-height-md, 34px);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1;
-  border-radius: var(--yz-radius-sm);
+  border-radius: var(--yz-btn-radius, 12px);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.12s ease-in-out;
+  transition: all 0.14s ease-in-out;
   user-select: none;
   text-decoration: none;
   white-space: nowrap;
@@ -93,13 +93,19 @@ p, span, label, input, button, select, textarea {
   pointer-events: none;
 }
 
+.yz-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .yz-btn-primary {
   background-color: var(--yz-primary);
   color: var(--yz-text-inverse);
   box-shadow: var(--yz-shadow-xs);
+  border-color: var(--yz-primary);
 }
 .yz-btn-primary:hover:not(:disabled) {
   background-color: var(--yz-primary-hover);
+  border-color: var(--yz-primary-hover);
 }
 .yz-btn-primary:active:not(:disabled) {
   background-color: var(--yz-primary-active);
@@ -109,20 +115,23 @@ p, span, label, input, button, select, textarea {
   background-color: #FFFFFF;
   color: var(--yz-text-primary);
   border-color: var(--yz-border);
-  box-shadow: var(--yz-shadow-xs);
+  box-shadow: var(--yz-shadow-2xs);
 }
 .yz-btn-secondary:hover:not(:disabled) {
   background-color: var(--yz-bg-subtle);
   border-color: var(--yz-border-strong);
+  color: var(--yz-text-primary);
 }
 
 .yz-btn-gold {
   background-color: var(--yz-gold);
   color: #FFFFFF;
   box-shadow: var(--yz-shadow-xs);
+  border-color: var(--yz-gold);
 }
 .yz-btn-gold:hover:not(:disabled) {
   background-color: var(--yz-gold-hover);
+  border-color: var(--yz-gold-hover);
 }
 
 .yz-btn-ghost {
@@ -145,33 +154,33 @@ p, span, label, input, button, select, textarea {
 }
 
 .yz-btn-sm {
-  height: 24px;
-  padding: 0 6px;
+  height: var(--yz-control-height-sm, 28px);
+  padding: 0 9px;
   font-size: 11px;
-  border-radius: var(--yz-radius-xs);
+  border-radius: var(--yz-radius-sm, 8px);
   gap: 4px;
 }
 
 .yz-btn-lg {
-  height: 34px;
-  padding: 0 14px;
+  height: var(--yz-control-height-lg, 38px);
+  padding: 0 16px;
   font-size: 13px;
-  font-weight: 600;
-  border-radius: var(--yz-radius-md);
+  font-weight: 700;
+  border-radius: var(--yz-btn-radius, 12px);
 }
 
 /* ==========================================================================
-   Badges & Status Tags - Compact Proportions
+   Badges & Status Tags - BillFlow Pill Silhouette & High Legibility
    ========================================================================== */
 .yz-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 1px 6px;
+  gap: 5px;
+  padding: 2px 8px;
   height: 20px;
-  font-size: 11px;
-  font-weight: 500;
-  border-radius: var(--yz-radius-sm);
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: var(--yz-badge-radius, 9999px);
   border: 1px solid transparent;
   white-space: nowrap;
   line-height: 1;
@@ -230,18 +239,18 @@ p, span, label, input, button, select, textarea {
 }
 
 /* ==========================================================================
-   Form Controls - Compact Height 28px - 30px
+   Form Controls - BillFlow 12px Radius & Height
    ========================================================================== */
 .yz-field {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  margin-bottom: 8px;
+  gap: 4px;
+  margin-bottom: 10px;
 }
 
 .yz-label {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--yz-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -249,14 +258,16 @@ p, span, label, input, button, select, textarea {
 
 .yz-input, .yz-select, .yz-textarea {
   width: 100%;
-  padding: 4px 8px;
-  font-size: 12px;
-  height: 30px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  height: var(--yz-control-height-md, 34px);
   color: var(--yz-text-primary);
   background-color: var(--yz-bg-surface);
   border: 1px solid var(--yz-border);
-  border-radius: var(--yz-radius-sm);
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  border-radius: var(--yz-input-radius, 12px);
+  box-shadow: var(--yz-shadow-2xs);
+  transition: border-color 0.14s ease, box-shadow 0.14s ease, background-color 0.14s ease;
   outline: none;
 }
 
@@ -265,21 +276,23 @@ p, span, label, input, button, select, textarea {
   -webkit-appearance: none;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 12px;
-  padding-right: 24px;
+  background-position: right 10px center;
+  background-size: 13px;
+  padding-right: 28px;
   cursor: pointer;
 }
 
 .yz-textarea {
   height: auto;
-  min-height: 52px;
-  padding: 6px 8px;
+  min-height: 60px;
+  padding: 8px 12px;
+  line-height: 1.4;
 }
 
 .yz-input:focus, .yz-select:focus, .yz-textarea:focus {
-  border-color: var(--yz-border-focus);
-  box-shadow: 0 0 0 2px var(--yz-primary-subtle);
+  border-color: var(--yz-primary);
+  box-shadow: 0 0 0 2.5px rgba(133, 34, 55, 0.15);
+  background-color: #FFFFFF;
 }
 
 .yz-input::placeholder, .yz-textarea::placeholder {
@@ -287,25 +300,25 @@ p, span, label, input, button, select, textarea {
 }
 
 .yz-hint {
-  font-size: 10px;
+  font-size: 10.5px;
   color: var(--yz-text-muted);
 }
 
 .yz-error-text {
   font-size: 11px;
   color: var(--yz-status-out-stock);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* ==========================================================================
-   Table Styles - Information-Dense Single-Line Invenaro Rows
+   Table Styles - BillFlow 16px Rounded Table Container & Structured Rows
    ========================================================================== */
 .yz-table-container {
   background: var(--yz-bg-surface);
   border: 1px solid var(--yz-border);
-  border-radius: var(--yz-radius-sm);
-  box-shadow: none;
-  overflow-x: auto;
+  border-radius: var(--yz-table-radius, 16px);
+  box-shadow: var(--yz-shadow-xs);
+  overflow: hidden;
   position: relative;
 }
 
@@ -318,25 +331,26 @@ p, span, label, input, button, select, textarea {
 
 .yz-table th {
   background-color: #F8FAFC;
-  padding: 5px 10px;
-  font-size: 11px;
-  font-weight: 600;
+  padding: 8px 14px;
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: var(--yz-text-muted);
   border-bottom: 1px solid var(--yz-border);
   white-space: nowrap;
-  height: 32px;
+  height: 34px;
   user-select: none;
 }
 
 .yz-table td {
-  padding: 5px 10px;
+  padding: 8px 14px;
   border-bottom: 1px solid var(--yz-border-subtle);
   color: var(--yz-text-primary);
+  font-weight: 500;
   vertical-align: middle;
   white-space: nowrap;
-  height: 35px;
+  height: var(--yz-table-row-height, 38px);
 }
 
 .yz-table tr:last-child td {
@@ -361,78 +375,95 @@ p, span, label, input, button, select, textarea {
 }
 
 /* ==========================================================================
-   Cards & Purposeful Compact Containers
+   Cards & Purposeful Compact Containers (BillFlow 16px Radius)
    ========================================================================== */
 .yz-card {
   background: var(--yz-bg-surface);
   border: 1px solid var(--yz-border);
-  border-radius: var(--yz-radius-md);
-  padding: 12px;
-  box-shadow: none;
+  border-radius: var(--yz-card-radius, 16px);
+  padding: 14px 16px;
+  box-shadow: var(--yz-shadow-xs);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.yz-card:hover {
+  box-shadow: var(--yz-shadow-sm);
 }
 
 .yz-stat-card {
   background: var(--yz-bg-surface);
   border: 1px solid var(--yz-border);
-  border-radius: var(--yz-radius-sm);
-  padding: 8px 12px;
-  box-shadow: none;
+  border-radius: var(--yz-card-radius, 16px);
+  padding: 12px 14px;
+  box-shadow: var(--yz-shadow-xs);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
+
+.yz-stat-card:hover {
+  box-shadow: var(--yz-shadow-sm);
+}
+
 .yz-stat-label {
-  font-size: 10px;
+  font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--yz-text-muted);
-  font-weight: 600;
-}
-.yz-stat-value {
-  font-size: 18px;
-  font-family: var(--yz-font-display);
   font-weight: 700;
-  color: var(--yz-text-primary);
-  line-height: 1.15;
 }
+
+.yz-stat-value {
+  font-size: 20px;
+  font-family: var(--yz-font-mono);
+  font-weight: 800;
+  color: var(--yz-text-primary);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
 .yz-stat-subtext {
   font-size: 11px;
   color: var(--yz-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 500;
 }
 
-/* Modals - Clean Compact Dialog */
+/* Modals - Clean Compact Dialog with BillFlow 16px Curvature */
 .yz-modal-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.45);
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem;
+  padding: 1rem;
 }
 
 .yz-modal {
   background: var(--yz-bg-surface);
-  border-radius: var(--yz-radius-md);
+  border-radius: var(--yz-modal-radius, 16px);
   box-shadow: var(--yz-shadow-modal);
   border: 1px solid var(--yz-border);
   width: 100%;
-  max-width: 520px;
-  max-height: 88vh;
+  max-width: 540px;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: modalPop 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: modalPop 0.16s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes modalPop {
   0% {
     opacity: 0;
-    transform: scale(0.98) translateY(4px);
+    transform: scale(0.97) translateY(6px);
   }
   100% {
     opacity: 1;

@@ -182,34 +182,35 @@ export const Pagination: React.FC<PaginationProps> = ({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: '5px',
-                height: '24px',
-                padding: '0 6px',
-                minWidth: '58px',
-                fontSize: '11px',
+                height: '28px',
+                padding: '0 8px',
+                minWidth: '64px',
+                fontSize: '11.5px',
                 fontFamily: 'var(--yz-font-mono)',
                 fontWeight: 600,
                 color: 'var(--yz-text-primary)',
                 backgroundColor: 'var(--yz-bg-surface)',
                 border: isDropdownOpen
-                  ? '1px solid var(--yz-primary, #832729)'
+                  ? '1px solid var(--yz-primary, #852237)'
                   : '1px solid var(--yz-border)',
-                borderRadius: 'var(--yz-radius-sm)',
+                borderRadius: 'var(--yz-radius-sm, 8px)',
+                boxShadow: isDropdownOpen ? '0 0 0 2px rgba(133, 34, 55, 0.12)' : 'var(--yz-shadow-2xs)',
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
+                transition: 'all 0.14s ease',
               }}
             >
               <span>{pageSize}</span>
               <ChevronDown
                 size={12}
                 style={{
-                  color: isDropdownOpen ? 'var(--yz-primary, #832729)' : 'var(--yz-text-muted)',
+                  color: isDropdownOpen ? 'var(--yz-primary, #852237)' : 'var(--yz-text-muted)',
                   transform: isDropdownOpen ? 'rotate(180deg)' : 'none',
                   transition: 'transform 0.15s ease',
                 }}
               />
             </button>
 
-            {/* Dropup Menu: Opens Upward (bottom: calc(100% + 4px)) with zIndex 100 */}
+            {/* Dropup Menu: Opens Upward with 12px curvature */}
             {isDropdownOpen && (
               <div
                 role="listbox"
@@ -217,13 +218,13 @@ export const Pagination: React.FC<PaginationProps> = ({
                   position: 'absolute',
                   left: 0,
                   bottom: 'calc(100% + 4px)',
-                  width: '95px',
+                  width: '100px',
                   backgroundColor: 'var(--yz-bg-surface)',
                   border: '1px solid var(--yz-border)',
-                  borderRadius: 'var(--yz-radius-sm)',
-                  boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.1)',
+                  borderRadius: 'var(--yz-radius-lg, 12px)',
+                  boxShadow: 'var(--yz-shadow-lg)',
                   zIndex: 100,
-                  padding: '3px 0',
+                  padding: '4px',
                 }}
               >
                 <div
@@ -254,15 +255,17 @@ export const Pagination: React.FC<PaginationProps> = ({
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         width: '100%',
-                        padding: '4px 8px',
+                        padding: '5px 8px',
                         fontSize: '11px',
                         fontFamily: 'var(--yz-font-mono)',
                         border: 'none',
-                        backgroundColor: isSelected ? '#FEF2F2' : 'transparent',
-                        color: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-text-primary)',
+                        borderRadius: 'var(--yz-radius-xs, 6px)',
+                        backgroundColor: isSelected ? 'var(--yz-primary-subtle, #FDF2F4)' : 'transparent',
+                        color: isSelected ? 'var(--yz-primary, #852237)' : 'var(--yz-text-primary)',
                         fontWeight: isSelected ? 700 : 500,
                         cursor: 'pointer',
                         textAlign: 'left',
+                        transition: 'background-color 0.1s ease',
                       }}
                       onMouseEnter={(e) => {
                         if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--yz-bg-subtle)';
@@ -273,7 +276,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                     >
                       <span>{opt} rows</span>
                       {isSelected && (
-                        <Check size={11} style={{ color: 'var(--yz-primary, #832729)' }} />
+                        <Check size={11} style={{ color: 'var(--yz-primary, #852237)' }} />
                       )}
                     </button>
                   );
@@ -295,18 +298,19 @@ export const Pagination: React.FC<PaginationProps> = ({
             title="First page"
             aria-label="First page"
             style={{
-              width: '24px',
-              height: '24px',
+              width: '28px',
+              height: '28px',
               padding: 0,
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               border: '1px solid var(--yz-border)',
-              borderRadius: 'var(--yz-radius-sm)',
+              borderRadius: 'var(--yz-radius-sm, 8px)',
               backgroundColor: 'var(--yz-bg-surface)',
               color: safeCurrentPage <= 1 ? 'var(--yz-text-muted)' : 'var(--yz-text-primary)',
               opacity: safeCurrentPage <= 1 ? 0.35 : 1,
               cursor: safeCurrentPage <= 1 ? 'not-allowed' : 'pointer',
+              transition: 'all 0.12s ease',
             }}
           >
             <ChevronsLeft size={13} />
@@ -321,18 +325,19 @@ export const Pagination: React.FC<PaginationProps> = ({
           title="Previous page"
           aria-label="Previous page"
           style={{
-            width: '24px',
-            height: '24px',
+            width: '28px',
+            height: '28px',
             padding: 0,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             border: '1px solid var(--yz-border)',
-            borderRadius: 'var(--yz-radius-sm)',
+            borderRadius: 'var(--yz-radius-sm, 8px)',
             backgroundColor: 'var(--yz-bg-surface)',
             color: safeCurrentPage <= 1 ? 'var(--yz-text-muted)' : 'var(--yz-text-primary)',
             opacity: safeCurrentPage <= 1 ? 0.35 : 1,
             cursor: safeCurrentPage <= 1 ? 'not-allowed' : 'pointer',
+            transition: 'all 0.12s ease',
           }}
         >
           <ChevronLeft size={13} />
@@ -367,22 +372,24 @@ export const Pagination: React.FC<PaginationProps> = ({
                 aria-current={isCurrent ? 'page' : undefined}
                 aria-label={`Page ${pageItem}`}
                 style={{
-                  minWidth: '24px',
-                  height: '24px',
-                  padding: '0 4px',
-                  borderRadius: 'var(--yz-radius-sm)',
+                  minWidth: '28px',
+                  height: '28px',
+                  padding: '0 5px',
+                  borderRadius: 'var(--yz-radius-sm, 8px)',
                   fontSize: '11px',
                   fontFamily: 'var(--yz-font-mono)',
-                  fontWeight: isCurrent ? 700 : 500,
-                  backgroundColor: isCurrent ? 'var(--yz-primary, #832729)' : 'var(--yz-bg-surface)',
+                  fontWeight: isCurrent ? 700 : 600,
+                  backgroundColor: isCurrent ? 'var(--yz-primary, #852237)' : 'var(--yz-bg-surface)',
                   color: isCurrent ? '#ffffff' : 'var(--yz-text-primary)',
                   border: isCurrent
-                    ? '1px solid var(--yz-primary, #832729)'
+                    ? '1px solid var(--yz-primary, #852237)'
                     : '1px solid var(--yz-border)',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  boxShadow: isCurrent ? 'var(--yz-shadow-2xs)' : 'none',
+                  transition: 'all 0.12s ease',
                 }}
               >
                 {pageItem}
@@ -399,18 +406,19 @@ export const Pagination: React.FC<PaginationProps> = ({
           title="Next page"
           aria-label="Next page"
           style={{
-            width: '24px',
-            height: '24px',
+            width: '28px',
+            height: '28px',
             padding: 0,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             border: '1px solid var(--yz-border)',
-            borderRadius: 'var(--yz-radius-sm)',
+            borderRadius: 'var(--yz-radius-sm, 8px)',
             backgroundColor: 'var(--yz-bg-surface)',
             color: safeCurrentPage >= totalPages ? 'var(--yz-text-muted)' : 'var(--yz-text-primary)',
             opacity: safeCurrentPage >= totalPages ? 0.35 : 1,
             cursor: safeCurrentPage >= totalPages ? 'not-allowed' : 'pointer',
+            transition: 'all 0.12s ease',
           }}
         >
           <ChevronRight size={13} />
@@ -425,18 +433,19 @@ export const Pagination: React.FC<PaginationProps> = ({
             title="Last page"
             aria-label="Last page"
             style={{
-              width: '24px',
-              height: '24px',
+              width: '28px',
+              height: '28px',
               padding: 0,
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               border: '1px solid var(--yz-border)',
-              borderRadius: 'var(--yz-radius-sm)',
+              borderRadius: 'var(--yz-radius-sm, 8px)',
               backgroundColor: 'var(--yz-bg-surface)',
               color: safeCurrentPage >= totalPages ? 'var(--yz-text-muted)' : 'var(--yz-text-primary)',
               opacity: safeCurrentPage >= totalPages ? 0.35 : 1,
               cursor: safeCurrentPage >= totalPages ? 'not-allowed' : 'pointer',
+              transition: 'all 0.12s ease',
             }}
           >
             <ChevronsRight size={13} />

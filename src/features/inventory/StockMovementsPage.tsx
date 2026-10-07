@@ -85,18 +85,19 @@ export const StockMovementsPage: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           backgroundColor: 'var(--yz-bg-surface)',
-          padding: '8px 10px',
-          borderRadius: 'var(--yz-radius-sm)',
+          padding: '8px 12px',
+          borderRadius: 'var(--yz-radius-md)',
           border: '1px solid var(--yz-border)',
+          boxShadow: 'var(--yz-shadow-2xs)',
         }}
       >
-        <div style={{ display: 'flex', gap: '6px', flex: 1, minWidth: '240px', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+        <div style={{ display: 'flex', gap: '8px', flex: 1, minWidth: '240px', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
             <Search
-              size={13}
+              size={14}
               style={{
                 position: 'absolute',
-                left: '8px',
+                left: '9px',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 color: 'var(--yz-text-muted)',
@@ -108,7 +109,7 @@ export const StockMovementsPage: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="yz-input"
-              style={{ paddingLeft: '26px' }}
+              style={{ paddingLeft: '28px', height: '32px', fontSize: '11.5px' }}
             />
           </div>
 
@@ -116,7 +117,7 @@ export const StockMovementsPage: React.FC = () => {
             value={typeFilter}
             onChange={(val) => setTypeFilter(val as any)}
             options={MOVEMENT_TYPE_OPTIONS}
-            minWidth="155px"
+            minWidth="160px"
           />
         </div>
 
@@ -126,6 +127,7 @@ export const StockMovementsPage: React.FC = () => {
           icon={<RefreshCw size={13} />}
           onClick={loadMovements}
           title="Reload audit records"
+          style={{ height: '32px' }}
         >
           Refresh Log
         </Button>
@@ -169,15 +171,15 @@ export const StockMovementsPage: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '4px',
-                  width: '70px',
+                  width: '72px',
                   height: '22px',
-                  borderRadius: 'var(--yz-radius-sm, 4px)',
+                  borderRadius: 'var(--yz-radius-full)',
                   fontSize: '11px',
                   fontWeight: 700,
                   letterSpacing: '0.02em',
                   textAlign: 'center',
                   boxSizing: 'border-box',
-                  padding: '0 4px',
+                  padding: '0 6px',
                 };
 
                 return (
@@ -366,8 +368,9 @@ export const StockMovementsPage: React.FC = () => {
                 gridTemplateColumns: 'repeat(2, 1fr)',
                 gap: '8px',
                 backgroundColor: 'var(--yz-bg-subtle)',
-                padding: '10px',
-                borderRadius: 'var(--yz-radius-sm)',
+                padding: '12px',
+                borderRadius: 'var(--yz-radius-md)',
+                border: '1px solid var(--yz-border-subtle)',
               }}
             >
               <div>

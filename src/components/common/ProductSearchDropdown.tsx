@@ -139,16 +139,18 @@ export const ProductSearchDropdown: React.FC<ProductSearchDropdownProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '8px',
-          height: '30px',
-          padding: '0 8px',
-          borderRadius: 'var(--yz-radius-sm)',
-          border: '1px solid var(--yz-border)',
+          height: 'var(--yz-control-height-md, 34px)',
+          padding: '0 10px',
+          borderRadius: 'var(--yz-input-radius, 12px)',
+          border: isOpen ? '1px solid var(--yz-primary, #852237)' : '1px solid var(--yz-border)',
           backgroundColor: 'var(--yz-bg-surface)',
+          boxShadow: isOpen ? '0 0 0 2px rgba(133, 34, 55, 0.12)' : 'var(--yz-shadow-2xs)',
           cursor: disabled ? 'not-allowed' : 'pointer',
           textAlign: 'left',
-          fontSize: '11px',
+          fontSize: '12px',
           color: 'var(--yz-text-primary)',
           boxSizing: 'border-box',
+          transition: 'all 0.14s ease',
         }}
       >
         <div
@@ -168,10 +170,10 @@ export const ProductSearchDropdown: React.FC<ProductSearchDropdownProps> = ({
                   fontFamily: 'var(--yz-font-mono)',
                   fontWeight: 700,
                   fontSize: '10px',
-                  color: 'var(--yz-primary, #832729)',
+                  color: 'var(--yz-primary, #852237)',
                   backgroundColor: 'var(--yz-primary-subtle, #FDF2F4)',
-                  padding: '1px 5px',
-                  borderRadius: '3px',
+                  padding: '2px 6px',
+                  borderRadius: 'var(--yz-radius-xs, 6px)',
                   flexShrink: 0,
                 }}
               >
@@ -190,7 +192,7 @@ export const ProductSearchDropdown: React.FC<ProductSearchDropdownProps> = ({
               </span>
               <span
                 style={{
-                  fontSize: '10px',
+                  fontSize: '10.5px',
                   color: 'var(--yz-text-muted)',
                   flexShrink: 0,
                 }}
@@ -220,29 +222,29 @@ export const ProductSearchDropdown: React.FC<ProductSearchDropdownProps> = ({
         <div
           style={{
             position: 'absolute',
-            top: 'calc(100% + 3px)',
+            top: 'calc(100% + 4px)',
             left: 0,
             right: 0,
             backgroundColor: 'var(--yz-bg-surface)',
             border: '1px solid var(--yz-border)',
-            borderRadius: 'var(--yz-radius-sm)',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+            borderRadius: 'var(--yz-dropdown-radius, 12px)',
+            boxShadow: 'var(--yz-shadow-lg)',
             zIndex: 90,
             padding: '6px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '4px',
-            maxHeight: '260px',
+            gap: '5px',
+            maxHeight: '270px',
             minWidth: '280px',
           }}
         >
           {/* Search Box */}
           <div style={{ position: 'relative' }}>
             <Search
-              size={12}
+              size={13}
               style={{
                 position: 'absolute',
-                left: '7px',
+                left: '8px',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 color: 'var(--yz-text-muted)',
@@ -256,9 +258,10 @@ export const ProductSearchDropdown: React.FC<ProductSearchDropdownProps> = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               className="yz-input"
               style={{
-                height: '26px',
-                fontSize: '11px',
-                paddingLeft: '24px',
+                height: '30px',
+                fontSize: '11.5px',
+                paddingLeft: '28px',
+                borderRadius: 'var(--yz-radius-sm, 8px)',
                 width: '100%',
                 boxSizing: 'border-box',
               }}
@@ -270,10 +273,10 @@ export const ProductSearchDropdown: React.FC<ProductSearchDropdownProps> = ({
             ref={listRef}
             style={{
               overflowY: 'auto',
-              maxHeight: '180px',
+              maxHeight: '190px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '1px',
+              gap: '2px',
             }}
           >
             {filteredProducts.length === 0 ? (
@@ -309,20 +312,21 @@ export const ProductSearchDropdown: React.FC<ProductSearchDropdownProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '5px 8px',
-                      borderRadius: 'var(--yz-radius-sm)',
+                      padding: '6px 8px',
+                      borderRadius: 'var(--yz-radius-sm, 8px)',
                       border: 'none',
                       backgroundColor: isSelected
                         ? 'var(--yz-primary-subtle, #FDF2F4)'
                         : isHighlighted
-                        ? '#F1F5F9'
+                        ? 'var(--yz-bg-subtle)'
                         : 'transparent',
                       cursor: isAlreadyAdded ? 'not-allowed' : 'pointer',
                       textAlign: 'left',
-                      fontSize: '11px',
+                      fontSize: '11.5px',
                       opacity: isAlreadyAdded ? 0.45 : 1,
-                      color: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-text-primary)',
+                      color: isSelected ? 'var(--yz-primary, #852237)' : 'var(--yz-text-primary)',
                       gap: '8px',
+                      transition: 'background-color 0.1s ease',
                     }}
                     onMouseEnter={() => setHighlightedIndex(idx)}
                   >
@@ -332,7 +336,7 @@ export const ProductSearchDropdown: React.FC<ProductSearchDropdownProps> = ({
                           display: 'flex',
                           alignItems: 'center',
                           gap: '6px',
-                          marginBottom: '1px',
+                          marginBottom: '2px',
                         }}
                       >
                         <span
@@ -340,10 +344,10 @@ export const ProductSearchDropdown: React.FC<ProductSearchDropdownProps> = ({
                             fontFamily: 'var(--yz-font-mono)',
                             fontWeight: 700,
                             fontSize: '9.5px',
-                            color: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-text-secondary)',
+                            color: isSelected ? 'var(--yz-primary, #852237)' : 'var(--yz-text-secondary)',
                             backgroundColor: '#F1F5F9',
-                            padding: '1px 4px',
-                            borderRadius: '2px',
+                            padding: '2px 5px',
+                            borderRadius: 'var(--yz-radius-xs, 6px)',
                           }}
                         >
                           {p.sku}

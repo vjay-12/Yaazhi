@@ -259,9 +259,10 @@ export const VendorsPage: React.FC = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           backgroundColor: 'var(--yz-bg-surface)',
-          padding: '8px 10px',
-          borderRadius: 'var(--yz-radius-sm)',
+          padding: '8px 12px',
+          borderRadius: 'var(--yz-radius-md)',
           border: '1px solid var(--yz-border)',
+          boxShadow: 'var(--yz-shadow-2xs)',
           gap: '8px',
           flexWrap: 'wrap',
         }}
@@ -270,10 +271,10 @@ export const VendorsPage: React.FC = () => {
           {/* Search Input */}
           <div style={{ position: 'relative', width: '270px' }}>
             <Search
-              size={13}
+              size={14}
               style={{
                 position: 'absolute',
-                left: '8px',
+                left: '9px',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 color: 'var(--yz-text-muted)',
@@ -285,7 +286,7 @@ export const VendorsPage: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="yz-input"
-              style={{ paddingLeft: '26px' }}
+              style={{ paddingLeft: '28px', height: '32px', fontSize: '11.5px' }}
             />
           </div>
 
@@ -295,7 +296,7 @@ export const VendorsPage: React.FC = () => {
               type="button"
               className="yz-input"
               style={{
-                height: '30px',
+                height: '32px',
                 padding: '0 10px',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -303,6 +304,7 @@ export const VendorsPage: React.FC = () => {
                 cursor: 'pointer',
                 backgroundColor: 'var(--yz-bg-surface)',
                 borderColor: isStatusDropdownOpen ? 'var(--yz-primary, #832729)' : 'var(--yz-border)',
+                borderRadius: 'var(--yz-radius-md)',
                 minWidth: '130px',
                 justifyContent: 'space-between',
                 fontSize: '11.5px',
@@ -317,7 +319,7 @@ export const VendorsPage: React.FC = () => {
                 </span>
               </span>
               <ChevronDown
-                size={12}
+                size={13}
                 style={{
                   color: 'var(--yz-text-muted)',
                   transform: isStatusDropdownOpen ? 'rotate(180deg)' : 'none',
@@ -335,8 +337,8 @@ export const VendorsPage: React.FC = () => {
                   zIndex: 50,
                   backgroundColor: '#FFFFFF',
                   border: '1px solid var(--yz-border)',
-                  borderRadius: 'var(--yz-radius-sm)',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                  borderRadius: 'var(--yz-radius-md)',
+                  boxShadow: 'var(--yz-shadow-md)',
                   minWidth: '150px',
                   padding: '4px 0',
                 }}
@@ -550,10 +552,11 @@ export const VendorsPage: React.FC = () => {
                         style={{
                           display: 'inline-block',
                           minWidth: '22px',
-                          padding: '1px 6px',
-                          borderRadius: 'var(--yz-radius-sm)',
+                          padding: '1px 7px',
+                          borderRadius: 'var(--yz-radius-full)',
                           fontSize: '11px',
                           fontWeight: 600,
+                          fontFamily: 'var(--yz-font-mono)',
                           backgroundColor: v.activeOrders > 0 ? '#E0F2FE' : 'var(--yz-bg-subtle)',
                           color: v.activeOrders > 0 ? '#0369A1' : 'var(--yz-text-muted)',
                         }}
@@ -568,9 +571,9 @@ export const VendorsPage: React.FC = () => {
                         <span
                           style={{
                             display: 'inline-block',
-                            padding: '1px 6px',
-                            borderRadius: 'var(--yz-radius-sm)',
-                            fontSize: '10px',
+                            padding: '2px 8px',
+                            borderRadius: 'var(--yz-radius-full)',
+                            fontSize: '10.5px',
                             fontWeight: 600,
                             backgroundColor: isArchived ? '#FEE2E2' : '#DCFCE7',
                             color: isArchived ? '#991B1B' : '#166534',
@@ -590,7 +593,7 @@ export const VendorsPage: React.FC = () => {
                           justifyContent: 'center',
                           gap: '4px',
                           width: '56px',
-                          height: '22px',
+                          height: '26px',
                         }}
                         onClick={(e) => e.stopPropagation()}
                       >
@@ -599,9 +602,10 @@ export const VendorsPage: React.FC = () => {
                           type="button"
                           className="yz-btn yz-btn-ghost yz-btn-sm"
                           style={{
-                            width: '24px',
-                            height: '22px',
+                            width: '26px',
+                            height: '26px',
                             padding: 0,
+                            borderRadius: 'var(--yz-radius-sm)',
                             display: 'inline-flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -615,7 +619,7 @@ export const VendorsPage: React.FC = () => {
                           }}
                           title="Edit vendor details"
                         >
-                          <Edit2 size={12} />
+                          <Edit2 size={13} />
                         </button>
 
                         {/* Archive or Restore Action */}
@@ -624,9 +628,10 @@ export const VendorsPage: React.FC = () => {
                             type="button"
                             className="yz-btn yz-btn-ghost yz-btn-sm"
                             style={{
-                              width: '24px',
-                              height: '22px',
+                              width: '26px',
+                              height: '26px',
                               padding: 0,
+                              borderRadius: 'var(--yz-radius-sm)',
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -639,16 +644,17 @@ export const VendorsPage: React.FC = () => {
                             }}
                             title="Archive vendor"
                           >
-                            <Archive size={12} />
+                            <Archive size={13} />
                           </button>
                         ) : (
                           <button
                             type="button"
                             className="yz-btn yz-btn-ghost yz-btn-sm"
                             style={{
-                              width: '24px',
-                              height: '22px',
+                              width: '26px',
+                              height: '26px',
                               padding: 0,
+                              borderRadius: 'var(--yz-radius-sm)',
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -661,7 +667,7 @@ export const VendorsPage: React.FC = () => {
                             }}
                             title="Restore vendor"
                           >
-                            <RotateCcw size={12} />
+                            <RotateCcw size={13} />
                           </button>
                         )}
                       </div>
@@ -722,8 +728,8 @@ export const VendorsPage: React.FC = () => {
                   {vendor.isArchived && (
                     <div
                       style={{
-                        padding: '6px 10px',
-                        borderRadius: 'var(--yz-radius-sm)',
+                        padding: '8px 12px',
+                        borderRadius: 'var(--yz-radius-md)',
                         backgroundColor: '#FEF2F2',
                         border: '1px solid #FECACA',
                         color: '#991B1B',
@@ -745,8 +751,8 @@ export const VendorsPage: React.FC = () => {
                       gridTemplateColumns: 'repeat(4, 1fr)',
                       gap: '8px',
                       backgroundColor: 'var(--yz-bg-subtle)',
-                      padding: '10px 12px',
-                      borderRadius: 'var(--yz-radius-sm)',
+                      padding: '12px 14px',
+                      borderRadius: 'var(--yz-radius-md)',
                       border: '1px solid var(--yz-border)',
                       fontSize: '11.5px',
                     }}
@@ -828,9 +834,10 @@ export const VendorsPage: React.FC = () => {
                   <div
                     style={{
                       border: '1px solid var(--yz-border)',
-                      borderRadius: 'var(--yz-radius-sm)',
-                      padding: '10px 12px',
+                      borderRadius: 'var(--yz-radius-md)',
+                      padding: '12px 14px',
                       backgroundColor: 'var(--yz-bg-surface)',
+                      boxShadow: 'var(--yz-shadow-2xs)',
                     }}
                   >
                     <div
@@ -961,8 +968,9 @@ export const VendorsPage: React.FC = () => {
                       style={{
                         backgroundColor: 'var(--yz-bg-surface)',
                         border: '1px solid var(--yz-border)',
-                        borderRadius: 'var(--yz-radius-sm)',
-                        padding: '8px 10px',
+                        borderRadius: 'var(--yz-radius-md)',
+                        boxShadow: 'var(--yz-shadow-2xs)',
+                        padding: '10px 12px',
                       }}
                     >
                       <div
@@ -1000,8 +1008,9 @@ export const VendorsPage: React.FC = () => {
                       style={{
                         backgroundColor: 'var(--yz-bg-surface)',
                         border: '1px solid var(--yz-border)',
-                        borderRadius: 'var(--yz-radius-sm)',
-                        padding: '8px 10px',
+                        borderRadius: 'var(--yz-radius-md)',
+                        boxShadow: 'var(--yz-shadow-2xs)',
+                        padding: '10px 12px',
                       }}
                     >
                       <div
@@ -1039,8 +1048,9 @@ export const VendorsPage: React.FC = () => {
                       style={{
                         backgroundColor: 'var(--yz-bg-surface)',
                         border: '1px solid var(--yz-border)',
-                        borderRadius: 'var(--yz-radius-sm)',
-                        padding: '8px 10px',
+                        borderRadius: 'var(--yz-radius-md)',
+                        boxShadow: 'var(--yz-shadow-2xs)',
+                        padding: '10px 12px',
                       }}
                     >
                       <div
@@ -1078,9 +1088,10 @@ export const VendorsPage: React.FC = () => {
                   <div
                     style={{
                       border: '1px solid var(--yz-border)',
-                      borderRadius: 'var(--yz-radius-sm)',
+                      borderRadius: 'var(--yz-radius-md)',
                       backgroundColor: 'var(--yz-bg-surface)',
                       overflow: 'hidden',
+                      boxShadow: 'var(--yz-shadow-2xs)',
                     }}
                   >
                     {/* Navigation Tabs */}
@@ -1240,10 +1251,10 @@ export const VendorsPage: React.FC = () => {
                                     <span
                                       style={{
                                         display: 'inline-block',
-                                        padding: '1px 6px',
-                                        borderRadius: 'var(--yz-radius-sm)',
-                                        fontSize: '10px',
-                                        fontWeight: 700,
+                                        padding: '2px 8px',
+                                        borderRadius: 'var(--yz-radius-full)',
+                                        fontSize: '10.5px',
+                                        fontWeight: 600,
                                         backgroundColor:
                                           po.status === 'RECEIVED'
                                             ? '#DCFCE7'
@@ -1360,10 +1371,11 @@ export const VendorsPage: React.FC = () => {
                                     <td style={{ textAlign: 'center' }}>
                                       <span
                                         style={{
-                                          padding: '1px 6px',
-                                          borderRadius: 'var(--yz-radius-sm)',
-                                          fontSize: '10px',
-                                          fontWeight: 700,
+                                          display: 'inline-block',
+                                          padding: '2px 8px',
+                                          borderRadius: 'var(--yz-radius-full)',
+                                          fontSize: '10.5px',
+                                          fontWeight: 600,
                                           backgroundColor: '#DCFCE7',
                                           color: '#166534',
                                         }}
@@ -1419,8 +1431,8 @@ export const VendorsPage: React.FC = () => {
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: '8px',
                 backgroundColor: 'var(--yz-bg-subtle)',
-                padding: '8px 10px',
-                borderRadius: 'var(--yz-radius-sm)',
+                padding: '10px 12px',
+                borderRadius: 'var(--yz-radius-md)',
                 border: '1px solid var(--yz-border)',
                 fontSize: '11px',
               }}

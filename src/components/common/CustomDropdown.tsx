@@ -121,19 +121,21 @@ export function CustomDropdown<T extends string | number = string>({
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '6px',
-          height: '28px',
-          padding: '0 8px',
-          fontSize: '11px',
+          height: '32px',
+          padding: '0 10px',
+          fontSize: '12px',
+          fontWeight: 600,
           cursor: disabled ? 'not-allowed' : 'pointer',
           backgroundColor: 'var(--yz-bg-surface)',
-          border: isOpen ? '1px solid var(--yz-primary, #832729)' : '1px solid var(--yz-border)',
-          borderRadius: 'var(--yz-radius-sm)',
+          border: isOpen ? '1px solid var(--yz-primary, #852237)' : '1px solid var(--yz-border)',
+          borderRadius: 'var(--yz-dropdown-radius, 12px)',
+          boxShadow: isOpen ? '0 0 0 2px rgba(133, 34, 55, 0.12)' : 'var(--yz-shadow-2xs)',
           color: 'var(--yz-text-primary)',
           width: '100%',
           userSelect: 'none',
           boxSizing: 'border-box',
           opacity: disabled ? 0.6 : 1,
-          transition: 'border-color 0.15s ease',
+          transition: 'all 0.14s ease',
         }}
       >
         <span
@@ -146,18 +148,18 @@ export function CustomDropdown<T extends string | number = string>({
           }}
         >
           {prefixLabel && (
-            <span style={{ color: 'var(--yz-text-muted)', marginRight: '4px' }}>
+            <span style={{ color: 'var(--yz-text-muted)', marginRight: '4px', fontWeight: 500 }}>
               {prefixLabel}
             </span>
           )}
-          <span style={{ fontWeight: 500 }}>
+          <span style={{ fontWeight: 600 }}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
         </span>
         <ChevronDown
-          size={12}
+          size={13}
           style={{
-            color: isOpen ? 'var(--yz-primary, #832729)' : 'var(--yz-text-muted)',
+            color: isOpen ? 'var(--yz-primary, #852237)' : 'var(--yz-text-muted)',
             transform: isOpen ? 'rotate(180deg)' : 'none',
             transition: 'transform 0.15s ease',
             flexShrink: 0,
@@ -176,17 +178,14 @@ export function CustomDropdown<T extends string | number = string>({
               : { top: 'calc(100% + 4px)', left: 0 }),
             backgroundColor: 'var(--yz-bg-surface)',
             border: '1px solid var(--yz-border)',
-            borderRadius: 'var(--yz-radius-sm)',
-            boxShadow:
-              dropDirection === 'up'
-                ? '0 -4px 14px rgba(0, 0, 0, 0.08)'
-                : '0 4px 14px rgba(0, 0, 0, 0.08)',
+            borderRadius: 'var(--yz-dropdown-radius, 12px)',
+            boxShadow: 'var(--yz-shadow-lg)',
             zIndex: 100,
             minWidth: '100%',
             maxWidth: '320px',
             maxHeight: '260px',
             overflowY: 'auto',
-            padding: '4px 0',
+            padding: '4px',
           }}
         >
           {options.map((opt, index) => {
@@ -206,26 +205,28 @@ export function CustomDropdown<T extends string | number = string>({
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   width: '100%',
-                  padding: '5px 10px',
-                  fontSize: '11px',
+                  padding: '6px 10px',
+                  fontSize: '11.5px',
                   textAlign: 'left',
                   border: 'none',
+                  borderRadius: 'var(--yz-radius-sm, 8px)',
                   backgroundColor: isSelected
-                    ? '#FEF2F2'
+                    ? 'var(--yz-primary-subtle, #FDF2F4)'
                     : isHighlighted
                     ? 'var(--yz-bg-subtle)'
                     : 'transparent',
-                  color: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-text-primary)',
-                  fontWeight: isSelected ? 600 : 400,
+                  color: isSelected ? 'var(--yz-primary, #852237)' : 'var(--yz-text-primary)',
+                  fontWeight: isSelected ? 700 : 500,
                   cursor: 'pointer',
                   userSelect: 'none',
                   whiteSpace: 'nowrap',
                   gap: '8px',
+                  transition: 'background-color 0.1s ease',
                 }}
               >
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{opt.label}</span>
                 {isSelected && (
-                  <Check size={12} style={{ color: 'var(--yz-primary, #832729)', flexShrink: 0 }} />
+                  <Check size={12} style={{ color: 'var(--yz-primary, #852237)', flexShrink: 0 }} />
                 )}
               </button>
             );

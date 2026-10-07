@@ -107,7 +107,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   style={{
                     background: 'transparent',
                     border: '1px solid var(--yz-border-sidebar)',
-                    borderRadius: 'var(--yz-radius-sm)',
+                    borderRadius: 'var(--yz-radius-sm, 8px)',
                     color: 'var(--yz-text-sidebar-muted)',
                     cursor: 'pointer',
                     padding: '3px',

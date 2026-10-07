@@ -275,21 +275,22 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           backgroundColor: 'var(--yz-bg-surface)',
-          padding: '8px 10px',
-          borderRadius: 'var(--yz-radius-sm)',
+          padding: '8px 12px',
+          borderRadius: 'var(--yz-radius-md)',
           border: '1px solid var(--yz-border)',
+          boxShadow: 'var(--yz-shadow-2xs)',
           gap: '8px',
         }}
       >
         {/* Left: Search & Custom Dropdowns */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0, flexWrap: 'wrap' }}>
           {/* Search box */}
-          <div style={{ position: 'relative', width: '210px', flexShrink: 0 }}>
+          <div style={{ position: 'relative', width: '220px', flexShrink: 0 }}>
             <Search
-              size={13}
+              size={14}
               style={{
                 position: 'absolute',
-                left: '8px',
+                left: '9px',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 color: 'var(--yz-text-muted)',
@@ -301,7 +302,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="yz-input"
-              style={{ paddingLeft: '26px', height: '28px', fontSize: '11px', width: '100%' }}
+              style={{ paddingLeft: '28px', height: '32px', fontSize: '11.5px', width: '100%' }}
             />
           </div>
 
@@ -310,7 +311,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
             value={selectedCategory}
             onChange={(val) => setSelectedCategory(val as any)}
             options={categoryOptions}
-            minWidth="115px"
+            minWidth="120px"
           />
 
           {/* Lifecycle Status Dropdown (Active, Archived, All) */}
@@ -318,7 +319,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
             value={lifecycleFilter}
             onChange={(val) => setLifecycleFilter(val as ProductLifecycleFilter)}
             options={LIFECYCLE_OPTIONS}
-            minWidth="95px"
+            minWidth="100px"
           />
 
           {/* Stock Status Dropdown (All Stock, In Stock, Low Stock, Out of Stock) */}
@@ -326,7 +327,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
             value={stockStatusFilter}
             onChange={(val) => setStockStatusFilter(val as StockStatusFilter)}
             options={STOCK_OPTIONS}
-            minWidth="105px"
+            minWidth="110px"
           />
 
           {/* Sort Dropdown */}
@@ -338,7 +339,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
               setSortOrder(so);
             }}
             options={SORT_OPTIONS}
-            minWidth="120px"
+            minWidth="130px"
           />
         </div>
 
@@ -349,9 +350,9 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
             size="sm"
             onClick={() => loadData()}
             title="Refresh Catalog & Stock"
-            style={{ height: '28px', width: '28px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ height: '32px', width: '32px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <RefreshCw size={12} />
+            <RefreshCw size={13} />
           </Button>
 
           <Button
@@ -361,7 +362,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
               setProductToEdit(null);
               setIsAddModalOpen(true);
             }}
-            style={{ height: '28px', fontSize: '11px', fontWeight: 600 }}
+            style={{ height: '32px', fontSize: '11.5px', fontWeight: 600 }}
           >
             + Add Product
           </Button>
@@ -422,7 +423,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
                     key={product.id}
                     onClick={() => onViewProductDetail(product)}
                     title="Click row to open details"
-                    style={{ cursor: 'pointer', height: '35px' }}
+                    style={{ cursor: 'pointer', height: '38px' }}
                   >
                     {/* PRODUCT & WEAVE: Single-line with ellipsis */}
                     <td style={{ paddingLeft: '12px', textAlign: 'left', whiteSpace: 'nowrap' }}>
@@ -432,10 +433,10 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
                           alt={product.name}
                           productName={product.name}
                           category={product.category}
-                          width={26}
-                          height={26}
+                          width={28}
+                          height={28}
                           rounded="sm"
-                          iconSize={12}
+                          iconSize={13}
                         />
                         <div
                           className="yz-cell-truncate"
@@ -521,7 +522,7 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
                           justifyContent: 'flex-end',
                           gap: '4px',
                           width: '100%',
-                          height: '22px',
+                          height: '26px',
                         }}
                       >
                         {!product.isArchived ? (
@@ -534,19 +535,19 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
                               }}
                               className="yz-btn yz-btn-ghost yz-btn-sm"
                               title="Edit Product"
-                              style={{ width: '22px', height: '22px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                              style={{ width: '26px', height: '26px', padding: 0, borderRadius: 'var(--yz-radius-sm)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                             >
-                              <Edit2 size={12} />
+                              <Edit2 size={13} />
                             </button>
 
                             <button
                               type="button"
                               onClick={() => setProductToArchive(product)}
                               className="yz-btn yz-btn-ghost yz-btn-sm"
-                              style={{ color: '#64748B', width: '22px', height: '22px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                              style={{ color: '#64748B', width: '26px', height: '26px', padding: 0, borderRadius: 'var(--yz-radius-sm)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                               title="Archive Product"
                             >
-                              <Archive size={12} />
+                              <Archive size={13} />
                             </button>
                           </>
                         ) : (
@@ -555,10 +556,10 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
                               type="button"
                               onClick={(e) => handleRestoreProduct(product, e)}
                               className="yz-btn yz-btn-ghost yz-btn-sm"
-                              style={{ color: '#166534', width: '22px', height: '22px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                              style={{ color: '#166534', width: '26px', height: '26px', padding: 0, borderRadius: 'var(--yz-radius-sm)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                               title="Restore to Active Catalog"
                             >
-                              <RotateCcw size={12} />
+                              <RotateCcw size={13} />
                             </button>
 
                             <button
@@ -569,9 +570,9 @@ export const ProductsStockPage: React.FC<ProductsStockPageProps> = ({
                               }}
                               className="yz-btn yz-btn-ghost yz-btn-sm"
                               title="Edit Product"
-                              style={{ width: '22px', height: '22px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                              style={{ width: '26px', height: '26px', padding: 0, borderRadius: 'var(--yz-radius-sm)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                             >
-                              <Edit2 size={12} />
+                              <Edit2 size={13} />
                             </button>
                           </>
                         )}
