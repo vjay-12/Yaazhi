@@ -251,7 +251,7 @@ export const VendorsPage: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }}>
       {/* Top Toolbar: [Search] [Status Filter] ... [+ Add Weaver / Vendor] */}
       <div
         style={{
@@ -265,9 +265,12 @@ export const VendorsPage: React.FC = () => {
           boxShadow: 'var(--yz-shadow-2xs)',
           gap: '8px',
           flexWrap: 'wrap',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', flex: 1, minWidth: '260px' }}>
           {/* Search Input */}
           <div style={{ position: 'relative', width: '270px' }}>
             <Search
@@ -412,39 +415,36 @@ export const VendorsPage: React.FC = () => {
         <table className="yz-table" style={{ width: '100%', tableLayout: 'fixed' }}>
           <thead>
             <tr>
-              <th style={{ minWidth: statusFilter === 'ALL' ? '140px' : '170px', paddingLeft: '12px' }}>
-                Weaver / Vendor Name
+              <th style={{ width: '23%', minWidth: '140px', paddingLeft: '12px', paddingRight: '6px', textAlign: 'left' }}>
+                WEAVER / VENDOR NAME
               </th>
-              <th style={{ width: statusFilter === 'ALL' ? '110px' : '120px' }}>
-                Weave / Specialization
+              <th style={{ width: '14%', minWidth: '95px', paddingLeft: '6px', paddingRight: '6px', textAlign: 'left' }}>
+                SPECIALIZATION
               </th>
-              <th style={{ width: statusFilter === 'ALL' ? '125px' : '135px' }}>
-                Contact Person
+              <th style={{ width: '13%', minWidth: '90px', paddingLeft: '6px', paddingRight: '6px', textAlign: 'left' }}>
+                CONTACT PERSON
               </th>
-              <th style={{ width: '105px' }}>
-                Phone
+              <th style={{ width: '108px', paddingLeft: '6px', paddingRight: '6px', textAlign: 'left' }}>
+                PHONE
               </th>
-              <th style={{ width: '80px' }}>
-                City
+              <th style={{ width: '80px', paddingLeft: '6px', paddingRight: '6px', textAlign: 'left' }}>
+                CITY
               </th>
-              <th style={{ width: '110px' }}>
+              <th style={{ width: '116px', paddingLeft: '6px', paddingRight: '6px', textAlign: 'left' }}>
                 GSTIN
               </th>
-              <th style={{ width: '75px', textAlign: 'center', padding: '5px 4px' }}>
-                Active POs
+              <th style={{ width: '64px', paddingLeft: '4px', paddingRight: '4px', textAlign: 'center' }}>
+                OPEN POs
               </th>
-              {statusFilter === 'ALL' && (
-                <th style={{ width: '65px', textAlign: 'center', padding: '5px 4px' }}>Status</th>
-              )}
-              <th style={{ width: '75px', textAlign: 'center', paddingRight: '12px', paddingLeft: '4px' }}>
-                Actions
+              <th style={{ width: '70px', paddingRight: '8px', paddingLeft: '4px', textAlign: 'center' }}>
+                ACTIONS
               </th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={statusFilter === 'ALL' ? 9 : 8} style={{ textAlign: 'center', padding: '24px' }}>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                     <Loader2 size={16} className="animate-spin" />
                     <span>Loading vendors from database...</span>
@@ -454,7 +454,7 @@ export const VendorsPage: React.FC = () => {
             ) : paginatedItems.length === 0 ? (
               <tr>
                 <td
-                  colSpan={statusFilter === 'ALL' ? 9 : 8}
+                  colSpan={8}
                   style={{ textAlign: 'center', padding: '24px', color: 'var(--yz-text-muted)' }}
                 >
                   No vendors found matching criteria.
@@ -469,30 +469,41 @@ export const VendorsPage: React.FC = () => {
                     onClick={() => setSelectedVendor(v)}
                     style={{
                       cursor: 'pointer',
+                      height: '38px',
                       opacity: isArchived ? 0.75 : 1,
                     }}
                     title="Click row to view vendor profile & purchase history"
                   >
                     {/* Weaver / Vendor Name */}
-                    <td style={{ fontWeight: 600, paddingLeft: '12px', whiteSpace: 'nowrap' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                        <div
-                          className="yz-cell-truncate"
-                          style={{ maxWidth: statusFilter === 'ALL' ? '150px' : '205px' }}
+                    <td style={{ paddingLeft: '12px', paddingRight: '6px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, width: '100%' }}>
+                        <span
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            fontWeight: 600,
+                            color: 'var(--yz-text-primary)',
+                          }}
                           title={v.name}
                         >
                           {v.name}
-                        </div>
-                        {v.isArchived && statusFilter === 'ALL' && (
+                        </span>
+                        {isArchived && (
                           <span
                             style={{
                               fontSize: '9px',
                               fontWeight: 700,
-                              padding: '1px 4px',
-                              borderRadius: '2px',
+                              padding: '1px 5px',
+                              borderRadius: 'var(--yz-radius-full)',
                               backgroundColor: 'var(--yz-alert-danger-bg, #FEE2E2)',
                               color: 'var(--yz-alert-danger-text, #991B1B)',
+                              border: '1px solid var(--yz-alert-danger-border, #FECACA)',
+                              lineHeight: 1.2,
                               flexShrink: 0,
+                              userSelect: 'none',
                             }}
                           >
                             ARCHIVED
@@ -502,15 +513,31 @@ export const VendorsPage: React.FC = () => {
                     </td>
 
                     {/* Weave / Specialization */}
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      <div className="yz-cell-truncate" style={{ maxWidth: '115px' }} title={v.category}>
+                    <td style={{ paddingLeft: '6px', paddingRight: '6px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <div
+                        style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          width: '100%',
+                        }}
+                        title={v.category}
+                      >
                         {v.category}
                       </div>
                     </td>
 
                     {/* Contact Person */}
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      <div className="yz-cell-truncate" style={{ maxWidth: '130px' }} title={v.contactPerson || '-'}>
+                    <td style={{ paddingLeft: '6px', paddingRight: '6px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <div
+                        style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          width: '100%',
+                        }}
+                        title={v.contactPerson || '-'}
+                      >
                         {v.contactPerson || '-'}
                       </div>
                     </td>
@@ -518,9 +545,14 @@ export const VendorsPage: React.FC = () => {
                     {/* Phone */}
                     <td
                       style={{
+                        paddingLeft: '6px',
+                        paddingRight: '6px',
                         fontFamily: 'var(--yz-font-mono)',
                         fontSize: '11px',
+                        color: 'var(--yz-text-secondary)',
                         whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                       }}
                       title={v.phone || '-'}
                     >
@@ -528,8 +560,16 @@ export const VendorsPage: React.FC = () => {
                     </td>
 
                     {/* City */}
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      <div className="yz-cell-truncate" style={{ maxWidth: '75px' }} title={v.city}>
+                    <td style={{ paddingLeft: '6px', paddingRight: '6px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <div
+                        style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          width: '100%',
+                        }}
+                        title={v.city}
+                      >
                         {v.city}
                       </div>
                     </td>
@@ -537,9 +577,14 @@ export const VendorsPage: React.FC = () => {
                     {/* GSTIN */}
                     <td
                       style={{
+                        paddingLeft: '6px',
+                        paddingRight: '6px',
                         fontFamily: 'var(--yz-font-mono)',
                         fontSize: '11px',
+                        color: 'var(--yz-text-secondary)',
                         whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                       }}
                       title={v.gstin || 'Unregistered'}
                     >
@@ -547,7 +592,7 @@ export const VendorsPage: React.FC = () => {
                     </td>
 
                     {/* Active POs */}
-                    <td style={{ textAlign: 'center', padding: '5px 4px', whiteSpace: 'nowrap' }}>
+                    <td style={{ paddingLeft: '4px', paddingRight: '4px', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden' }}>
                       <span
                         style={{
                           display: 'inline-block',
@@ -565,27 +610,8 @@ export const VendorsPage: React.FC = () => {
                       </span>
                     </td>
 
-                    {/* Status badge if 'ALL' */}
-                    {statusFilter === 'ALL' && (
-                      <td style={{ textAlign: 'center', padding: '5px 4px', whiteSpace: 'nowrap' }}>
-                        <span
-                          style={{
-                            display: 'inline-block',
-                            padding: '2px 8px',
-                            borderRadius: 'var(--yz-radius-full)',
-                            fontSize: '10.5px',
-                            fontWeight: 600,
-                            backgroundColor: isArchived ? 'var(--yz-status-out-stock-bg, #FEE2E2)' : 'var(--yz-status-in-stock-bg, #DCFCE7)',
-                            color: isArchived ? 'var(--yz-status-out-stock, #991B1B)' : 'var(--yz-status-in-stock, #166534)',
-                          }}
-                        >
-                          {isArchived ? 'Archived' : 'Active'}
-                        </span>
-                      </td>
-                    )}
-
-                    {/* Actions: [Edit] [Archive] or [Restore] - Ghost icon buttons matching other components */}
-                    <td style={{ textAlign: 'center', paddingRight: '12px', paddingLeft: '4px', whiteSpace: 'nowrap' }}>
+                    {/* Actions: [Edit] [Archive] or [Restore] - Ghost icon buttons */}
+                    <td style={{ paddingRight: '8px', paddingLeft: '4px', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden' }}>
                       <div
                         style={{
                           display: 'inline-flex',
