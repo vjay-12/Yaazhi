@@ -811,7 +811,8 @@ export const SalesOrdersPage: React.FC = () => {
           onClose={() => !isSubmittingSettle && setOrderToSettle(null)}
           title={`Settle Balance — ${orderToSettle.orderNumber}`}
           subtitle={`Customer: ${orderToSettle.customerName} • Source: ${orderToSettle.location}`}
-          maxWidth="460px"
+          maxWidth="480px"
+          bodyPadding="14px 16px"
           footer={
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', width: '100%' }}>
               <Button
@@ -844,7 +845,7 @@ export const SalesOrdersPage: React.FC = () => {
             </div>
           }
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {/* Overview Card */}
             <div
               style={{
@@ -853,181 +854,186 @@ export const SalesOrdersPage: React.FC = () => {
                 backgroundColor: 'var(--yz-bg-subtle)',
                 border: '1px solid var(--yz-border)',
                 borderRadius: 'var(--yz-radius-sm)',
-                padding: '8px 10px',
+                padding: '6px 8px',
                 textAlign: 'center',
                 fontSize: '11px',
               }}
             >
               <div>
-                <span style={{ color: 'var(--yz-text-muted)', fontSize: '10px', display: 'block' }}>
+                <span style={{ color: 'var(--yz-text-muted)', fontSize: '9.5px', fontWeight: 600, display: 'block', letterSpacing: '0.2px' }}>
                   TOTAL AMOUNT
                 </span>
-                <strong style={{ fontSize: '13px', fontFamily: 'var(--yz-font-mono)' }}>
+                <strong style={{ fontSize: '12.5px', fontFamily: 'var(--yz-font-mono)' }}>
                   ₹{orderToSettle.totalAmount.toLocaleString('en-IN')}
                 </strong>
               </div>
               <div>
-                <span style={{ color: 'var(--yz-text-muted)', fontSize: '10px', display: 'block' }}>
+                <span style={{ color: 'var(--yz-text-muted)', fontSize: '9.5px', fontWeight: 600, display: 'block', letterSpacing: '0.2px' }}>
                   ALREADY PAID
                 </span>
-                <strong style={{ fontSize: '13px', color: 'var(--yz-status-in-stock, #166534)', fontFamily: 'var(--yz-font-mono)' }}>
+                <strong style={{ fontSize: '12.5px', color: 'var(--yz-status-in-stock, #166534)', fontFamily: 'var(--yz-font-mono)' }}>
                   ₹{orderToSettle.paidAmount.toLocaleString('en-IN')}
                 </strong>
               </div>
               <div>
-                <span style={{ color: 'var(--yz-text-muted)', fontSize: '10px', display: 'block' }}>
+                <span style={{ color: 'var(--yz-text-muted)', fontSize: '9.5px', fontWeight: 600, display: 'block', letterSpacing: '0.2px' }}>
                   PENDING DUE
                 </span>
-                <strong style={{ fontSize: '13px', color: 'var(--yz-status-low-stock, #B45309)', fontFamily: 'var(--yz-font-mono)' }}>
+                <strong style={{ fontSize: '12.5px', color: 'var(--yz-status-low-stock, #B45309)', fontFamily: 'var(--yz-font-mono)' }}>
                   ₹{orderToSettle.pendingAmount.toLocaleString('en-IN')}
                 </strong>
               </div>
             </div>
 
-            {/* Settlement Input */}
-            <div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '4px',
-                }}
-              >
-                <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--yz-text-primary)' }}>
-                  Amount to Settle (₹)
-                </label>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <button
-                    type="button"
-                    className="yz-btn yz-btn-ghost yz-btn-sm"
-                    style={{ height: '20px', padding: '0 5px', fontSize: '10px' }}
-                    onClick={() => setSettleAmount(orderToSettle.pendingAmount.toString())}
-                  >
-                    Full (₹{orderToSettle.pendingAmount.toLocaleString('en-IN')})
-                  </button>
-                  {orderToSettle.pendingAmount > 1000 && (
+            {/* 2-Column Grid: Settlement Input + Payment Mode */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: '10px', alignItems: 'start' }}>
+              {/* Settlement Input */}
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '3px',
+                  }}
+                >
+                  <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--yz-text-primary)' }}>
+                    Amount to Settle (₹)
+                  </label>
+                  <div style={{ display: 'flex', gap: '3px' }}>
                     <button
                       type="button"
                       className="yz-btn yz-btn-ghost yz-btn-sm"
-                      style={{ height: '20px', padding: '0 5px', fontSize: '10px' }}
-                      onClick={() =>
-                        setSettleAmount((Math.round(orderToSettle.pendingAmount / 2)).toString())
-                      }
+                      style={{ height: '18px', padding: '0 4px', fontSize: '9.5px' }}
+                      onClick={() => setSettleAmount(orderToSettle.pendingAmount.toString())}
                     >
-                      50% (₹{Math.round(orderToSettle.pendingAmount / 2).toLocaleString('en-IN')})
+                      Full
                     </button>
-                  )}
+                    {orderToSettle.pendingAmount > 1000 && (
+                      <button
+                        type="button"
+                        className="yz-btn yz-btn-ghost yz-btn-sm"
+                        style={{ height: '18px', padding: '0 4px', fontSize: '9.5px' }}
+                        onClick={() =>
+                          setSettleAmount((Math.round(orderToSettle.pendingAmount / 2)).toString())
+                        }
+                      >
+                        50%
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <input
+                  type="number"
+                  min="1"
+                  max={orderToSettle.pendingAmount}
+                  step="any"
+                  className="yz-input"
+                  value={settleAmount}
+                  onChange={(e) => setSettleAmount(e.target.value)}
+                  style={{
+                    height: '28px',
+                    fontSize: '12px',
+                    fontFamily: 'var(--yz-font-mono)',
+                    fontWeight: 600,
+                  }}
+                  autoFocus
+                />
+                <div style={{ marginTop: '2px', fontSize: '10px', lineHeight: 1.25 }}>
+                  {Number(settleAmount) >= orderToSettle.pendingAmount ? (
+                    <span style={{ color: 'var(--yz-status-in-stock, #166534)', fontWeight: 600 }}>
+                      ✓ Order will be fully PAID
+                    </span>
+                  ) : Number(settleAmount) > 0 && Number(settleAmount) < orderToSettle.pendingAmount ? (
+                    <span style={{ color: 'var(--yz-status-low-stock, #92400E)' }}>
+                      Remaining due: ₹{(orderToSettle.pendingAmount - Number(settleAmount)).toLocaleString('en-IN')}
+                    </span>
+                  ) : Number(settleAmount) > orderToSettle.pendingAmount ? (
+                    <span style={{ color: 'var(--yz-status-out-stock, #DC2626)', fontWeight: 600 }}>
+                      Exceeds due of ₹{orderToSettle.pendingAmount.toLocaleString('en-IN')}
+                    </span>
+                  ) : null}
                 </div>
               </div>
-              <input
-                type="number"
-                min="1"
-                max={orderToSettle.pendingAmount}
-                step="any"
-                className="yz-input"
-                value={settleAmount}
-                onChange={(e) => setSettleAmount(e.target.value)}
-                style={{
-                  height: '30px',
-                  fontSize: '13px',
-                  fontFamily: 'var(--yz-font-mono)',
-                  fontWeight: 600,
-                }}
-                autoFocus
-              />
-              <div style={{ marginTop: '4px', fontSize: '10.5px' }}>
-                {Number(settleAmount) >= orderToSettle.pendingAmount ? (
-                  <span style={{ color: 'var(--yz-status-in-stock, #166534)', fontWeight: 600 }}>
-                    ✓ Order will be fully PAID with ₹0 remaining due.
-                  </span>
-                ) : Number(settleAmount) > 0 && Number(settleAmount) < orderToSettle.pendingAmount ? (
-                  <span style={{ color: 'var(--yz-status-low-stock, #92400E)' }}>
-                    Remaining due: ₹{(orderToSettle.pendingAmount - Number(settleAmount)).toLocaleString('en-IN')} (will remain PENDING).
-                  </span>
-                ) : Number(settleAmount) > orderToSettle.pendingAmount ? (
-                  <span style={{ color: 'var(--yz-status-out-stock, #DC2626)', fontWeight: 600 }}>
-                    Amount exceeds pending due of ₹{orderToSettle.pendingAmount.toLocaleString('en-IN')}.
-                  </span>
-                ) : null}
-              </div>
-            </div>
 
-            {/* Payment Mode (Cash and UPI only, Card removed) */}
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: 'var(--yz-text-primary)',
-                  marginBottom: '4px',
-                }}
-              >
-                Payment Mode
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
-                <button
-                  type="button"
-                  onClick={() => setSettlePaymentMode('CASH')}
+              {/* Payment Mode */}
+              <div>
+                <label
                   style={{
-                    height: '28px',
-                    fontSize: '11px',
-                    borderRadius: 'var(--yz-radius-sm)',
-                    border:
-                      settlePaymentMode === 'CASH'
-                        ? '1px solid var(--yz-primary, #832729)'
-                        : '1px solid var(--yz-border)',
-                    backgroundColor:
-                      settlePaymentMode === 'CASH'
-                        ? 'var(--yz-primary-subtle, #FDF2F2)'
-                        : 'var(--yz-bg-surface)',
-                    color:
-                      settlePaymentMode === 'CASH'
-                        ? 'var(--yz-primary, #832729)'
-                        : 'var(--yz-text-secondary)',
-                    fontWeight: settlePaymentMode === 'CASH' ? 600 : 400,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px',
+                    display: 'block',
+                    fontSize: '10.5px',
+                    fontWeight: 600,
+                    color: 'var(--yz-text-primary)',
+                    marginBottom: '3px',
                   }}
                 >
-                  <Banknote size={14} />
-                  <span>Cash</span>
-                </button>
+                  Payment Mode
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setSettlePaymentMode('CASH')}
+                    style={{
+                      height: '28px',
+                      fontSize: '11px',
+                      borderRadius: 'var(--yz-radius-sm)',
+                      border:
+                        settlePaymentMode === 'CASH'
+                          ? '1px solid var(--yz-primary, #832729)'
+                          : '1px solid var(--yz-border)',
+                      backgroundColor:
+                        settlePaymentMode === 'CASH'
+                          ? 'var(--yz-primary-subtle, #FDF2F2)'
+                          : 'var(--yz-bg-surface)',
+                      color:
+                        settlePaymentMode === 'CASH'
+                          ? 'var(--yz-primary, #832729)'
+                          : 'var(--yz-text-secondary)',
+                      fontWeight: settlePaymentMode === 'CASH' ? 600 : 400,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      transition: 'all 0.12s ease',
+                    }}
+                  >
+                    <Banknote size={13} />
+                    <span>Cash</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setSettlePaymentMode('UPI')}
-                  style={{
-                    height: '28px',
-                    fontSize: '11px',
-                    borderRadius: 'var(--yz-radius-sm)',
-                    border:
-                      settlePaymentMode === 'UPI'
-                        ? '1px solid var(--yz-primary, #832729)'
-                        : '1px solid var(--yz-border)',
-                    backgroundColor:
-                      settlePaymentMode === 'UPI'
-                        ? 'var(--yz-primary-subtle, #FDF2F2)'
-                        : 'var(--yz-bg-surface)',
-                    color:
-                      settlePaymentMode === 'UPI'
-                        ? 'var(--yz-primary, #832729)'
-                        : 'var(--yz-text-secondary)',
-                    fontWeight: settlePaymentMode === 'UPI' ? 600 : 400,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <QrCode size={14} />
-                  <span>UPI</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setSettlePaymentMode('UPI')}
+                    style={{
+                      height: '28px',
+                      fontSize: '11px',
+                      borderRadius: 'var(--yz-radius-sm)',
+                      border:
+                        settlePaymentMode === 'UPI'
+                          ? '1px solid var(--yz-primary, #832729)'
+                          : '1px solid var(--yz-border)',
+                      backgroundColor:
+                        settlePaymentMode === 'UPI'
+                          ? 'var(--yz-primary-subtle, #FDF2F2)'
+                          : 'var(--yz-bg-surface)',
+                      color:
+                        settlePaymentMode === 'UPI'
+                          ? 'var(--yz-primary, #832729)'
+                          : 'var(--yz-text-secondary)',
+                      fontWeight: settlePaymentMode === 'UPI' ? 600 : 400,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      transition: 'all 0.12s ease',
+                    }}
+                  >
+                    <QrCode size={13} />
+                    <span>UPI</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1037,67 +1043,72 @@ export const SalesOrdersPage: React.FC = () => {
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '6px',
+                  gap: '5px',
                   backgroundColor: 'var(--yz-bg-subtle)',
-                  padding: '8px 10px',
+                  padding: '6px 8px',
                   borderRadius: 'var(--yz-radius-sm)',
                   border: '1px solid var(--yz-border)',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--yz-text-secondary)' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--yz-text-secondary)' }}>
                     Cash Received (Tendered)
                   </label>
-                  <span style={{ fontSize: '10px', color: 'var(--yz-text-muted)' }}>Amount given by client</span>
+                  <span style={{ fontSize: '9.5px', color: 'var(--yz-text-muted)' }}>Amount given by client</span>
                 </div>
-                <input
-                  type="number"
-                  min="0"
-                  value={settleCashTendered}
-                  onChange={(e) => setSettleCashTendered(e.target.value)}
-                  className="yz-input tabular-nums"
-                  placeholder={`₹${Number(settleAmount || 0).toLocaleString('en-IN')}`}
-                  style={{ height: '28px', fontSize: '12px', fontWeight: 600 }}
-                />
+                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    min="0"
+                    value={settleCashTendered}
+                    onChange={(e) => setSettleCashTendered(e.target.value)}
+                    className="yz-input tabular-nums"
+                    placeholder={`₹${Number(settleAmount || 0).toLocaleString('en-IN')}`}
+                    style={{ height: '26px', fontSize: '11.5px', fontWeight: 600, flex: 1 }}
+                  />
 
-                {/* Presets */}
-                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => setSettleCashTendered(settleAmount)}
-                    style={{
-                      padding: '2px 6px',
-                      fontSize: '10px',
-                      fontWeight: 600,
-                      borderRadius: '3px',
-                      border: '1px solid var(--yz-primary)',
-                      backgroundColor: 'var(--yz-primary-subtle)',
-                      color: 'var(--yz-primary)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Exact (₹{Number(settleAmount || 0).toLocaleString('en-IN')})
-                  </button>
-                  {[500, 1000, 2000, 5000]
-                    .filter((val) => val >= Number(settleAmount || 0))
-                    .map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => setSettleCashTendered(String(preset))}
-                        style={{
-                          padding: '2px 6px',
-                          fontSize: '10px',
-                          borderRadius: '3px',
-                          border: '1px solid var(--yz-border)',
-                          backgroundColor: 'var(--yz-bg-surface)',
-                          color: 'var(--yz-text-secondary)',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        ₹{preset.toLocaleString('en-IN')}
-                      </button>
-                    ))}
+                  {/* Presets */}
+                  <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => setSettleCashTendered(settleAmount)}
+                      style={{
+                        padding: '2px 5px',
+                        fontSize: '9.5px',
+                        fontWeight: 600,
+                        borderRadius: '3px',
+                        border: '1px solid var(--yz-primary)',
+                        backgroundColor: 'var(--yz-primary-subtle)',
+                        color: 'var(--yz-primary)',
+                        cursor: 'pointer',
+                        height: '24px',
+                      }}
+                    >
+                      Exact
+                    </button>
+                    {[500, 1000, 2000, 5000]
+                      .filter((val) => val >= Number(settleAmount || 0))
+                      .slice(0, 3)
+                      .map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setSettleCashTendered(String(preset))}
+                          style={{
+                            padding: '2px 5px',
+                            fontSize: '9.5px',
+                            borderRadius: '3px',
+                            border: '1px solid var(--yz-border)',
+                            backgroundColor: 'var(--yz-bg-surface)',
+                            color: 'var(--yz-text-secondary)',
+                            cursor: 'pointer',
+                            height: '24px',
+                          }}
+                        >
+                          ₹{preset.toLocaleString('en-IN')}
+                        </button>
+                      ))}
+                  </div>
                 </div>
 
                 {/* Change calculation */}
@@ -1116,13 +1127,13 @@ export const SalesOrdersPage: React.FC = () => {
                           backgroundColor: 'var(--yz-alert-success-bg, #DCFCE7)',
                           border: '1px solid var(--yz-alert-success-border, #86EFAC)',
                           borderRadius: '4px',
-                          padding: '4px 8px',
-                          fontSize: '11px',
+                          padding: '3px 6px',
+                          fontSize: '10.5px',
                           color: 'var(--yz-alert-success-text, #166534)',
                         }}
                       >
                         <span style={{ fontWeight: 600 }}>Change to Return:</span>
-                        <strong style={{ fontSize: '12px', fontFamily: 'var(--yz-font-mono)' }}>
+                        <strong style={{ fontSize: '11.5px', fontFamily: 'var(--yz-font-mono)' }}>
                           ₹{change.toLocaleString('en-IN')}
                         </strong>
                       </div>
@@ -1138,8 +1149,8 @@ export const SalesOrdersPage: React.FC = () => {
                           backgroundColor: 'var(--yz-alert-danger-bg, #FEF2F2)',
                           border: '1px solid var(--yz-alert-danger-border, #FECACA)',
                           borderRadius: '4px',
-                          padding: '4px 8px',
-                          fontSize: '10.5px',
+                          padding: '3px 6px',
+                          fontSize: '10px',
                           color: 'var(--yz-alert-danger-text, #991B1B)',
                         }}
                       >
@@ -1160,14 +1171,14 @@ export const SalesOrdersPage: React.FC = () => {
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '6px',
+                  gap: '5px',
                   backgroundColor: 'var(--yz-bg-subtle)',
-                  padding: '8px 10px',
+                  padding: '6px 8px',
                   borderRadius: 'var(--yz-radius-sm)',
                   border: '1px solid var(--yz-border)',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px' }}>
                   <span style={{ color: 'var(--yz-text-secondary)' }}>Merchant UPI ID:</span>
                   <strong style={{ fontFamily: 'var(--yz-font-mono)' }}>
                     {storePaymentSettings.upiId || 'yaazhi@oksbi'}
@@ -1177,7 +1188,7 @@ export const SalesOrdersPage: React.FC = () => {
                   <label
                     style={{
                       display: 'block',
-                      fontSize: '10.5px',
+                      fontSize: '10px',
                       fontWeight: 600,
                       color: 'var(--yz-text-secondary)',
                       marginBottom: '2px',
@@ -1187,11 +1198,11 @@ export const SalesOrdersPage: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. UPI UTR number / transaction ID..."
+                    placeholder="e.g. UPI transaction ID..."
                     className="yz-input"
                     value={settleReference}
                     onChange={(e) => setSettleReference(e.target.value)}
-                    style={{ height: '28px', fontSize: '11px' }}
+                    style={{ height: '26px', fontSize: '10.5px' }}
                   />
                 </div>
               </div>

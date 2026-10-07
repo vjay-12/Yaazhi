@@ -514,7 +514,7 @@ router.post('/:id/settle', async (req, res): Promise<void> => {
 
       const total = Number(order.grand_total);
       const currentPaid = Number(order.paid_amount ?? 0);
-      const currentPending = Number(order.pending_amount ?? Math.max(0, total - currentPaid));
+      const currentPending = Math.max(0, total - currentPaid);
 
       if (currentPending <= 0) {
         throw new Error(`Order ${order.order_number} is already fully paid`);

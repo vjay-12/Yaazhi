@@ -11,6 +11,7 @@ interface ModalProps {
   footer?: React.ReactNode;
   maxWidth?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl' | string;
+  bodyPadding?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -22,6 +23,7 @@ export const Modal: React.FC<ModalProps> = ({
   footer,
   maxWidth,
   size = 'md',
+  bodyPadding,
 }) => {
   const sizeMap: Record<string, string> = {
     sm: '440px',
@@ -128,7 +130,7 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
 
         {/* Body */}
-        <div style={{ padding: '18px', overflowY: 'auto', flex: 1 }}>{children}</div>
+        <div style={{ padding: bodyPadding || '18px', overflowY: 'auto', flex: 1 }}>{children}</div>
 
         {/* Footer */}
         {footer && (

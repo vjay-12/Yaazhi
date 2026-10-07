@@ -33,7 +33,7 @@ export const CustomersPage: React.FC = () => {
   const [customers, setCustomers] = useState<CustomerData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<CustomerStatusFilter>('ALL');
+  const [statusFilter, setStatusFilter] = useState<CustomerStatusFilter>('ACTIVE');
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
 
   // Modals state
@@ -56,14 +56,20 @@ export const CustomersPage: React.FC = () => {
   const loadCustomers = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await customerService.list(search);
+      const apiStatus =
+        statusFilter === 'ACTIVE'
+          ? 'active'
+          : statusFilter === 'ARCHIVED'
+          ? 'archived'
+          : 'all';
+      const data = await customerService.list(search, apiStatus);
       setCustomers(data);
     } catch {
       showToast({ type: 'error', title: 'Load Error', message: 'Could not load boutique customers' });
     } finally {
       setIsLoading(false);
     }
-  }, [search, showToast]);
+  }, [search, statusFilter, showToast]);
 
   useEffect(() => {
     loadCustomers();
@@ -254,8 +260,8 @@ export const CustomersPage: React.FC = () => {
               }}
             >
               <span>
-                <span style={{ color: 'var(--yz-text-muted)', marginRight: '4px' }}>Status:</span>
-                <strong>{STATUS_FILTER_OPTIONS.find((s) => s.id === statusFilter)?.label || 'All'}</strong>
+                <span style={{ color: 'var(--yz-text-muted)', marginRight: '4px' }}>Lifecycle:</span>
+                <strong>{STATUS_FILTER_OPTIONS.find((s) => s.id === statusFilter)?.label || 'Active'}</strong>
               </span>
               <ChevronDown
                 size={13}
@@ -292,7 +298,7 @@ export const CustomersPage: React.FC = () => {
                     letterSpacing: '0.4px',
                   }}
                 >
-                  Filter Status
+                  Lifecycle Status
                 </div>
                 <div style={{ height: '1px', backgroundColor: 'var(--yz-border)', margin: '2px 0 4px 0' }} />
                 {STATUS_FILTER_OPTIONS.map((opt) => {

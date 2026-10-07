@@ -46,11 +46,11 @@ export const BillingPage: React.FC = () => {
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Dynamically derive unique categories from real product data (ACTIVE ONLY)
+  // Dynamically derive unique categories from real product data (SELLABLE ONLY: ACTIVE & IN/LOW STOCK)
   const availableCategories = React.useMemo(() => {
     const set = new Set<string>();
     products.forEach((p) => {
-      if (p.isActive && !p.isArchived && p.category && typeof p.category === 'string' && p.category.trim()) {
+      if (p.isActive && !p.isArchived && Number(p.currentStock) > 0 && p.category && typeof p.category === 'string' && p.category.trim()) {
         set.add(p.category.trim());
       }
     });
@@ -58,6 +58,19 @@ export const BillingPage: React.FC = () => {
   }, [products]);
 
   const effectiveCategory = (selectedCategory !== 'ALL' && availableCategories.includes(selectedCategory)) ? selectedCategory : 'ALL';
+
+  // Load only currently sellable products (ACTIVE, NOT ARCHIVED, currentStock > 0)
+  const loadBillingCatalog = React.useCallback(async () => {
+    try {
+      const prods = await productService.list({ lifecycle: 'ACTIVE' });
+      const sellable = prods.filter(
+        (p) => p.isActive && !p.isArchived && Number(p.currentStock) > 0
+      );
+      setProducts(sellable);
+    } catch (err) {
+      console.error('Failed to load billing catalog products:', err);
+    }
+  }, []);
 
   // Payment Modal State
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
@@ -77,7 +90,7 @@ export const BillingPage: React.FC = () => {
   const [recentCustomers, setRecentCustomers] = useState<any[]>([]);
 
   useEffect(() => {
-    productService.list({ lifecycle: 'ACTIVE' }).then(setProducts);
+    loadBillingCatalog();
     customerService.list().then(setRecentCustomers).catch(() => {});
     settingsService
       .getSettings()
@@ -90,7 +103,7 @@ export const BillingPage: React.FC = () => {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [loadBillingCatalog]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -246,6 +259,16 @@ export const BillingPage: React.FC = () => {
       return;
     }
 
+    const outOfStockItem = cart.find((i) => Number(i.product.currentStock) <= 0);
+    if (outOfStockItem) {
+      showToast({
+        type: 'error',
+        title: 'Out of Stock Item in Cart',
+        message: `${outOfStockItem.product.name} is out of stock and cannot be billed. Please remove it from the cart.`,
+      });
+      return;
+    }
+
     if (!selectedCustomerId || !customerName.trim()) {
       showToast({
         type: 'warning',
@@ -333,8 +356,8 @@ export const BillingPage: React.FC = () => {
         message: `Bill ${res.billNo} registered (${billPaymentStatus}). Total: ₹${res.totalAmount.toLocaleString('en-IN')}`,
       });
 
-      // Refresh product stock (ACTIVE ONLY)
-      productService.list({ lifecycle: 'ACTIVE' }).then(setProducts);
+      // Refresh product stock (SELLABLE ONLY)
+      loadBillingCatalog();
     } catch (err: any) {
       showToast({
         type: 'error',
@@ -361,7 +384,8 @@ export const BillingPage: React.FC = () => {
   };
 
   const filteredProducts = products.filter((p) => {
-    if (p.isArchived || !p.isActive) return false;
+    // Strictly sellable: Active, Not Archived, Stock > 0 (In Stock or Low Stock)
+    if (p.isArchived || !p.isActive || Number(p.currentStock) <= 0) return false;
     if (effectiveCategory !== 'ALL' && p.category?.trim().toLowerCase() !== effectiveCategory.toLowerCase()) {
       return false;
     }
