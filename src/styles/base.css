@@ -336,7 +336,9 @@ p, span, label, input, button, select, textarea {
   border: 1px solid var(--yz-border);
   border-radius: var(--yz-table-radius, 16px);
   box-shadow: var(--yz-shadow-xs);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
   position: relative;
 }
 
@@ -345,6 +347,12 @@ p, span, label, input, button, select, textarea {
   border-collapse: collapse;
   text-align: left;
   font-size: 12px;
+}
+
+.yz-table-compact th,
+.yz-table-compact td {
+  padding: 6px 8px;
+  font-size: 11px;
 }
 
 .yz-table th {

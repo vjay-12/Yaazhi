@@ -361,6 +361,22 @@
 }
 
 /* ==========================================================================
+   Overview Dashboard Layout
+   ========================================================================== */
+.yz-overview-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.yz-overview-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ==========================================================================
    Responsive Adaptations
    ========================================================================== */
 @media (max-width: 900px) {
@@ -385,4 +401,37 @@
     grid-template-columns: 1fr;
     height: auto;
   }
+  .yz-overview-columns {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .yz-overview-col {
+    display: contents;
+  }
+  .yz-overview-trend {
+    order: 1;
+  }
+  .yz-overview-lowstock {
+    order: 2;
+  }
+  .yz-overview-topselling {
+    order: 3;
+  }
+  .yz-overview-recentsales {
+    order: 4;
+  }
 }
+
+@media (max-width: 640px) {
+  .yz-header {
+    padding: 0 12px;
+  }
+  .yz-header-subtitle {
+    display: none !important;
+  }
+  .yz-header-action-secondary {
+    display: none !important;
+  }
+}
+
