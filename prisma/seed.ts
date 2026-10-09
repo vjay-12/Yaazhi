@@ -123,7 +123,7 @@ async function main() {
     },
   });
 
-  const vendorLace = await prisma.supplier.upsert({
+  await prisma.supplier.upsert({
     where: { id: 'ven-002' },
     update: {},
     create: {
@@ -144,7 +144,7 @@ async function main() {
     },
   });
 
-  const vendorTextiles = await prisma.supplier.upsert({
+  await prisma.supplier.upsert({
     where: { id: 'ven-003' },
     update: {},
     create: {
@@ -439,7 +439,7 @@ async function main() {
             godown_id: showroomMain.id,
           },
         },
-        update: { current_quantity: p.mainStock, avg_cost: p.purchase_price },
+        update: {},
         create: {
           product_id: product.id,
           godown_id: showroomMain.id,
@@ -448,20 +448,31 @@ async function main() {
         },
       });
 
-      await prisma.stockMovement.create({
-        data: {
-          movement_type: MovementType.ADJUSTMENT_ADD,
+      const existingMainMovement = await prisma.stockMovement.findFirst({
+        where: {
           product_id: product.id,
           godown_id: showroomMain.id,
-          quantity: p.mainStock,
-          unit_cost: p.purchase_price,
-          balance_after: p.mainStock,
           reference_type: 'INITIAL_STOCK',
           reference_id: 'SEED-OPENING',
-          notes: 'Opening stock count for boutique launch',
-          created_by: 'Boutique Manager',
         },
       });
+
+      if (!existingMainMovement) {
+        await prisma.stockMovement.create({
+          data: {
+            movement_type: MovementType.ADJUSTMENT_ADD,
+            product_id: product.id,
+            godown_id: showroomMain.id,
+            quantity: p.mainStock,
+            unit_cost: p.purchase_price,
+            balance_after: p.mainStock,
+            reference_type: 'INITIAL_STOCK',
+            reference_id: 'SEED-OPENING',
+            notes: 'Opening stock count for boutique launch',
+            created_by: 'Boutique Manager',
+          },
+        });
+      }
     }
 
     if (p.vaultStock > 0) {
@@ -472,7 +483,7 @@ async function main() {
             godown_id: sildVault.id,
           },
         },
-        update: { current_quantity: p.vaultStock, avg_cost: p.purchase_price },
+        update: {},
         create: {
           product_id: product.id,
           godown_id: sildVault.id,
@@ -481,20 +492,31 @@ async function main() {
         },
       });
 
-      await prisma.stockMovement.create({
-        data: {
-          movement_type: MovementType.ADJUSTMENT_ADD,
+      const existingVaultMovement = await prisma.stockMovement.findFirst({
+        where: {
           product_id: product.id,
           godown_id: sildVault.id,
-          quantity: p.vaultStock,
-          unit_cost: p.purchase_price,
-          balance_after: p.vaultStock,
           reference_type: 'INITIAL_STOCK',
           reference_id: 'SEED-OPENING',
-          notes: 'Bridal Vault high-value allocation',
-          created_by: 'Boutique Curator',
         },
       });
+
+      if (!existingVaultMovement) {
+        await prisma.stockMovement.create({
+          data: {
+            movement_type: MovementType.ADJUSTMENT_ADD,
+            product_id: product.id,
+            godown_id: sildVault.id,
+            quantity: p.vaultStock,
+            unit_cost: p.purchase_price,
+            balance_after: p.vaultStock,
+            reference_type: 'INITIAL_STOCK',
+            reference_id: 'SEED-OPENING',
+            notes: 'Bridal Vault high-value allocation',
+            created_by: 'Boutique Curator',
+          },
+        });
+      }
     }
   }
 

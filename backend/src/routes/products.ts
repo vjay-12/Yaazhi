@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../db.js';
 import { productSchema } from '../validators/schemas.js';
-import { LedgerService } from '../services/ledgerService.js';
 import { MovementType } from '@prisma/client';
 
 const router = Router();
@@ -97,6 +96,7 @@ router.get('/categories', async (_req, res): Promise<void> => {
     });
     res.json(categories);
   } catch (err: any) {
+    console.error('Fetch categories error:', err);
     res.status(500).json({ error: 'Failed to fetch categories' });
   }
 });
@@ -116,6 +116,7 @@ router.post('/categories', async (req, res): Promise<void> => {
     });
     res.status(201).json(cat);
   } catch (err: any) {
+    console.error('Create category error:', err);
     res.status(500).json({ error: 'Failed to create category' });
   }
 });
@@ -192,6 +193,7 @@ router.get('/:id', async (req, res): Promise<void> => {
       createdAt: product.created_at,
     });
   } catch (err: any) {
+    console.error('Fetch product details error:', err);
     res.status(500).json({ error: 'Failed to fetch product details' });
   }
 });
@@ -238,12 +240,18 @@ router.post('/', async (req, res): Promise<void> => {
       godown_id,
     } = parsed.data;
 
-    // Check SKU duplicate
+    const normalizedSku = sku.toUpperCase().trim();
+
+    // Check SKU duplicate across both active and archived catalog
     const existing = await prisma.product.findUnique({
-      where: { sku: sku.toUpperCase().trim() },
+      where: { sku: normalizedSku },
     });
     if (existing) {
-      res.status(400).json({ error: `Product with SKU "${sku}" already exists` });
+      const statusDesc = existing.is_active ? 'active' : 'archived';
+      res.status(409).json({
+        error: `Product with SKU "${normalizedSku}" already exists (${statusDesc} item: "${existing.name}"). SKUs must be unique across all boutique items.`,
+        code: 'DUPLICATE_SKU',
+      });
       return;
     }
 
@@ -273,40 +281,69 @@ router.post('/', async (req, res): Promise<void> => {
       targetGodownId = defaultGodown?.id;
     }
 
-    const product = await prisma.product.create({
-      data: {
-        sku: sku.toUpperCase().trim(),
-        name: name.trim(),
-        description,
-        fabric,
-        craft,
-        category_id: targetCategoryId,
-        unit: unit.trim(),
-        sale_price,
-        purchase_price,
-        hsn_code,
-        tax_rate,
-        min_stock_level,
-        image_url: parsed.data.image_url || parsed.data.imageUrl || null,
-        is_active: true,
-      },
-      include: { category: true },
-    });
-
-    // Record initial stock if provided
-    if (initial_stock && initial_stock > 0 && targetGodownId) {
-      await LedgerService.recordMovement({
-        product_id: product.id,
-        godown_id: targetGodownId,
-        movement_type: MovementType.ADJUSTMENT_ADD,
-        quantity: initial_stock,
-        unit_cost: purchase_price,
-        reference_type: 'INITIAL_STOCK',
-        reference_id: product.id,
-        notes: 'Opening stock count upon catalog addition',
-        created_by: 'Boutique Staff',
+    // Create product and record initial opening stock atomically
+    const product = await prisma.$transaction(async (tx) => {
+      const created = await tx.product.create({
+        data: {
+          sku: normalizedSku,
+          name: name.trim(),
+          description,
+          fabric,
+          craft,
+          category_id: targetCategoryId,
+          unit: unit.trim(),
+          sale_price,
+          purchase_price,
+          hsn_code,
+          tax_rate,
+          min_stock_level,
+          image_url: parsed.data.image_url || parsed.data.imageUrl || null,
+          is_active: true,
+        },
+        include: { category: true },
       });
-    }
+
+      // Record initial stock if provided
+      if (initial_stock && initial_stock > 0 && targetGodownId) {
+        // Upsert stock balance
+        await tx.stockBalance.upsert({
+          where: {
+            product_id_godown_id: {
+              product_id: created.id,
+              godown_id: targetGodownId,
+            },
+          },
+          update: {
+            current_quantity: { increment: initial_stock },
+            avg_cost: purchase_price,
+          },
+          create: {
+            product_id: created.id,
+            godown_id: targetGodownId,
+            current_quantity: initial_stock,
+            avg_cost: purchase_price,
+          },
+        });
+
+        // Record opening ledger movement
+        await tx.stockMovement.create({
+          data: {
+            product_id: created.id,
+            godown_id: targetGodownId,
+            movement_type: MovementType.ADJUSTMENT_ADD,
+            quantity: initial_stock,
+            unit_cost: purchase_price,
+            balance_after: initial_stock,
+            reference_type: 'INITIAL_STOCK',
+            reference_id: created.id,
+            notes: 'Opening stock count upon catalog addition',
+            created_by: 'Boutique Staff',
+          },
+        });
+      }
+
+      return created;
+    });
 
     res.status(201).json({
       id: product.id,
@@ -330,6 +367,13 @@ router.post('/', async (req, res): Promise<void> => {
     });
   } catch (err: any) {
     console.error('Create product error:', err);
+    if (err.code === 'P2002') {
+      res.status(409).json({
+        error: 'Product with this SKU already exists.',
+        code: 'DUPLICATE_SKU',
+      });
+      return;
+    }
     res.status(500).json({ error: err.message || 'Failed to create product' });
   }
 });
@@ -433,6 +477,7 @@ router.post('/:id/archive', async (req, res): Promise<void> => {
       status: 'ARCHIVED',
     });
   } catch (err: any) {
+    console.error('Archive product error:', err);
     res.status(500).json({ error: 'Failed to archive product' });
   }
 });
@@ -452,6 +497,7 @@ router.post('/:id/unarchive', async (req, res): Promise<void> => {
       status: 'ACTIVE',
     });
   } catch (err: any) {
+    console.error('Restore product error:', err);
     res.status(500).json({ error: 'Failed to restore product' });
   }
 });
@@ -465,6 +511,7 @@ router.delete('/:id', async (req, res): Promise<void> => {
     });
     res.json({ success: true, message: 'Product archived successfully' });
   } catch (err: any) {
+    console.error('Delete/archive product error:', err);
     res.status(500).json({ error: 'Failed to archive product' });
   }
 });

@@ -11,7 +11,7 @@
     "dev:all": "concurrently -n \"api,web\" -c \"blue,magenta\" \"tsx watch backend/src/server.ts\" \"vite --host\"",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "tsx backend/src/test_workflows.ts && tsx backend/src/test_product_lifecycle.ts",
+    "test": "tsx backend/src/test_workflows.ts && tsx backend/src/test_product_lifecycle.ts && tsx backend/src/test_catalog_integrity.ts",
     "preview": "vite preview",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",

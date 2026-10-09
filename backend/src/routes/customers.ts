@@ -262,8 +262,9 @@ router.post('/:id/archive', async (req, res): Promise<void> => {
 // POST /api/customers/:id/unarchive - restore archived customer
 router.post(['/:id/unarchive', '/:id/restore'], async (req, res): Promise<void> => {
   try {
+    const id = String(req.params.id);
     const customer = await prisma.customer.update({
-      where: { id: req.params.id },
+      where: { id },
       data: {
         is_archived: false,
         archived_at: null,
@@ -280,7 +281,7 @@ router.post(['/:id/unarchive', '/:id/restore'], async (req, res): Promise<void> 
 // DELETE /api/customers/:id - permanent delete of archived customer
 router.delete('/:id', async (req, res): Promise<void> => {
   try {
-    const customerId = req.params.id;
+    const customerId = String(req.params.id);
     await prisma.$transaction(async (tx) => {
       // Disassociate foreign keys so past sales orders & invoices retain customer name
       await tx.salesOrder.updateMany({
@@ -318,7 +319,7 @@ router.delete('/:id', async (req, res): Promise<void> => {
 // GET /api/customers/:customerId/measurement-profiles
 router.get(['/:customerId/measurement-profiles', '/:customerId/measurements'], async (req, res): Promise<void> => {
   try {
-    const { customerId } = req.params;
+    const customerId = String(req.params.customerId);
     const profiles = await CustomerMeasurementService.getProfilesByCustomer(customerId);
     res.json(profiles);
   } catch (err: any) {
@@ -330,7 +331,8 @@ router.get(['/:customerId/measurement-profiles', '/:customerId/measurements'], a
 // GET /api/customers/:customerId/measurement-profiles/:profileId
 router.get(['/:customerId/measurement-profiles/:profileId', '/:customerId/measurements/:profileId'], async (req, res): Promise<void> => {
   try {
-    const { customerId, profileId } = req.params;
+    const customerId = String(req.params.customerId);
+    const profileId = String(req.params.profileId);
     const profile = await CustomerMeasurementService.getProfileDetails(customerId, profileId);
     if (!profile) {
       res.status(404).json({ error: 'Measurement profile not found' });
@@ -338,6 +340,7 @@ router.get(['/:customerId/measurement-profiles/:profileId', '/:customerId/measur
     }
     res.json(profile);
   } catch (err: any) {
+    console.error('Fetch measurement profile error:', err);
     res.status(500).json({ error: 'Failed to fetch measurement profile' });
   }
 });
@@ -345,7 +348,8 @@ router.get(['/:customerId/measurement-profiles/:profileId', '/:customerId/measur
 // GET /api/customers/:customerId/measurement-profiles/:profileId/history
 router.get(['/:customerId/measurement-profiles/:profileId/history', '/:customerId/measurements/:profileId/history'], async (req, res): Promise<void> => {
   try {
-    const { customerId, profileId } = req.params;
+    const customerId = String(req.params.customerId);
+    const profileId = String(req.params.profileId);
     const history = await CustomerMeasurementService.getProfileHistory(customerId, profileId);
     if (!history) {
       res.status(404).json({ error: 'Measurement profile not found' });
@@ -353,6 +357,7 @@ router.get(['/:customerId/measurement-profiles/:profileId/history', '/:customerI
     }
     res.json(history.versions);
   } catch (err: any) {
+    console.error('Fetch measurement history error:', err);
     res.status(500).json({ error: 'Failed to fetch measurement history' });
   }
 });
@@ -360,7 +365,7 @@ router.get(['/:customerId/measurement-profiles/:profileId/history', '/:customerI
 // POST /api/customers/:customerId/measurement-profiles - create profile
 router.post(['/:customerId/measurement-profiles', '/:customerId/measurements'], async (req, res): Promise<void> => {
   try {
-    const { customerId } = req.params;
+    const customerId = String(req.params.customerId);
     const { template_id, profile_name, notes, measured_by, measured_at, values } = req.body;
 
     if (!template_id || !profile_name) {
@@ -388,7 +393,8 @@ router.post(['/:customerId/measurement-profiles', '/:customerId/measurements'], 
 // POST /api/customers/:customerId/measurement-profiles/:profileId/versions - add new version
 router.post(['/:customerId/measurement-profiles/:profileId/versions', '/:customerId/measurements/:profileId/versions'], async (req, res): Promise<void> => {
   try {
-    const { customerId, profileId } = req.params;
+    const customerId = String(req.params.customerId);
+    const profileId = String(req.params.profileId);
     const { notes, measured_by, measured_at, values } = req.body;
 
     const version = await CustomerMeasurementService.addProfileVersion(customerId, profileId, {
@@ -409,7 +415,8 @@ router.post(['/:customerId/measurement-profiles/:profileId/versions', '/:custome
 // POST /api/customers/:customerId/measurement-profiles/:profileId/clone - clone profile
 router.post(['/:customerId/measurement-profiles/:profileId/clone', '/:customerId/measurements/:profileId/clone'], async (req, res): Promise<void> => {
   try {
-    const { customerId, profileId } = req.params;
+    const customerId = String(req.params.customerId);
+    const profileId = String(req.params.profileId);
     const { profile_name } = req.body;
 
     const cloned = await CustomerMeasurementService.cloneProfile(customerId, profileId, profile_name);
@@ -424,10 +431,12 @@ router.post(['/:customerId/measurement-profiles/:profileId/clone', '/:customerId
 // PUT /api/customers/:customerId/measurement-profiles/:profileId - update profile name/notes
 router.put(['/:customerId/measurement-profiles/:profileId', '/:customerId/measurements/:profileId'], async (req, res): Promise<void> => {
   try {
-    const { customerId, profileId } = req.params;
+    const customerId = String(req.params.customerId);
+    const profileId = String(req.params.profileId);
     const updated = await CustomerMeasurementService.updateProfile(customerId, profileId, req.body);
     res.json(updated);
   } catch (err: any) {
+    console.error('Update measurement profile error:', err);
     res.status(500).json({ error: 'Failed to update profile' });
   }
 });
@@ -435,10 +444,12 @@ router.put(['/:customerId/measurement-profiles/:profileId', '/:customerId/measur
 // DELETE /api/customers/:customerId/measurement-profiles/:profileId - soft delete
 router.delete(['/:customerId/measurement-profiles/:profileId', '/:customerId/measurements/:profileId'], async (req, res): Promise<void> => {
   try {
-    const { customerId, profileId } = req.params;
+    const customerId = String(req.params.customerId);
+    const profileId = String(req.params.profileId);
     await CustomerMeasurementService.deleteProfile(customerId, profileId);
     res.json({ message: 'Measurement profile archived successfully' });
   } catch (err: any) {
+    console.error('Delete measurement profile error:', err);
     res.status(500).json({ error: 'Failed to delete measurement profile' });
   }
 });
