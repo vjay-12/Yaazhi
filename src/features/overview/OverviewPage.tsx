@@ -7,6 +7,8 @@ import {
   ArrowRight,
   TrendingUp,
   CheckCircle2,
+  LineChart,
+  BarChart2,
 } from 'lucide-react';
 import type { YaazhiProduct, StockStatusFilter } from '../../types/product';
 import { productService } from '../../services/productService';
@@ -14,6 +16,37 @@ import { salesOrderService, type SalesOrderData } from '../../services/salesOrde
 import { OrderDetailModal } from '../commercial/OrderDetailModal';
 import { CardSkeleton } from '../../components/common/LoadingState';
 import type { NavTabId } from '../../components/layout/Sidebar';
+
+// Standard Indian Rupee (INR) Formatter
+const inrFormatter = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+});
+
+const formatINR = (val?: number | null): string => {
+  if (val === undefined || val === null || isNaN(val)) return '₹0';
+  return inrFormatter.format(val);
+};
+
+// Compact chart axis abbreviation (e.g. ₹0, ₹402k, ₹1.5M)
+const formatYAxisValue = (val: number): string => {
+  if (val <= 0) return '₹0';
+  if (val >= 10000000) {
+    const cr = (val / 10000000).toFixed(1).replace(/\.0$/, '');
+    return `₹${cr}Cr`;
+  }
+  if (val >= 1000000) {
+    const m = (val / 1000000).toFixed(1).replace(/\.0$/, '');
+    return `₹${m}M`;
+  }
+  if (val >= 1000) {
+    const k = Math.round(val / 1000);
+    return `₹${k}k`;
+  }
+  return `₹${Math.round(val)}`;
+};
 
 interface OverviewPageProps {
   onNavigate: (tab: NavTabId, stockFilter?: StockStatusFilter) => void;
@@ -29,8 +62,16 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
   const [salesOrders, setSalesOrders] = useState<SalesOrderData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Sales Trend chart type toggle: Line or Bar
-  const [chartType, setChartType] = useState<'line' | 'bar'>('bar');
+  // Sales Trend chart type toggle: Line or Bar (defaults to line)
+  const [chartType, setChartType] = useState<'line' | 'bar'>(() => {
+    const saved = localStorage.getItem('yaazhi_overview_chart_type');
+    return saved === 'bar' ? 'bar' : 'line';
+  });
+
+  const handleToggleChartType = (type: 'line' | 'bar') => {
+    setChartType(type);
+    localStorage.setItem('yaazhi_overview_chart_type', type);
+  };
   const [hoveredBar, setHoveredBar] = useState<{
     label: string;
     dateStr: string;
@@ -270,16 +311,19 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
   }
 
   // Calculate coordinates for SVG Sales Trend graph
-  // viewBox: 0 0 320 120; plot area: x from 40 to 308, y from 16 to 96
-  const plotLeft = 40;
-  const plotRight = 308;
-  const plotWidth = plotRight - plotLeft;
+  // viewBox: 0 0 340 115; plot area: x from 50 to 330 (width 280), y from 16 to 96 (height 80)
+  // Each bucket occupies 40px column width; data points and bars centered at +20px
+  const plotLeft = 50;
+  const plotRight = 330;
+  const plotWidth = plotRight - plotLeft; // 280
   const plotBaseY = 96;
   const plotTopY = 16;
-  const plotHeight = plotBaseY - plotTopY;
+  const plotHeight = plotBaseY - plotTopY; // 80
+
+  const colWidth = plotWidth / (trendData.buckets.length > 0 ? trendData.buckets.length : 7); // 40
 
   const chartPoints = trendData.buckets.map((b, idx) => {
-    const x = plotLeft + (idx * plotWidth) / (trendData.buckets.length - 1);
+    const x = plotLeft + (idx + 0.5) * colWidth;
     const ratio = trendData.maxSales > 0 ? b.sales / trendData.maxSales : 0;
     const y = plotBaseY - ratio * plotHeight;
     return { x, y, b };
@@ -339,7 +383,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             }}
             className="tabular-nums"
           >
-            ₹{todayStats.salesToday.toLocaleString('en-IN')}
+            {formatINR(todayStats.salesToday)}
           </div>
           <span style={{ fontSize: '11px', color: 'var(--yz-text-muted)' }}>
             Sales recorded today
@@ -421,7 +465,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             }}
             className="tabular-nums"
           >
-            ₹{stockStats.stockValuationCost.toLocaleString('en-IN')}
+            {formatINR(stockStats.stockValuationCost)}
           </div>
           <span style={{ fontSize: '11px', color: 'var(--yz-text-muted)' }}>
             Current inventory at cost
@@ -525,13 +569,15 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                 </h3>
                 <span style={{ fontSize: '11px', color: 'var(--yz-text-muted)' }}>
                   {trendData.hasSales
-                    ? `₹${trendData.totalPeriodSales.toLocaleString('en-IN')} total (${trendData.totalPeriodOrders} orders)`
+                    ? `${formatINR(trendData.totalPeriodSales)} total (${trendData.totalPeriodOrders} orders)`
                     : 'Sales (₹)'}
                 </span>
               </div>
 
-              {/* Compact [Line] [Bar] Toggle */}
+              {/* Compact Icon-Based [Line] [Bar] Toggle */}
               <div
+                role="group"
+                aria-label="Chart type toggle"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -544,13 +590,14 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
               >
                 <button
                   type="button"
-                  onClick={() => setChartType('line')}
+                  onClick={() => handleToggleChartType('line')}
                   className="yz-btn"
+                  aria-label="Switch to line chart"
+                  aria-pressed={chartType === 'line'}
                   style={{
+                    width: '26px',
                     height: '24px',
-                    padding: '0 8px',
-                    fontSize: '11px',
-                    fontWeight: chartType === 'line' ? 600 : 500,
+                    padding: 0,
                     backgroundColor: chartType === 'line' ? 'var(--yz-bg-surface)' : 'transparent',
                     color: chartType === 'line' ? 'var(--yz-text-primary)' : 'var(--yz-text-muted)',
                     boxShadow: chartType === 'line' ? 'var(--yz-shadow-2xs)' : 'none',
@@ -559,22 +606,23 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    justifyContent: 'center',
                     transition: 'all 0.14s ease',
                   }}
-                  title="Line chart view"
+                  title="Switch to line chart"
                 >
-                  Line
+                  <LineChart size={13} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
-                  onClick={() => setChartType('bar')}
+                  onClick={() => handleToggleChartType('bar')}
                   className="yz-btn"
+                  aria-label="Switch to bar chart"
+                  aria-pressed={chartType === 'bar'}
                   style={{
+                    width: '26px',
                     height: '24px',
-                    padding: '0 8px',
-                    fontSize: '11px',
-                    fontWeight: chartType === 'bar' ? 600 : 500,
+                    padding: 0,
                     backgroundColor: chartType === 'bar' ? 'var(--yz-bg-surface)' : 'transparent',
                     color: chartType === 'bar' ? 'var(--yz-text-primary)' : 'var(--yz-text-muted)',
                     boxShadow: chartType === 'bar' ? 'var(--yz-shadow-2xs)' : 'none',
@@ -583,12 +631,12 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    justifyContent: 'center',
                     transition: 'all 0.14s ease',
                   }}
-                  title="Bar chart view"
+                  title="Switch to bar chart"
                 >
-                  Bar
+                  <BarChart2 size={13} aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -637,7 +685,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                         color: 'var(--yz-primary, #852237)',
                       }}
                     >
-                      ₹{hoveredBar.sales.toLocaleString('en-IN')}
+                      {formatINR(hoveredBar.sales)}
                     </span>
                     <span style={{ color: 'var(--yz-text-muted)', marginLeft: '4px' }}>
                       ({hoveredBar.orders} {hoveredBar.orders === 1 ? 'order' : 'orders'})
@@ -650,7 +698,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                   <svg
                     width="100%"
                     height="100%"
-                    viewBox="0 0 320 115"
+                    viewBox="0 0 340 115"
                     preserveAspectRatio="none"
                     style={{ overflow: 'visible' }}
                   >
@@ -689,22 +737,22 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                       strokeWidth="1"
                     />
 
-                    {/* Y-Axis scale labels */}
+                    {/* Y-Axis scale labels - positioned with clean separation from first bar */}
                     <text
-                      x={plotLeft - 6}
+                      x={plotLeft - 8}
                       y={plotTopY + 3}
                       textAnchor="end"
-                      fontSize="9"
+                      fontSize="8.5"
                       fill="var(--yz-text-muted, #94A3B8)"
                       fontFamily="var(--yz-font-mono)"
                     >
-                      ₹{trendData.maxSales >= 1000 ? `${Math.round(trendData.maxSales / 1000)}k` : trendData.maxSales}
+                      {formatYAxisValue(trendData.maxSales)}
                     </text>
                     <text
-                      x={plotLeft - 6}
+                      x={plotLeft - 8}
                       y={plotBaseY + 3}
                       textAnchor="end"
-                      fontSize="9"
+                      fontSize="8.5"
                       fill="var(--yz-text-muted, #94A3B8)"
                       fontFamily="var(--yz-font-mono)"
                     >
@@ -744,7 +792,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                     {/* BAR MODE: Vertical bars with rounded corners */}
                     {chartType === 'bar' &&
                       chartPoints.map((pt) => {
-                        const barWidth = 18;
+                        const barWidth = 16;
                         const barHeight = pt.b.sales > 0 ? Math.max(3, plotBaseY - pt.y) : 0;
                         const isHovered = hoveredBar?.dateStr === pt.b.key;
                         const barX = pt.x - barWidth / 2;
@@ -778,7 +826,6 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                     {/* X-Axis labels & Hit targets (shared by both modes) */}
                     {chartPoints.map((pt) => {
                       const isHovered = hoveredBar?.dateStr === pt.b.key;
-                      const colWidth = plotWidth / (trendData.buckets.length - 1);
 
                       return (
                         <g
@@ -943,7 +990,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                             }}
                             className="tabular-nums"
                           >
-                            ₹{Number(o.totalAmount || 0).toLocaleString('en-IN')}
+                            {formatINR(Number(o.totalAmount || 0))}
                           </td>
                           <td style={{ textAlign: 'center', width: '78px' }}>
                             <span
@@ -1377,7 +1424,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                             }}
                             className="tabular-nums"
                           >
-                            ₹{Number(p.revenue || 0).toLocaleString('en-IN')}
+                            {formatINR(Number(p.revenue || 0))}
                           </td>
                         </tr>
                       );
