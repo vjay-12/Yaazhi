@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './Sidebar';
 import type { NavTabId } from './Sidebar';
 import { Header } from './Header';
@@ -69,13 +69,18 @@ export const AppShell: React.FC = () => {
   const [isQuickSearchOpen, setIsQuickSearchOpen] = useState(false);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
 
-  // Sync route and title
+  const mainContentRef = useRef<HTMLElement>(null);
+
+  // Sync route and title & reset content scroll position
   useEffect(() => {
     window.location.hash = currentTab;
     if (selectedProductId && currentTab === 'products') {
       document.title = 'Yaazhi | Product Details';
     } else {
       document.title = TAB_PAGE_TITLES[currentTab] || 'Yaazhi Boutique';
+    }
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
     }
   }, [currentTab, selectedProductId]);
 
@@ -159,7 +164,7 @@ export const AppShell: React.FC = () => {
         />
 
         {/* Content View */}
-        <main className="yz-content-container">
+        <main ref={mainContentRef} className="yz-content-container">
           {currentTab === 'overview' && (
             <OverviewPage
               onNavigate={handleSelectTab}
