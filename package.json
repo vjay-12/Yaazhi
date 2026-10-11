@@ -5,20 +5,23 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -n \"api,web\" -c \"blue,magenta\" \"tsx watch backend/src/server.ts\" \"vite --host\"",
+    "dev": "concurrently -n \"api,web\" -c \"blue,magenta\" \"tsx watch backend/src/dev.ts\" \"vite --host\"",
     "dev:web": "vite --host",
-    "server": "tsx watch backend/src/server.ts",
-    "dev:all": "concurrently -n \"api,web\" -c \"blue,magenta\" \"tsx watch backend/src/server.ts\" \"vite --host\"",
+    "server": "tsx watch backend/src/dev.ts",
+    "dev:all": "concurrently -n \"api,web\" -c \"blue,magenta\" \"tsx watch backend/src/dev.ts\" \"vite --host\"",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test": "tsx backend/src/test_workflows.ts && tsx backend/src/test_product_lifecycle.ts && tsx backend/src/test_catalog_integrity.ts",
     "preview": "vite preview",
     "db:push": "prisma db push",
+    "db:push:neon": "tsx scripts/migrate-to-neon.ts",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "prisma db push --force-reset && tsx prisma/seed.ts"
+    "db:reset": "prisma db push --force-reset && tsx prisma/seed.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "cookie-session": "^2.1.1",
     "cors": "^2.8.6",
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
@@ -30,6 +33,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@types/cookie-session": "^2.0.49",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^24.13.3",

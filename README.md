@@ -30,3 +30,8 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## Neon Database Migration
+- Run `npm run db:push:neon -- --dry-run` to preview local row counts and target host.
+- Run `npm run db:push:neon` to copy data to Neon transactionally (confirms target host).
+- Add `--yes` to bypass prompt (`npm run db:push:neon -- --yes`). Requires `.env.neon`.

@@ -543,7 +543,7 @@ router.post('/:id/settle', async (req, res): Promise<void> => {
       const newPaymentStatus = newPending <= 0 ? 'PAID' : 'PENDING';
 
       // 1. Update Sales Order
-      const updatedOrder = await tx.salesOrder.update({
+      await tx.salesOrder.update({
         where: { id: order.id },
         data: {
           paid_amount: newPaid,
