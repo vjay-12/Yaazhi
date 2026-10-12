@@ -1110,18 +1110,21 @@ export const PurchasesPage: React.FC = () => {
           subtitle="Issues a formal procurement order to an artisanal supplier or weaver guild"
           maxWidth="720px"
         >
-          <form onSubmit={handleCreatePO} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <form onSubmit={handleCreatePO} style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0, width: '100%' }}>
             {/* Top Fields: Vendor Selector & Order Date */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: '10px', width: '100%', minWidth: 0 }}>
               {/* Supplier / Vendor with custom dropdown + Create New Vendor */}
-              <div ref={vendorDropdownRef} style={{ position: 'relative' }}>
+              <div ref={vendorDropdownRef} style={{ position: 'relative', minWidth: 0, width: '100%' }}>
                 <label className="yz-label">Supplier / Vendor *</label>
                 <button
                   id="po-vendor-dropdown-btn"
                   type="button"
                   onClick={() => setIsVendorDropdownOpen((prev) => !prev)}
+                  title={selectedVendor ? `${selectedVendor.name} (${selectedVendor.city || selectedVendor.category})` : undefined}
                   style={{
                     width: '100%',
+                    maxWidth: '100%',
+                    minWidth: 0,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -1129,17 +1132,20 @@ export const PurchasesPage: React.FC = () => {
                     height: '30px',
                     padding: '0 8px',
                     borderRadius: 'var(--yz-radius-sm)',
-                    border: '1px solid var(--yz-border)',
+                    border: isVendorDropdownOpen ? '1px solid var(--yz-primary, #852237)' : '1px solid var(--yz-border)',
                     backgroundColor: 'var(--yz-bg-surface)',
                     cursor: 'pointer',
                     fontSize: '11px',
                     color: 'var(--yz-text-primary)',
                     textAlign: 'left',
                     boxSizing: 'border-box',
+                    overflow: 'hidden',
                   }}
                 >
                   <span
                     style={{
+                      flex: 1,
+                      minWidth: 0,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
@@ -1167,6 +1173,9 @@ export const PurchasesPage: React.FC = () => {
                       top: 'calc(100% + 3px)',
                       left: 0,
                       right: 0,
+                      width: '100%',
+                      maxWidth: '100%',
+                      boxSizing: 'border-box',
                       backgroundColor: 'var(--yz-bg-surface)',
                       border: '1px solid var(--yz-border)',
                       borderRadius: 'var(--yz-radius-sm)',
@@ -1177,17 +1186,18 @@ export const PurchasesPage: React.FC = () => {
                       flexDirection: 'column',
                       gap: '4px',
                       maxHeight: '260px',
+                      overflow: 'hidden',
                     }}
                   >
                     {/* Search vendors... */}
-                    <div style={{ position: 'relative' }}>
+                    <div style={{ position: 'relative', width: '100%', minWidth: 0 }}>
                       <Search
                         size={12}
                         style={{
                           position: 'absolute',
                           left: '7px',
                           top: '50%',
-                          transform: 'translateY(-50)',
+                          transform: 'translateY(-50%)',
                           color: 'var(--yz-text-muted)',
                         }}
                       />
@@ -1206,10 +1216,13 @@ export const PurchasesPage: React.FC = () => {
                     <div
                       style={{
                         overflowY: 'auto',
+                        overflowX: 'hidden',
                         maxHeight: '160px',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '1px',
+                        width: '100%',
+                        minWidth: 0,
                       }}
                     >
                       {filteredVendors.length === 0 ? (
@@ -1219,6 +1232,7 @@ export const PurchasesPage: React.FC = () => {
                       ) : (
                         filteredVendors.map((v) => {
                           const isSelected = selectedVendorId === v.id;
+                          const subtitle = [v.category, v.city, v.phone].filter(Boolean).join(' • ');
                           return (
                             <button
                               key={v.id}
@@ -1228,6 +1242,7 @@ export const PurchasesPage: React.FC = () => {
                                 setIsVendorDropdownOpen(false);
                                 setVendorSearch('');
                               }}
+                              title={`${v.name}${subtitle ? ` (${subtitle})` : ''}`}
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -1240,6 +1255,10 @@ export const PurchasesPage: React.FC = () => {
                                 textAlign: 'left',
                                 fontSize: '11px',
                                 color: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-text-primary)',
+                                width: '100%',
+                                minWidth: 0,
+                                boxSizing: 'border-box',
+                                gap: '8px',
                               }}
                               onMouseEnter={(e) => {
                                 if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--yz-bg-subtle, #F1F5F9)';
@@ -1248,13 +1267,32 @@ export const PurchasesPage: React.FC = () => {
                                 if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
                               }}
                             >
-                              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                <div style={{ fontWeight: isSelected ? 600 : 500 }}>{v.name}</div>
-                                <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)' }}>
-                                  {v.category} {v.city ? `• ${v.city}` : ''} {v.phone ? `• ${v.phone}` : ''}
+                              <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                                <div
+                                  style={{
+                                    fontWeight: isSelected ? 600 : 500,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {v.name}
                                 </div>
+                                {subtitle && (
+                                  <div
+                                    style={{
+                                      fontSize: '10px',
+                                      color: 'var(--yz-text-muted)',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    {subtitle}
+                                  </div>
+                                )}
                               </div>
-                              {isSelected && <Check size={13} style={{ color: 'var(--yz-primary, #832729)' }} />}
+                              {isSelected && <Check size={13} style={{ flexShrink: 0, color: 'var(--yz-primary, #832729)' }} />}
                             </button>
                           );
                         })
@@ -1291,7 +1329,7 @@ export const PurchasesPage: React.FC = () => {
               </div>
 
               {/* Order Date */}
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <label className="yz-label">Order Date *</label>
                 <input
                   type="date"
@@ -1299,7 +1337,7 @@ export const PurchasesPage: React.FC = () => {
                   onChange={(e) => setOrderDate(e.target.value)}
                   className="yz-input"
                   required
-                  style={{ height: '30px', fontSize: '11px', fontFamily: 'var(--yz-font-mono)' }}
+                  style={{ height: '30px', fontSize: '11px', fontFamily: 'var(--yz-font-mono)', width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
             </div>
@@ -1332,7 +1370,7 @@ export const PurchasesPage: React.FC = () => {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 70px 95px 95px 28px',
+                  gridTemplateColumns: 'minmax(0, 1fr) 70px 95px 95px 28px',
                   gap: '6px',
                   padding: '0 4px',
                   fontSize: '10px',
@@ -1359,7 +1397,7 @@ export const PurchasesPage: React.FC = () => {
                       key={index}
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: '1fr 70px 95px 95px 28px',
+                        gridTemplateColumns: 'minmax(0, 1fr) 70px 95px 95px 28px',
                         gap: '6px',
                         alignItems: 'center',
                         backgroundColor: 'var(--yz-bg-subtle, #F8FAFC)',
@@ -1471,7 +1509,7 @@ export const PurchasesPage: React.FC = () => {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: '1.2fr 1fr',
+                gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)',
                 gap: '12px',
                 borderTop: '1px solid var(--yz-border)',
                 paddingTop: '8px',

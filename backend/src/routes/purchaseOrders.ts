@@ -231,10 +231,16 @@ router.post('/', async (req, res): Promise<void> => {
 // POST /api/purchase-orders/:id/receive - Receive PO into stock (TRANSACTIONAL)
 router.post('/:id/receive', async (req, res): Promise<void> => {
   const poId = req.params.id;
-  const { notes } = req.body;
+  const { notes, items: receivedItems } = req.body;
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      // Concurrency protection: lock PO row to prevent race conditions & double-clicks
+      await tx.$queryRawUnsafe(
+        `SELECT id FROM purchase_orders WHERE id = $1 FOR UPDATE`,
+        poId
+      );
+
       const po = await tx.purchaseOrder.findUnique({
         where: { id: poId },
         include: { items: true, godown: true },
@@ -252,8 +258,8 @@ router.post('/:id/receive', async (req, res): Promise<void> => {
         throw new Error('Cannot receive a cancelled purchase order');
       }
 
-      // Check idempotency guard in ledger
-      const existingReceipt = await tx.stockMovement.findFirst({
+      // Check existing receipts for this PO to support partial receipts and prevent duplicates
+      const existingMovements = await tx.stockMovement.findMany({
         where: {
           reference_type: 'PURCHASE_ORDER',
           reference_id: po.id,
@@ -261,28 +267,82 @@ router.post('/:id/receive', async (req, res): Promise<void> => {
         },
       });
 
-      if (existingReceipt) {
-        throw new Error('Stock receipt already recorded for this purchase order');
+      const receivedByProduct = new Map<string, number>();
+      for (const m of existingMovements) {
+        const current = receivedByProduct.get(m.product_id) || 0;
+        receivedByProduct.set(m.product_id, current + Number(m.quantity));
       }
 
-      // 1. Update status to RECEIVED
-      const updatedPO = await tx.purchaseOrder.update({
-        where: { id: po.id },
-        data: { status: POStatus.RECEIVED },
-      });
+      // Determine quantities to receive per line item
+      const itemsToReceive: {
+        product_id: string;
+        quantity: number;
+        unit_cost: number;
+      }[] = [];
 
-      // 2. Increase stock in ledger for each line item
+      let hasRemainingItems = false;
+
       for (const item of po.items) {
-        const qty = Number(item.quantity);
-        if (qty <= 0) continue;
+        const orderedQty = Number(item.quantity);
+        const alreadyReceived = receivedByProduct.get(item.product_id) || 0;
+        const remainingQty = Math.max(0, orderedQty - alreadyReceived);
 
-        await LedgerService.recordMovement(
+        if (remainingQty > 0) {
+          hasRemainingItems = true;
+        }
+
+        let qtyToReceive = 0;
+        if (Array.isArray(receivedItems) && receivedItems.length > 0) {
+          const match = receivedItems.find(
+            (ri: any) =>
+              ri.product_id === item.product_id ||
+              ri.productId === item.product_id ||
+              ri.id === item.id
+          );
+          if (match) {
+            const rawQty = match.quantity ?? match.received_quantity ?? match.receivedQuantity ?? match.qty;
+            qtyToReceive = Number(rawQty);
+            if (isNaN(qtyToReceive) || qtyToReceive <= 0) {
+              throw new Error(`Received quantity for item must be greater than 0`);
+            }
+            if (qtyToReceive > remainingQty) {
+              throw new Error(
+                `Received quantity (${qtyToReceive}) cannot exceed remaining ordered quantity (${remainingQty})`
+              );
+            }
+          }
+        } else {
+          // Default: receive all remaining units
+          qtyToReceive = remainingQty;
+        }
+
+        if (qtyToReceive > 0) {
+          itemsToReceive.push({
+            product_id: item.product_id,
+            quantity: qtyToReceive,
+            unit_cost: Number(item.unit_cost),
+          });
+        }
+      }
+
+      if (!hasRemainingItems || itemsToReceive.length === 0) {
+        throw new Error('All items in this purchase order have already been received');
+      }
+
+      // Process receipts atomically
+      const receiptRecords = [];
+      for (const item of itemsToReceive) {
+        // 1. Read product's current stock before receiving
+        const stockBefore = await LedgerService.getProductStock(item.product_id, tx);
+
+        // 2. Increase stock and write immutable movement
+        const movementResult = await LedgerService.recordMovement(
           {
             product_id: item.product_id,
             godown_id: po.godown_id,
             movement_type: MovementType.PURCHASE_RECEIPT,
-            quantity: qty,
-            unit_cost: Number(item.unit_cost),
+            quantity: item.quantity,
+            unit_cost: item.unit_cost,
             reference_type: 'PURCHASE_ORDER',
             reference_id: po.id,
             notes: notes
@@ -292,15 +352,51 @@ router.post('/:id/receive', async (req, res): Promise<void> => {
           },
           tx
         );
+
+        receiptRecords.push({
+          productId: item.product_id,
+          receivedQty: item.quantity,
+          previousStock: stockBefore.totalStock,
+          resultingStock: movementResult.totalStock,
+          balanceAfter: Number(movementResult.movement.balance_after),
+        });
       }
 
-      return updatedPO;
+      // Check if all PO line items are now fully received
+      let allFullyReceived = true;
+      for (const item of po.items) {
+        const orderedQty = Number(item.quantity);
+        const previouslyReceived = receivedByProduct.get(item.product_id) || 0;
+        const justReceived =
+          itemsToReceive.find((it) => it.product_id === item.product_id)?.quantity || 0;
+        if (previouslyReceived + justReceived < orderedQty) {
+          allFullyReceived = false;
+          break;
+        }
+      }
+
+      let updatedPO = po;
+      if (allFullyReceived) {
+        updatedPO = await tx.purchaseOrder.update({
+          where: { id: po.id },
+          data: { status: POStatus.RECEIVED },
+          include: { items: true, godown: true },
+        });
+      }
+
+      return {
+        po: updatedPO,
+        receiptRecords,
+        isFullyReceived: allFullyReceived,
+      };
     });
 
     res.json({
       success: true,
-      message: `Purchase order ${result.po_number} received into stock successfully`,
-      po: result,
+      message: `Purchase order ${result.po.po_number} goods received into stock successfully`,
+      po: result.po,
+      receipts: result.receiptRecords,
+      isFullyReceived: result.isFullyReceived,
     });
   } catch (err: any) {
     console.error('Receive PO error:', err);

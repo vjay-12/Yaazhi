@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../db.js';
 import { productSchema } from '../validators/schemas.js';
 import { MovementType } from '@prisma/client';
+import { LedgerService } from '../services/ledgerService.js';
 
 const router = Router();
 
@@ -132,8 +133,8 @@ router.get('/:id', async (req, res): Promise<void> => {
           include: { godown: true },
         },
         stock_movements: {
-          take: 20,
-          orderBy: { created_at: 'desc' },
+          take: 50,
+          orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
           include: { godown: true },
         },
       },
@@ -303,43 +304,22 @@ router.post('/', async (req, res): Promise<void> => {
         include: { category: true },
       });
 
-      // Record initial stock if provided
+      // Record initial stock if provided via authoritative LedgerService
       if (initial_stock && initial_stock > 0 && targetGodownId) {
-        // Upsert stock balance
-        await tx.stockBalance.upsert({
-          where: {
-            product_id_godown_id: {
-              product_id: created.id,
-              godown_id: targetGodownId,
-            },
-          },
-          update: {
-            current_quantity: { increment: initial_stock },
-            avg_cost: purchase_price,
-          },
-          create: {
-            product_id: created.id,
-            godown_id: targetGodownId,
-            current_quantity: initial_stock,
-            avg_cost: purchase_price,
-          },
-        });
-
-        // Record opening ledger movement
-        await tx.stockMovement.create({
-          data: {
+        await LedgerService.recordMovement(
+          {
             product_id: created.id,
             godown_id: targetGodownId,
             movement_type: MovementType.ADJUSTMENT_ADD,
             quantity: initial_stock,
             unit_cost: purchase_price,
-            balance_after: initial_stock,
             reference_type: 'INITIAL_STOCK',
             reference_id: created.id,
             notes: 'Opening stock count upon catalog addition',
             created_by: 'Boutique Staff',
           },
-        });
+          tx
+        );
       }
 
       return created;

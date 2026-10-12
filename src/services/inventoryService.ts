@@ -28,7 +28,7 @@ class InventoryService {
   }
 
   public async getMovements(productId?: string): Promise<StockMovement[]> {
-    const endpoint = productId ? `/movements?search=${productId}` : '/movements';
+    const endpoint = productId ? `/movements?productId=${encodeURIComponent(productId)}` : '/movements';
     const data = await api.get<any[]>(endpoint);
 
     return data.map((m) => ({

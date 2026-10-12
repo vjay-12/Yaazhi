@@ -130,7 +130,7 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
 
         {/* Body */}
-        <div style={{ padding: bodyPadding || '18px', overflowY: 'auto', flex: 1 }}>{children}</div>
+        <div style={{ padding: bodyPadding || '18px', overflowY: 'auto', overflowX: 'hidden', flex: 1 }}>{children}</div>
 
         {/* Footer */}
         {footer && (

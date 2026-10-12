@@ -135,6 +135,7 @@ export const ProductSearchDropdown: React.FC<ProductSearchDropdownProps> = ({
         onClick={() => setIsOpen((prev) => !prev)}
         style={{
           width: '100%',
+          minWidth: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -185,6 +186,8 @@ export const ProductSearchDropdown: React.FC<ProductSearchDropdownProps> = ({
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
+                  flex: 1,
+                  minWidth: 0,
                 }}
                 title={selectedProduct.name}
               >
@@ -358,6 +361,8 @@ export const ProductSearchDropdown: React.FC<ProductSearchDropdownProps> = ({
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
+                            flex: 1,
+                            minWidth: 0,
                           }}
                         >
                           {p.name}

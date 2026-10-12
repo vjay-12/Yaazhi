@@ -1,8 +1,36 @@
 import { Router } from 'express';
 import { prisma } from '../db.js';
 import { MovementType } from '@prisma/client';
+import { ReconciliationService } from '../services/reconciliationService.js';
 
 const router = Router();
+
+// GET /api/movements/audit - Audit discrepancies between stored stock and movement ledger
+router.get('/audit', async (_req, res): Promise<void> => {
+  try {
+    const report = await ReconciliationService.auditAllProducts();
+    res.json(report);
+  } catch (err: any) {
+    console.error('Audit report error:', err);
+    res.status(500).json({ error: 'Failed to generate inventory audit report' });
+  }
+});
+
+// POST /api/movements/reconcile - Safely reconcile chronological ledger balance_after values
+router.post('/reconcile', async (req, res): Promise<void> => {
+  try {
+    const productIds = Array.isArray(req.body.productIds) ? req.body.productIds : undefined;
+    const result = await ReconciliationService.reconcileLedgerBalances(productIds);
+    res.json({
+      success: true,
+      message: `Reconciled chronological ledger balances for ${result.reconciledCount} products`,
+      ...result,
+    });
+  } catch (err: any) {
+    console.error('Reconciliation error:', err);
+    res.status(500).json({ error: 'Failed to reconcile ledger balances' });
+  }
+});
 
 // GET /api/movements or /api/ledger - list stock audit movements with filters
 router.get('/', async (req, res): Promise<void> => {
@@ -10,8 +38,14 @@ router.get('/', async (req, res): Promise<void> => {
     const search = req.query.search ? String(req.query.search).trim() : '';
     const movementType = req.query.type ? String(req.query.type).trim() : undefined;
     const godownId = req.query.godownId ? String(req.query.godownId).trim() : undefined;
+    const productId = req.query.productId || req.query.product_id;
+    const limit = req.query.limit ? Math.min(Math.max(1, Number(req.query.limit)), 500) : 100;
 
     const where: any = {};
+
+    if (productId && productId !== 'ALL') {
+      where.product_id = String(productId).trim();
+    }
 
     if (movementType && movementType !== 'ALL') {
       where.movement_type = movementType as MovementType;
@@ -27,13 +61,14 @@ router.get('/', async (req, res): Promise<void> => {
         { product: { sku: { contains: search, mode: 'insensitive' } } },
         { reference_id: { contains: search, mode: 'insensitive' } },
         { notes: { contains: search, mode: 'insensitive' } },
+        { product_id: search },
       ];
     }
 
     const movements = await prisma.stockMovement.findMany({
       where,
-      orderBy: { created_at: 'desc' },
-      take: 100,
+      orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+      take: limit,
       include: {
         product: { select: { id: true, name: true, sku: true, craft: true, fabric: true } },
         godown: { select: { id: true, name: true, code: true } },
