@@ -1,10 +1,150 @@
 import { Router } from 'express';
+import type { Request, Response } from 'express';
 import { prisma } from '../db.js';
 import { OrderStatus } from '@prisma/client';
+import { ComprehensiveReportService } from '../services/comprehensiveReportService.js';
 
 const router = Router();
 
-// GET /api/reports/dashboard - live aggregated statistics calculated from database
+// GET /api/reports/comprehensive - Complete unified reports payload for all 8 domains
+router.get('/comprehensive', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { period, from, to } = req.query;
+    const data = await ComprehensiveReportService.getComprehensiveDashboard(
+      period ? String(period) : 'THIS_MONTH',
+      from ? String(from) : undefined,
+      to ? String(to) : undefined
+    );
+    res.json({ success: true, data });
+  } catch (err: any) {
+    console.error('Comprehensive reports error:', err);
+    res.status(500).json({ success: false, error: err.message || 'Failed to generate comprehensive reports' });
+  }
+});
+
+// GET /api/reports/overview - Domain 1: Business Overview
+router.get('/overview', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { period, from, to } = req.query;
+    const { startDate, endDate } = ComprehensiveReportService.parsePeriod(
+      period ? String(period) : 'THIS_MONTH',
+      from ? String(from) : undefined,
+      to ? String(to) : undefined
+    );
+    const data = await ComprehensiveReportService.getBusinessOverview({ startDate, endDate });
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/reports/sales - Domain 2: Sales & Billing
+router.get('/sales', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { period, from, to } = req.query;
+    const { startDate, endDate } = ComprehensiveReportService.parsePeriod(
+      period ? String(period) : 'THIS_MONTH',
+      from ? String(from) : undefined,
+      to ? String(to) : undefined
+    );
+    const data = await ComprehensiveReportService.getSalesReports({ startDate, endDate });
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/reports/stitching - Domain 3: Stitching & Tailoring
+router.get('/stitching', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { period, from, to } = req.query;
+    const { startDate, endDate } = ComprehensiveReportService.parsePeriod(
+      period ? String(period) : 'THIS_MONTH',
+      from ? String(from) : undefined,
+      to ? String(to) : undefined
+    );
+    const data = await ComprehensiveReportService.getStitchingReports({ startDate, endDate });
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/reports/payments - Domain 4: Payments & Outstanding Balances
+router.get('/payments', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { period, from, to } = req.query;
+    const { startDate, endDate } = ComprehensiveReportService.parsePeriod(
+      period ? String(period) : 'THIS_MONTH',
+      from ? String(from) : undefined,
+      to ? String(to) : undefined
+    );
+    const data = await ComprehensiveReportService.getPaymentsReports({ startDate, endDate });
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/reports/inventory - Domain 5: Products & Current Inventory
+router.get('/inventory', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const data = await ComprehensiveReportService.getInventoryReports();
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/reports/purchasing - Domain 6: Purchasing & Suppliers
+router.get('/purchasing', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { period, from, to } = req.query;
+    const { startDate, endDate } = ComprehensiveReportService.parsePeriod(
+      period ? String(period) : 'THIS_MONTH',
+      from ? String(from) : undefined,
+      to ? String(to) : undefined
+    );
+    const data = await ComprehensiveReportService.getPurchasingReports({ startDate, endDate });
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/reports/supplies-expenses - Domain 7: Supplies & Expenses
+router.get('/supplies-expenses', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { period, from, to } = req.query;
+    const { startDate, endDate } = ComprehensiveReportService.parsePeriod(
+      period ? String(period) : 'THIS_MONTH',
+      from ? String(from) : undefined,
+      to ? String(to) : undefined
+    );
+    const data = await ComprehensiveReportService.getSuppliesExpensesReports({ startDate, endDate });
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/reports/customers - Domain 8: Customer Insights
+router.get('/customers', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { period, from, to } = req.query;
+    const { startDate, endDate } = ComprehensiveReportService.parsePeriod(
+      period ? String(period) : 'THIS_MONTH',
+      from ? String(from) : undefined,
+      to ? String(to) : undefined
+    );
+    const data = await ComprehensiveReportService.getCustomerReports({ startDate, endDate });
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/reports/dashboard - Legacy endpoint kept for backward compatibility
 router.get('/dashboard', async (_req, res): Promise<void> => {
   try {
     const [
@@ -54,14 +194,12 @@ router.get('/dashboard', async (_req, res): Promise<void> => {
       }),
     ]);
 
-    // Calculate inventory units, valuation at cost and retail
     let totalStockUnits = 0;
     let valuationCost = 0;
     let valuationRetail = 0;
     let lowStockCount = 0;
     let outOfStockCount = 0;
 
-    // Aggregate by product across godowns
     const productStockMap = new Map<string, { product: any; totalQty: number }>();
 
     for (const b of stockBalances) {
@@ -89,19 +227,16 @@ router.get('/dashboard', async (_req, res): Promise<void> => {
       }
     }
 
-    // Calculate total sales revenue
     const totalSalesRevenue = salesOrders.reduce(
       (sum, o) => sum + Number(o.grand_total),
       0
     );
 
-    // Calculate total procurement spend
     const totalPurchasesSpend = purchaseOrders.reduce(
       (sum, p) => sum + Number(p.grand_total),
       0
     );
 
-    // Calculate top selling weaves / products
     const productSalesMap = new Map<string, { name: string; sku: string; units: number; revenue: number }>();
     for (const order of salesOrders) {
       for (const item of order.items) {
