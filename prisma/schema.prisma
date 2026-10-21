@@ -385,37 +385,42 @@ model StockAdjustmentItem {
 
 // Boutique Tailoring Measurements
 model MeasurementTemplate {
-  id          String                      @id @default(uuid())
-  name        String
-  code        String                      @unique
-  description String?
-  category    String                      @default("WOMEN")
-  is_default  Boolean                     @default(false)
-  is_active   Boolean                     @default(true)
-  created_at  DateTime                    @default(now())
-  updated_at  DateTime                    @updatedAt
+  id           String                      @id @default(uuid())
+  name         String
+  code         String                      @unique
+  garment_type String?
+  description  String?
+  category     String                      @default("WOMEN")
+  is_default   Boolean                     @default(false)
+  is_active    Boolean                     @default(true)
+  is_archived  Boolean                     @default(false)
+  archived_at  DateTime?
+  created_at   DateTime                    @default(now())
+  updated_at   DateTime                    @updatedAt
 
-  fields      MeasurementTemplateField[]
-  profiles    CustomerMeasurementProfile[]
+  fields       MeasurementTemplateField[]
+  profiles     CustomerMeasurementProfile[]
 
   @@map("measurement_templates")
 }
 
 model MeasurementTemplateField {
-  id            String                    @id @default(uuid())
-  template_id   String
-  field_key     String
-  field_name    String
-  field_type    String                    @default("number")
-  default_unit  String                    @default("in")
-  display_order Int                       @default(0)
-  is_required   Boolean                   @default(false)
-  is_active     Boolean                   @default(true)
-  created_at    DateTime                  @default(now())
-  updated_at    DateTime                  @updatedAt
+  id               String                    @id @default(uuid())
+  template_id      String
+  field_key        String
+  field_name       String
+  field_type       String                    @default("number")
+  default_unit     String                    @default("in")
+  display_order    Int                       @default(0)
+  is_required      Boolean                   @default(false)
+  options          String?
+  validation_rules String?
+  is_active        Boolean                   @default(true)
+  created_at       DateTime                  @default(now())
+  updated_at       DateTime                  @updatedAt
 
-  template      MeasurementTemplate       @relation(fields: [template_id], references: [id], onDelete: Cascade)
-  values        CustomerMeasurementValue[]
+  template         MeasurementTemplate       @relation(fields: [template_id], references: [id], onDelete: Cascade)
+  values           CustomerMeasurementValue[]
 
   @@unique([template_id, field_key])
   @@index([template_id, display_order])
@@ -476,4 +481,45 @@ model CustomerMeasurementValue {
   @@index([version_id])
   @@index([field_id])
   @@map("customer_measurement_values")
+}
+
+// Boutique Tailoring Stitching Price Templates
+model StitchingTemplate {
+  id           String           @id @default(uuid())
+  name         String
+  code         String           @unique
+  garment_type String           @default("Blouse")
+  category     String           @default("WOMEN")
+  description  String?
+  base_price   Decimal          @default(0) @db.Decimal(12, 2)
+  tax_rate     Decimal          @default(5) @db.Decimal(5, 2)
+  hsn_code     String?          @default("9988")
+  is_default   Boolean          @default(false)
+  is_active    Boolean          @default(true)
+  is_archived  Boolean          @default(false)
+  archived_at  DateTime?
+  created_at   DateTime         @default(now())
+  updated_at   DateTime         @updatedAt
+
+  addons       StitchingAddon[]
+
+  @@map("stitching_templates")
+}
+
+model StitchingAddon {
+  id                  String            @id @default(uuid())
+  template_id         String
+  name                String
+  description         String?
+  price               Decimal           @default(0) @db.Decimal(12, 2)
+  is_default_selected Boolean           @default(false)
+  is_active           Boolean           @default(true)
+  display_order       Int               @default(0)
+  created_at          DateTime          @default(now())
+  updated_at          DateTime          @updatedAt
+
+  template            StitchingTemplate @relation(fields: [template_id], references: [id], onDelete: Cascade)
+
+  @@index([template_id, display_order])
+  @@map("stitching_addons")
 }

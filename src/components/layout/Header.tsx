@@ -44,6 +44,14 @@ const TAB_TITLES: Record<NavTabId, { title: string; subtitle: string }> = {
     title: 'Vendors',
     subtitle: 'Master weavers, cooperative societies, and suppliers',
   },
+  templates: {
+    title: 'Unified Templates',
+    subtitle: 'Customer measurement fitting parameters and atelier stitching price catalogs',
+  },
+  expenses: {
+    title: 'Expenses & Supplies',
+    subtitle: 'Fabric sourcing, atelier consumables, trims, and operating expenses',
+  },
   reports: {
     title: 'Reports',
     subtitle: 'Sales analytics, weave velocity, and GST breakdowns',

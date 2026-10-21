@@ -23,7 +23,7 @@ interface FieldValueState {
   field_id: string;
   field_name: string;
   field_key: string;
-  field_type: 'number' | 'text';
+  field_type: 'number' | 'text' | 'dropdown' | 'tailor_instruction' | string;
   num_value: string;
   unit: 'in' | 'cm';
   notes: string;

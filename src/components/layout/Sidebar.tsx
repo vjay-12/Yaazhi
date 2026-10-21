@@ -11,6 +11,8 @@ import {
   BarChart3,
   Settings,
   ChevronLeft,
+  LayoutTemplate,
+  ReceiptText,
 } from 'lucide-react';
 import { YaazhiLogo } from '../icons/YaazhiLogo';
 
@@ -21,8 +23,10 @@ export type NavTabId =
   | 'customers'
   | 'products'
   | 'movements'
+  | 'templates'
   | 'purchases'
   | 'vendors'
+  | 'expenses'
   | 'reports'
   | 'settings';
 
@@ -191,6 +195,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && <span>Stock Audit Log</span>}
           </button>
 
+          <button
+            className={`yz-nav-item ${currentTab === 'templates' ? 'active' : ''}`}
+            onClick={() => handleNavClick('templates')}
+            title="Templates"
+          >
+            <LayoutTemplate className="yz-nav-icon" size={15} />
+            {!isCollapsed && <span>Templates</span>}
+          </button>
+
           {/* PURCHASING Section */}
           {!isCollapsed && <div className="yz-nav-group-title">Purchasing</div>}
 
@@ -210,6 +223,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <Truck className="yz-nav-icon" size={15} />
             {!isCollapsed && <span>Vendors</span>}
+          </button>
+
+          <button
+            className={`yz-nav-item ${currentTab === 'expenses' ? 'active' : ''}`}
+            onClick={() => handleNavClick('expenses')}
+            title="Expenses & Supplies"
+          >
+            <ReceiptText className="yz-nav-icon" size={15} />
+            {!isCollapsed && <span>Expenses & Supplies</span>}
           </button>
 
           {/* Reports */}

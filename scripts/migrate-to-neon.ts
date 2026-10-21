@@ -52,6 +52,8 @@ const MIGRATION_ORDER = [
   { model: 'customerMeasurementProfile', table: 'customer_measurement_profiles' },
   { model: 'customerMeasurementVersion', table: 'customer_measurement_versions' },
   { model: 'customerMeasurementValue', table: 'customer_measurement_values' },
+  { model: 'stitchingTemplate', table: 'stitching_templates' },
+  { model: 'stitchingAddon', table: 'stitching_addons' },
 ] as const;
 
 async function main() {

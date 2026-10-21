@@ -5,10 +5,12 @@ export interface MeasurementTemplateField {
   template_id: string;
   field_key: string;
   field_name: string;
-  field_type: 'number' | 'text';
-  default_unit: 'in' | 'cm';
+  field_type: 'number' | 'text' | 'dropdown' | 'tailor_instruction' | string;
+  default_unit: string;
   display_order: number;
   is_required: boolean;
+  options?: string | null;
+  validation_rules?: string | null;
   is_active?: boolean;
 }
 
@@ -16,11 +18,17 @@ export interface MeasurementTemplate {
   id: string;
   name: string;
   code: string;
+  garment_type?: string | null;
   description?: string | null;
   category: string;
   is_default: boolean;
   is_active: boolean;
+  is_archived?: boolean;
+  archived_at?: string | null;
   fields: MeasurementTemplateField[];
+  _count?: {
+    profiles?: number;
+  };
 }
 
 export interface CustomerMeasurementValue {

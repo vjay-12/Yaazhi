@@ -14,6 +14,8 @@ import { VendorsPage } from '../../features/commercial/VendorsPage';
 import { CustomersPage } from '../../features/commercial/CustomersPage';
 import { ReportsPage } from '../../features/reports/ReportsPage';
 import { SettingsPage } from '../../features/settings/SettingsPage';
+import { TemplatesPage } from '../../features/templates/TemplatesPage';
+import { ExpensesSuppliesPage } from '../../features/purchasing/ExpensesSuppliesPage';
 import type { YaazhiProduct, StockStatusFilter } from '../../types/product';
 import { ProductModal } from '../../features/products/ProductModal';
 import { productService } from '../../services/productService';
@@ -26,8 +28,10 @@ const TAB_PAGE_TITLES: Record<NavTabId, string> = {
   customers: 'Yaazhi | Customers',
   products: 'Yaazhi | Products & Stock',
   movements: 'Yaazhi | Stock Audit Log',
+  templates: 'Yaazhi | Unified Templates',
   purchases: 'Yaazhi | Purchase Orders',
   vendors: 'Yaazhi | Vendors',
+  expenses: 'Yaazhi | Expenses & Supplies',
   reports: 'Yaazhi | Reports',
   settings: 'Yaazhi | Settings',
 };
@@ -41,8 +45,10 @@ export const AppShell: React.FC = () => {
     if (hash === 'inventory') return 'products';
     if (hash === 'sales-orders' || hash === 'sales') return 'orders';
     if (hash === 'stock-audit' || hash === 'stock-movements' || hash === 'audit') return 'movements';
+    if (hash === 'templates' || hash === 'template') return 'templates';
     if (hash === 'purchase-orders' || hash === 'purchase') return 'purchases';
     if (hash === 'suppliers') return 'vendors';
+    if (hash === 'expenses' || hash === 'supplies') return 'expenses';
     const validTabs: NavTabId[] = [
       'overview',
       'billing',
@@ -50,8 +56,10 @@ export const AppShell: React.FC = () => {
       'customers',
       'products',
       'movements',
+      'templates',
       'purchases',
       'vendors',
+      'expenses',
       'reports',
       'settings',
     ];
@@ -200,9 +208,13 @@ export const AppShell: React.FC = () => {
 
           {currentTab === 'movements' && <StockMovementsPage />}
 
+          {currentTab === 'templates' && <TemplatesPage />}
+
           {currentTab === 'purchases' && <PurchasesPage />}
 
           {currentTab === 'vendors' && <VendorsPage />}
+
+          {currentTab === 'expenses' && <ExpensesSuppliesPage />}
 
           {currentTab === 'reports' && <ReportsPage />}
 

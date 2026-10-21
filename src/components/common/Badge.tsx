@@ -85,3 +85,72 @@ export const LifecycleBadge: React.FC<LifecycleBadgeProps> = ({ status }) => {
     </span>
   );
 };
+
+export interface BadgeProps {
+  variant?: 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary';
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export const Badge: React.FC<BadgeProps> = ({
+  variant = 'neutral',
+  children,
+  className = '',
+  style,
+}) => {
+  const variantStyles: Record<string, React.CSSProperties> = {
+    success: {
+      backgroundColor: 'var(--yz-status-in-stock-bg)',
+      color: 'var(--yz-status-in-stock)',
+      border: '1px solid var(--yz-status-in-stock-border)',
+    },
+    warning: {
+      backgroundColor: 'var(--yz-status-low-stock-bg)',
+      color: 'var(--yz-status-low-stock)',
+      border: '1px solid var(--yz-status-low-stock-border)',
+    },
+    danger: {
+      backgroundColor: 'var(--yz-status-out-stock-bg)',
+      color: 'var(--yz-status-out-stock)',
+      border: '1px solid var(--yz-status-out-stock-border)',
+    },
+    info: {
+      backgroundColor: 'var(--yz-status-info-bg)',
+      color: 'var(--yz-status-info)',
+      border: '1px solid var(--yz-status-info-border)',
+    },
+    primary: {
+      backgroundColor: 'var(--yz-primary-subtle)',
+      color: 'var(--yz-primary)',
+      border: '1px solid var(--yz-primary-border)',
+    },
+    neutral: {
+      backgroundColor: 'var(--yz-bg-subtle)',
+      color: 'var(--yz-text-secondary)',
+      border: '1px solid var(--yz-border)',
+    },
+  };
+
+  const selectedStyle = variantStyles[variant] || variantStyles.neutral;
+
+  return (
+    <span
+      className={`yz-badge ${className}`}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '2px 8px',
+        borderRadius: 'var(--yz-radius-full)',
+        fontSize: '11px',
+        fontWeight: 600,
+        lineHeight: 1.4,
+        ...selectedStyle,
+        ...style,
+      }}
+    >
+      {children}
+    </span>
+  );
+};
+

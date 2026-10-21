@@ -17,6 +17,7 @@ import reportsRouter from './routes/reports.js';
 import godownsRouter from './routes/godowns.js';
 import settingsRouter from './routes/settings.js';
 import measurementTemplatesRouter from './routes/measurementTemplates.js';
+import stitchingTemplatesRouter from './routes/stitchingTemplates.js';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -93,6 +94,7 @@ app.use('/api/reports', reportsRouter);
 app.use('/api/godowns', godownsRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/measurement-templates', measurementTemplatesRouter);
+app.use('/api/stitching-templates', stitchingTemplatesRouter);
 
 // Central error handler
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
