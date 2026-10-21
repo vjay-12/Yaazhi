@@ -12,10 +12,19 @@ router.post('/checkout', async (req, res): Promise<void> => {
     const rawItems = Array.isArray(req.body.items)
       ? req.body.items.map((it: any) => ({
           product_id: it.product_id || it.productId || it.id,
+          template_id: it.template_id || it.templateId,
+          item_type: it.item_type || it.itemType || (it.template_id || it.templateId ? 'SERVICE' : 'PRODUCT'),
+          name: it.name || it.productName || it.serviceName,
+          sku: it.sku,
           quantity: Number(it.quantity || it.qty || 1),
           unit_price: Number(it.unit_price || it.unitPrice || it.price || it.salePrice || 0),
           discount: Number(it.discount || 0),
           tax_rate: it.tax_rate !== undefined ? Number(it.tax_rate) : it.taxRate !== undefined ? Number(it.taxRate) : it.gstRate !== undefined ? Number(it.gstRate) : undefined,
+          measurement_version_id: it.measurement_version_id || it.measurementVersionId,
+          garment_type: it.garment_type || it.garmentType,
+          selected_addons: Array.isArray(it.selected_addons) ? it.selected_addons : Array.isArray(it.addons) ? it.addons : undefined,
+          tailor_instructions: it.tailor_instructions || it.tailorInstructions,
+          delivery_date: it.delivery_date || it.deliveryDate || it.expectedDeliveryDate,
         }))
       : [];
 
@@ -31,6 +40,8 @@ router.post('/checkout', async (req, res): Promise<void> => {
       paid_amount: req.body.paid_amount !== undefined ? Number(req.body.paid_amount) : req.body.paidAmount !== undefined ? Number(req.body.paidAmount) : undefined,
       pending_amount: req.body.pending_amount !== undefined ? Number(req.body.pending_amount) : req.body.pendingAmount !== undefined ? Number(req.body.pendingAmount) : undefined,
       discount_total: Number(req.body.discount_total || req.body.discountTotal || 0),
+      measurement_version_id: req.body.measurement_version_id || req.body.measurementVersionId,
+      measurement_version_ids: req.body.measurement_version_ids || (req.body.measurement_version_id ? [req.body.measurement_version_id] : undefined),
       items: rawItems,
     };
 
@@ -52,6 +63,8 @@ router.post('/checkout', async (req, res): Promise<void> => {
       paid_amount: rawPaidAmount,
       discount_total,
       notes,
+      measurement_version_id,
+      measurement_version_ids,
       items,
     } = parsed.data;
 
@@ -70,8 +83,38 @@ router.post('/checkout', async (req, res): Promise<void> => {
     // Execute atomic checkout transaction
     const checkoutResult = await prisma.$transaction(
       async (tx) => {
-        // 1. Validate stock availability for each item in the selected counter
+        // 1. Resolve products and validate physical stock availability
         for (const item of items) {
+          const isService = item.item_type === 'SERVICE' || Boolean(item.template_id);
+          if (isService) {
+            // Find or create service representation in Product table
+            const baseSku = item.sku || (item.template_id ? `SRV-${item.template_id.substring(0, 8).toUpperCase()}` : `SRV-CUSTOM`);
+            let serviceProd = await tx.product.findUnique({ where: { sku: baseSku } });
+            if (!serviceProd) {
+              serviceProd = await tx.product.create({
+                data: {
+                  sku: baseSku,
+                  name: item.name || 'Custom Stitching Service',
+                  description: `Boutique atelier tailoring service (${item.garment_type || 'Custom'})`,
+                  unit: 'SERVICE',
+                  sale_price: item.unit_price,
+                  tax_rate: item.tax_rate !== undefined ? item.tax_rate : 5,
+                  is_active: true,
+                },
+              });
+            }
+            item.product_id = serviceProd.id;
+            if (item.tax_rate === undefined) {
+              item.tax_rate = Number(serviceProd.tax_rate);
+            }
+            // Services do NOT decrement physical inventory or require stock balances
+            continue;
+          }
+
+          if (!item.product_id) {
+            throw new Error('Product ID is required for physical goods');
+          }
+
           const product = await tx.product.findUnique({
             where: { id: item.product_id },
           });
@@ -147,7 +190,7 @@ router.post('/checkout', async (req, res): Promise<void> => {
           const lineTax = (lineTaxable * (it.tax_rate ?? 0)) / 100;
           taxTotal += lineTax;
           return {
-            product_id: it.product_id,
+            product_id: it.product_id as string,
             quantity: it.quantity,
             unit_price: it.unit_price,
             discount: it.discount,
@@ -184,6 +227,20 @@ router.post('/checkout', async (req, res): Promise<void> => {
           finalPaymentStatus = 'PAID';
         }
 
+        // Build comprehensive notes with tailoring specifications if present
+        let combinedNotes = notes ? `POS Billing: ${notes}` : 'Point-of-Sale Counter Transaction';
+        const serviceLines = items.filter((it) => it.item_type === 'SERVICE');
+        if (serviceLines.length > 0) {
+          const detailStrings = serviceLines.map((s) => {
+            let part = `[Stitching: ${s.name || 'Service'} (${s.garment_type || 'Custom'}) × ${s.quantity}]`;
+            if (s.delivery_date) part += ` Est Delivery: ${s.delivery_date};`;
+            if (s.tailor_instructions) part += ` Tailor Instructions: ${s.tailor_instructions};`;
+            if (s.selected_addons && s.selected_addons.length > 0) part += ` Addons: ${s.selected_addons.join(', ')};`;
+            return part;
+          });
+          combinedNotes += `\n--- TAILORING WORKSHOP JOB ---\n${detailStrings.join('\n')}`;
+        }
+
         // 4. Create Sales Order (Status DELIVERED since it's instant counter POS)
         const salesOrder = await tx.salesOrder.create({
           data: {
@@ -201,7 +258,7 @@ router.post('/checkout', async (req, res): Promise<void> => {
             paid_amount: actualPaidAmount,
             pending_amount: actualPendingAmount,
             payment_status: finalPaymentStatus,
-            notes: notes ? `POS Billing: ${notes}` : 'Point-of-Sale Counter Transaction',
+            notes: combinedNotes,
             created_by: 'Main POS Terminal',
             items: {
               create: lineItemsData,
@@ -213,11 +270,19 @@ router.post('/checkout', async (req, res): Promise<void> => {
           },
         });
 
-        // Link measurement version if supplied
-        const mvId = req.body.measurement_version_id || req.body.measurementVersionId;
-        if (mvId) {
+        // Link measurement version(s) to sales order
+        const rawMvIds = [
+          ...(measurement_version_ids || []),
+          measurement_version_id,
+          req.body.measurement_version_id,
+          req.body.measurementVersionId,
+          ...items.map((it) => it.measurement_version_id),
+        ].filter(Boolean) as string[];
+
+        const uniqueMvIds = Array.from(new Set(rawMvIds));
+        if (uniqueMvIds.length > 0) {
           await tx.customerMeasurementVersion.updateMany({
-            where: { id: mvId },
+            where: { id: { in: uniqueMvIds } },
             data: { order_id: salesOrder.id },
           });
         }
@@ -258,11 +323,14 @@ router.post('/checkout', async (req, res): Promise<void> => {
           });
         }
 
-        // 7. Deduct inventory and record immutable Stock Movement
+        // 7. Deduct inventory ONLY for physical goods (never services)
         for (const item of items) {
+          if (item.item_type === 'SERVICE') {
+            continue;
+          }
           await LedgerService.recordMovement(
             {
-              product_id: item.product_id,
+              product_id: item.product_id!,
               godown_id: targetGodownId!,
               movement_type: MovementType.SALES_DELIVERY,
               quantity: -item.quantity,
@@ -298,14 +366,22 @@ router.post('/checkout', async (req, res): Promise<void> => {
       discountTotal: Number(checkoutResult.salesOrder.discount_total),
       paymentMode: checkoutResult.payment?.payment_mode || payment_mode,
       customerName: checkoutResult.salesOrder.customer_name,
-      items: checkoutResult.salesOrder.items.map((it) => ({
-        id: it.id,
-        name: it.product.name,
-        sku: it.product.sku,
-        quantity: Number(it.quantity),
-        price: Number(it.unit_price),
-        total: Number(it.total),
-      })),
+      items: (checkoutResult.salesOrder as any).items?.map((it: any, idx: number) => {
+        const origItem = items[idx];
+        return {
+          id: it.id,
+          name: it.product?.name || origItem?.name || 'Item',
+          sku: it.product?.sku || origItem?.sku || '',
+          item_type: origItem?.item_type || (it.product?.unit === 'SERVICE' ? 'SERVICE' : 'PRODUCT'),
+          garment_type: origItem?.garment_type,
+          delivery_date: origItem?.delivery_date,
+          tailor_instructions: origItem?.tailor_instructions,
+          selected_addons: origItem?.selected_addons,
+          quantity: Number(it.quantity),
+          price: Number(it.unit_price),
+          total: Number(it.total),
+        };
+      }) || [],
       date: checkoutResult.salesOrder.order_date,
     });
   } catch (err: any) {

@@ -95,11 +95,20 @@ export const salesOrderSchema = z.object({
 });
 
 export const billingCheckoutItemSchema = z.object({
-  product_id: z.string().min(1, 'Product is required'),
+  product_id: z.string().optional().nullable(),
+  template_id: z.string().optional().nullable(),
+  item_type: z.enum(['PRODUCT', 'SERVICE']).default('PRODUCT'),
+  name: z.string().optional(),
+  sku: z.string().optional(),
   quantity: z.number().positive('Quantity must be at least 1'),
   unit_price: z.number().min(0, 'Unit price must be non-negative'),
   discount: z.number().min(0).default(0),
   tax_rate: z.number().min(0).optional(),
+  measurement_version_id: z.string().optional().nullable(),
+  garment_type: z.string().optional().nullable(),
+  selected_addons: z.array(z.string()).optional(),
+  tailor_instructions: z.string().optional().nullable(),
+  delivery_date: z.string().optional().nullable(),
 });
 
 export const billingCheckoutSchema = z.object({
@@ -114,6 +123,8 @@ export const billingCheckoutSchema = z.object({
   pending_amount: z.number().min(0).optional(),
   discount_total: z.number().min(0).default(0),
   notes: z.string().optional().nullable(),
+  measurement_version_id: z.string().optional().nullable(),
+  measurement_version_ids: z.array(z.string()).optional(),
   items: z.array(billingCheckoutItemSchema).min(1, 'Cart cannot be empty'),
 });
 

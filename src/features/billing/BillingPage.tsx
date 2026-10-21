@@ -10,12 +10,18 @@ import {
   Printer,
   ShoppingBag,
   ChevronDown,
+  Scissors,
+  Ruler,
+  Calendar,
+  Sparkles,
 } from 'lucide-react';
 import type { YaazhiProduct } from '../../types/product';
+import type { StitchingTemplate } from '../../types/template';
 import { productService } from '../../services/productService';
 import { billingService } from '../../services/billingService';
 import { customerService } from '../../services/customerService';
 import { settingsService } from '../../services/settingsService';
+import { templateService } from '../../services/templateService';
 import { StockBadge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
@@ -23,19 +29,42 @@ import { useToast } from '../../components/common/Toast';
 import { ProductImage } from '../../components/common/ProductImage';
 import { AddCustomerModal } from '../commercial/AddCustomerModal';
 import { CustomDropdown } from '../../components/common/CustomDropdown';
+import { ConfigureStitchingModal, type ConfiguredStitchingService } from './ConfigureStitchingModal';
 
 interface CartLine {
-  product: YaazhiProduct;
+  id: string;
+  type: 'PRODUCT' | 'SERVICE';
+  // Product details
+  product?: YaazhiProduct;
+  // Service details
+  templateId?: string;
+  garmentType?: string;
+  addons?: string[];
+  addonsPrice?: number;
+  measurementProfileId?: string;
+  measurementProfileName?: string;
+  measurementVersionId?: string;
+  measurementVersionNumber?: number;
+  fittingPreferences?: string;
+  tailorInstructions?: string;
+  expectedDeliveryDate?: string;
+  // Common details
+  name: string;
+  sku: string;
   quantity: number;
   unitPrice: number;
+  discount: number;
   gstRate: number;
 }
 
 export const BillingPage: React.FC = () => {
   const { showToast } = useToast();
+  const [billingMode, setBillingMode] = useState<'PRODUCTS' | 'STITCHING'>('PRODUCTS');
   const [products, setProducts] = useState<YaazhiProduct[]>([]);
+  const [stitchingTemplates, setStitchingTemplates] = useState<StitchingTemplate[]>([]);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [selectedStitchingGarment, setSelectedStitchingGarment] = useState<string>('ALL');
   const [cart, setCart] = useState<CartLine[]>([]);
   const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [customerName, setCustomerName] = useState<string>('');
@@ -44,6 +73,9 @@ export const BillingPage: React.FC = () => {
   const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
+  const [configuringTemplate, setConfiguringTemplate] = useState<StitchingTemplate | null>(null);
+  const [isConfigureStitchingModalOpen, setIsConfigureStitchingModalOpen] = useState(false);
+  const [storeSettings, setStoreSettings] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Dynamically derive unique categories from real product data (SELLABLE ONLY: ACTIVE & IN/LOW STOCK)
@@ -72,6 +104,15 @@ export const BillingPage: React.FC = () => {
     }
   }, []);
 
+  const loadStitchingTemplates = React.useCallback(async () => {
+    try {
+      const templates = await templateService.getStitchingTemplates({ include_archived: false });
+      setStitchingTemplates(templates.filter((t) => t.is_active && !t.is_archived));
+    } catch (err) {
+      console.error('Failed to load stitching templates:', err);
+    }
+  }, []);
+
   // Payment Modal State
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [paymentMode, setPaymentMode] = useState<'CASH' | 'UPI'>('CASH');
@@ -91,11 +132,13 @@ export const BillingPage: React.FC = () => {
 
   useEffect(() => {
     loadBillingCatalog();
+    loadStitchingTemplates();
     customerService.list().then(setRecentCustomers).catch(() => {});
     settingsService
       .getSettings()
       .then((s) => {
         if (s) {
+          setStoreSettings(s);
           setPaymentSettings({
             upiId: s.upi_id || 'yaazhi@oksbi',
             upiQrUrl: s.upi_qr_url || '/images/payment/yaazhi-upi-qr.png',
@@ -103,7 +146,7 @@ export const BillingPage: React.FC = () => {
         }
       })
       .catch(() => {});
-  }, [loadBillingCatalog]);
+  }, [loadBillingCatalog, loadStitchingTemplates]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -139,6 +182,16 @@ export const BillingPage: React.FC = () => {
     );
   });
 
+  const availableStitchingGarments = React.useMemo(() => {
+    const set = new Set<string>();
+    stitchingTemplates.forEach((t) => {
+      if (t.garment_type && typeof t.garment_type === 'string' && t.garment_type.trim()) {
+        set.add(t.garment_type.trim());
+      }
+    });
+    return ['ALL', ...Array.from(set).sort()];
+  }, [stitchingTemplates]);
+
   const addToCart = (product: YaazhiProduct) => {
     if (product.isArchived || !product.isActive) {
       showToast({
@@ -159,7 +212,7 @@ export const BillingPage: React.FC = () => {
     }
 
     setCart((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id);
+      const existing = prev.find((item) => item.type === 'PRODUCT' && item.product?.id === product.id);
       if (existing) {
         if (existing.quantity >= product.currentStock) {
           showToast({
@@ -170,7 +223,7 @@ export const BillingPage: React.FC = () => {
           return prev;
         }
         return prev.map((item) =>
-          item.product.id === product.id
+          item.id === existing.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -178,22 +231,59 @@ export const BillingPage: React.FC = () => {
       return [
         ...prev,
         {
+          id: `prod-${product.id}`,
+          type: 'PRODUCT',
           product,
+          name: product.name,
+          sku: product.sku,
           quantity: 1,
           unitPrice: product.sellPrice,
+          discount: 0,
           gstRate: Number(product.gstRate ?? product.taxRate ?? 0),
         },
       ];
     });
   };
 
-  const updateQuantity = (productId: string, delta: number) => {
+  const handleAddStitchingService = (svc: ConfiguredStitchingService) => {
+    const lineId = `stitch-${svc.templateId}-${Date.now()}`;
+    const newLine: CartLine = {
+      id: lineId,
+      type: 'SERVICE',
+      templateId: svc.templateId,
+      name: svc.name,
+      sku: svc.sku,
+      garmentType: svc.garmentType,
+      quantity: svc.quantity,
+      unitPrice: svc.chargedPrice,
+      discount: svc.discount,
+      gstRate: svc.taxRate,
+      addons: svc.selectedAddons.map((ad) => ad.name),
+      addonsPrice: svc.selectedAddons.reduce((s, ad) => s + Number(ad.price || 0), 0),
+      measurementProfileId: svc.measurementProfileId,
+      measurementProfileName: svc.measurementProfileName,
+      measurementVersionId: svc.measurementVersionId,
+      measurementVersionNumber: svc.measurementVersionNumber,
+      fittingPreferences: svc.fittingPreferences,
+      tailorInstructions: svc.tailorInstructions,
+      expectedDeliveryDate: svc.expectedDeliveryDate,
+    };
+
+    setCart((prev) => [...prev, newLine]);
+    showToast({
+      type: 'success',
+      title: 'Service Added to Bill',
+      message: `${svc.name} (${svc.garmentType}) linked to counter bill`,
+    });
+  };
+
+  const updateQuantity = (lineId: string, delta: number) => {
     setCart((prev) =>
       prev
         .map((item) => {
-          if (item.product.id === productId) {
+          if (item.id === lineId) {
             const newQty = item.quantity + delta;
-            if (newQty > item.product.currentStock) {
+            if (item.type === 'PRODUCT' && item.product && newQty > item.product.currentStock) {
               showToast({
                 type: 'warning',
                 title: 'Insufficient Stock',
@@ -209,8 +299,8 @@ export const BillingPage: React.FC = () => {
     );
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart((prev) => prev.filter((item) => item.product.id !== productId));
+  const removeFromCart = (lineId: string) => {
+    setCart((prev) => prev.filter((item) => item.id !== lineId));
   };
 
   const clearCart = () => {
@@ -249,22 +339,26 @@ export const BillingPage: React.FC = () => {
   const handleCompletePayment = async () => {
     if (cart.length === 0 || isSubmittingPayment) return;
 
-    const archivedItem = cart.find((i) => i.product.isArchived || !i.product.isActive);
+    const archivedItem = cart.find(
+      (i) => i.type === 'PRODUCT' && i.product && (i.product.isArchived || !i.product.isActive)
+    );
     if (archivedItem) {
       showToast({
         type: 'error',
         title: 'Archived Item in Cart',
-        message: `${archivedItem.product.name} is archived and cannot be billed. Please remove it from the cart.`,
+        message: `${archivedItem.name} is archived and cannot be billed. Please remove it from the cart.`,
       });
       return;
     }
 
-    const outOfStockItem = cart.find((i) => Number(i.product.currentStock) <= 0);
+    const outOfStockItem = cart.find(
+      (i) => i.type === 'PRODUCT' && i.product && Number(i.product.currentStock) <= 0
+    );
     if (outOfStockItem) {
       showToast({
         type: 'error',
         title: 'Out of Stock Item in Cart',
-        message: `${outOfStockItem.product.name} is out of stock and cannot be billed. Please remove it from the cart.`,
+        message: `${outOfStockItem.name} is out of stock and cannot be billed. Please remove it from the cart.`,
       });
       return;
     }
@@ -341,11 +435,24 @@ export const BillingPage: React.FC = () => {
         pending_amount: computedPendingAmount,
         discount_total: discountAmount,
         items: cart.map((item) => ({
-          product_id: item.product.id,
+          item_type: item.type,
+          product_id: item.type === 'PRODUCT' ? item.product?.id : undefined,
+          template_id: item.type === 'SERVICE' ? item.templateId : undefined,
+          name: item.name,
+          sku: item.sku,
           quantity: item.quantity,
           unit_price: item.unitPrice,
+          discount: item.discount,
           tax_rate: Number(item.gstRate) || 0,
+          measurement_version_id: item.measurementVersionId,
+          garment_type: item.garmentType,
+          selected_addons: item.addons,
+          tailor_instructions: item.tailorInstructions,
+          delivery_date: item.expectedDeliveryDate,
         })),
+        measurement_version_ids: cart
+          .filter((i) => i.measurementVersionId)
+          .map((i) => i.measurementVersionId!),
       });
 
       setCompletedBillNo(res.billNo);
@@ -400,14 +507,127 @@ export const BillingPage: React.FC = () => {
     return true;
   });
 
+  const filteredStitchingTemplates = stitchingTemplates.filter((t) => {
+    if (selectedStitchingGarment !== 'ALL' && t.garment_type?.toLowerCase() !== selectedStitchingGarment.toLowerCase()) {
+      return false;
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      return (
+        t.name?.toLowerCase().includes(q) ||
+        t.code?.toLowerCase().includes(q) ||
+        t.garment_type?.toLowerCase().includes(q) ||
+        t.description?.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
   return (
     <div className="yz-billing-page">
       <div className="yz-billing-grid">
-        {/* Left Column: Product Selection Grid */}
+        {/* Left Column: Product & Custom Stitching Selection Grid */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', height: '100%', minHeight: 0 }}>
-          {/* Search & Category Pills */}
-          <div className="yz-card" style={{ padding: '8px 10px', flexShrink: 0 }}>
-            <div style={{ position: 'relative', marginBottom: '6px' }}>
+          {/* Catalog & Services Switcher Card */}
+          <div className="yz-card" style={{ padding: '8px 10px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {/* Mode Switcher Tabs */}
+            <div
+              style={{
+                display: 'flex',
+                backgroundColor: 'var(--yz-bg-subtle)',
+                borderRadius: 'var(--yz-radius-lg, 12px)',
+                padding: '3px',
+                border: '1px solid var(--yz-border)',
+                gap: '4px',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setBillingMode('PRODUCTS');
+                  setSearch('');
+                }}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '6px 12px',
+                  borderRadius: 'var(--yz-radius-md, 8px)',
+                  border: 'none',
+                  backgroundColor: billingMode === 'PRODUCTS' ? 'var(--yz-bg-surface)' : 'transparent',
+                  color: billingMode === 'PRODUCTS' ? 'var(--yz-primary, #852237)' : 'var(--yz-text-secondary)',
+                  fontWeight: billingMode === 'PRODUCTS' ? 700 : 600,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  boxShadow: billingMode === 'PRODUCTS' ? 'var(--yz-shadow-xs)' : 'none',
+                  transition: 'all 0.14s ease',
+                  height: '30px',
+                }}
+              >
+                <ShoppingBag size={14} />
+                <span>Ready-made Products</span>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    padding: '1px 6px',
+                    borderRadius: 'var(--yz-radius-full)',
+                    backgroundColor: billingMode === 'PRODUCTS' ? 'var(--yz-primary-subtle, #FDF2F4)' : 'var(--yz-border-subtle)',
+                    color: billingMode === 'PRODUCTS' ? 'var(--yz-primary, #852237)' : 'var(--yz-text-muted)',
+                    fontFamily: 'var(--yz-font-mono)',
+                    fontWeight: 700,
+                  }}
+                >
+                  {filteredProducts.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setBillingMode('STITCHING');
+                  setSearch('');
+                }}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '6px 12px',
+                  borderRadius: 'var(--yz-radius-md, 8px)',
+                  border: 'none',
+                  backgroundColor: billingMode === 'STITCHING' ? 'var(--yz-bg-surface)' : 'transparent',
+                  color: billingMode === 'STITCHING' ? 'var(--yz-primary, #852237)' : 'var(--yz-text-secondary)',
+                  fontWeight: billingMode === 'STITCHING' ? 700 : 600,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  boxShadow: billingMode === 'STITCHING' ? 'var(--yz-shadow-xs)' : 'none',
+                  transition: 'all 0.14s ease',
+                  height: '30px',
+                }}
+              >
+                <Scissors size={14} />
+                <span>Custom Stitching</span>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    padding: '1px 6px',
+                    borderRadius: 'var(--yz-radius-full)',
+                    backgroundColor: billingMode === 'STITCHING' ? 'var(--yz-primary-subtle, #FDF2F4)' : 'var(--yz-border-subtle)',
+                    color: billingMode === 'STITCHING' ? 'var(--yz-primary, #852237)' : 'var(--yz-text-muted)',
+                    fontFamily: 'var(--yz-font-mono)',
+                    fontWeight: 700,
+                  }}
+                >
+                  {stitchingTemplates.length}
+                </span>
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div style={{ position: 'relative' }}>
               <Search
                 size={13}
                 style={{
@@ -420,7 +640,11 @@ export const BillingPage: React.FC = () => {
               />
               <input
                 type="text"
-                placeholder="Search weave name, SKU, or scan barcode..."
+                placeholder={
+                  billingMode === 'PRODUCTS'
+                    ? 'Search weave name, SKU, or scan barcode...'
+                    : 'Search stitching service, garment type, or description...'
+                }
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="yz-input"
@@ -429,258 +653,405 @@ export const BillingPage: React.FC = () => {
               />
             </div>
 
-            {/* Dynamic Category Quick Pills */}
+            {/* Dynamic Quick Pills (Categories for products, Garment Types for stitching) */}
             <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px' }}>
-              {availableCategories.map((c) => {
-                const isSelected = effectiveCategory === c;
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setSelectedCategory(c)}
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: 'var(--yz-radius-lg, 12px)',
-                      border: '1px solid',
-                      borderColor: isSelected ? 'var(--yz-primary, #852237)' : 'var(--yz-border)',
-                      backgroundColor: isSelected ? 'var(--yz-primary, #852237)' : 'var(--yz-bg-subtle)',
-                      color: isSelected ? '#FFFFFF' : 'var(--yz-text-secondary)',
-                      fontSize: '11.5px',
-                      fontWeight: isSelected ? 700 : 600,
-                      boxShadow: isSelected ? 'var(--yz-shadow-2xs)' : 'none',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      transition: 'all 0.12s ease',
-                      height: '28px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                    }}
-                  >
-                    {c === 'ALL' ? 'All' : c}
-                  </button>
-                );
-              })}
+              {billingMode === 'PRODUCTS'
+                ? availableCategories.map((c) => {
+                    const isSelected = effectiveCategory === c;
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setSelectedCategory(c)}
+                        style={{
+                          padding: '4px 12px',
+                          borderRadius: 'var(--yz-radius-lg, 12px)',
+                          border: '1px solid',
+                          borderColor: isSelected ? 'var(--yz-primary, #852237)' : 'var(--yz-border)',
+                          backgroundColor: isSelected ? 'var(--yz-primary, #852237)' : 'var(--yz-bg-subtle)',
+                          color: isSelected ? '#FFFFFF' : 'var(--yz-text-secondary)',
+                          fontSize: '11.5px',
+                          fontWeight: isSelected ? 700 : 600,
+                          boxShadow: isSelected ? 'var(--yz-shadow-2xs)' : 'none',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.12s ease',
+                          height: '28px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                        }}
+                      >
+                        {c === 'ALL' ? 'All Weaves' : c}
+                      </button>
+                    );
+                  })
+                : availableStitchingGarments.map((g) => {
+                    const isSelected = selectedStitchingGarment === g;
+                    return (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setSelectedStitchingGarment(g)}
+                        style={{
+                          padding: '4px 12px',
+                          borderRadius: 'var(--yz-radius-lg, 12px)',
+                          border: '1px solid',
+                          borderColor: isSelected ? 'var(--yz-primary, #852237)' : 'var(--yz-border)',
+                          backgroundColor: isSelected ? 'var(--yz-primary, #852237)' : 'var(--yz-bg-subtle)',
+                          color: isSelected ? '#FFFFFF' : 'var(--yz-text-secondary)',
+                          fontSize: '11.5px',
+                          fontWeight: isSelected ? 700 : 600,
+                          boxShadow: isSelected ? 'var(--yz-shadow-2xs)' : 'none',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.12s ease',
+                          height: '28px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                        }}
+                      >
+                        {g === 'ALL' ? 'All Garments' : g}
+                      </button>
+                    );
+                  })}
             </div>
           </div>
 
-          {/* Product Cards Grid */}
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: '10px',
-              overflowY: 'auto',
-              padding: '2px 4px 2px 2px',
-              alignContent: 'start',
-            }}
-          >
-            {filteredProducts.map((p) => {
-              const inStock = p.currentStock > 0;
-              const cartItem = cart.find((i) => i.product.id === p.id);
-              const currentQty = cartItem ? cartItem.quantity : 0;
-              return (
+          {/* Product Cards or Custom Stitching Grid */}
+          {billingMode === 'STITCHING' ? (
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
+                gap: '10px',
+                overflowY: 'auto',
+                padding: '2px 4px 2px 2px',
+                alignContent: 'start',
+              }}
+            >
+              {filteredStitchingTemplates.length === 0 ? (
                 <div
-                  key={p.id}
                   style={{
-                    backgroundColor: 'var(--yz-bg-surface)',
-                    border: '1px solid',
-                    borderColor: cartItem ? 'var(--yz-primary, #852237)' : 'var(--yz-border)',
-                    borderRadius: 'var(--yz-card-radius, 16px)',
-                    padding: '8px 9px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    gap: '4px',
-                    cursor: 'default',
-                    opacity: inStock ? 1 : 0.55,
-                    transition: 'all 0.14s ease',
-                    boxShadow: cartItem
-                      ? '0 0 0 2px rgba(133, 34, 55, 0.15), var(--yz-shadow-xs)'
-                      : 'var(--yz-shadow-2xs)',
-                    position: 'relative',
-                    userSelect: 'none',
+                    gridColumn: '1 / -1',
+                    padding: '2.5rem 1rem',
+                    textAlign: 'center',
+                    color: 'var(--yz-text-muted)',
                   }}
                 >
-                  <div>
-                    <ProductImage
-                      src={p.imageUrl}
-                      alt={p.name}
-                      productName={p.name}
-                      category={p.category}
-                      height={92}
-                      width="100%"
-                      rounded="md"
-                      iconSize={18}
-                      style={{ marginBottom: '6px' }}
-                    />
+                  <Scissors size={28} style={{ marginBottom: '8px', opacity: 0.5 }} />
+                  <div style={{ fontWeight: 600, fontSize: '13px' }}>No stitching templates match your filter</div>
+                  <p style={{ fontSize: '11px', marginTop: '4px' }}>
+                    Select another garment category or search term.
+                  </p>
+                </div>
+              ) : (
+                filteredStitchingTemplates.map((tpl) => {
+                  const addonsCount = tpl.addons ? tpl.addons.length : 0;
+                  return (
+                    <div
+                      key={tpl.id}
+                      style={{
+                        backgroundColor: 'var(--yz-bg-surface)',
+                        border: '1px solid var(--yz-border)',
+                        borderRadius: 'var(--yz-card-radius, 16px)',
+                        padding: '12px 14px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                        transition: 'all 0.14s ease',
+                        boxShadow: 'var(--yz-shadow-2xs)',
+                        position: 'relative',
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: 'var(--yz-radius-full)',
+                              backgroundColor: 'var(--yz-primary-subtle, #FDF2F4)',
+                              color: 'var(--yz-primary, #852237)',
+                              border: '1px solid var(--yz-primary-border, #F3D2D9)',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            {tpl.garment_type}
+                          </span>
+                          <span style={{ fontSize: '10px', color: 'var(--yz-text-muted)', fontFamily: 'var(--yz-font-mono)' }}>
+                            GST {tpl.tax_rate}%
+                          </span>
+                        </div>
+
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--yz-text-primary)', lineHeight: 1.3 }}>
+                          {tpl.name}
+                        </div>
+
+                        {tpl.description && (
+                          <p style={{ fontSize: '11px', color: 'var(--yz-text-secondary)', marginTop: '4px', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {tpl.description}
+                          </p>
+                        )}
+
+                        {addonsCount > 0 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px', fontSize: '10.5px', color: 'var(--yz-text-muted)' }}>
+                            <Sparkles size={11} style={{ color: 'var(--yz-primary, #852237)' }} />
+                            <span>{addonsCount} optional atelier add-on{addonsCount > 1 ? 's' : ''}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ borderTop: '1px solid var(--yz-border-subtle)', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontSize: '9.5px', color: 'var(--yz-text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
+                            Base Rate
+                          </div>
+                          <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--yz-primary, #852237)', fontFamily: 'var(--yz-font-mono)' }}>
+                            ₹{Number(tpl.base_price).toLocaleString('en-IN')}
+                          </div>
+                        </div>
+
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          icon={<Scissors size={12} />}
+                          onClick={() => {
+                            setConfiguringTemplate(tpl);
+                            setIsConfigureStitchingModalOpen(true);
+                          }}
+                          style={{ fontSize: '11px', height: '28px', padding: '0 10px' }}
+                        >
+                          Configure
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          ) : (
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                gap: '10px',
+                overflowY: 'auto',
+                padding: '2px 4px 2px 2px',
+                alignContent: 'start',
+              }}
+            >
+              {filteredProducts.map((p) => {
+                const inStock = p.currentStock > 0;
+                const cartItem = cart.find((i) => i.type === 'PRODUCT' && i.product?.id === p.id);
+                const currentQty = cartItem ? cartItem.quantity : 0;
+                return (
+                  <div
+                    key={p.id}
+                    style={{
+                      backgroundColor: 'var(--yz-bg-surface)',
+                      border: '1px solid',
+                      borderColor: cartItem ? 'var(--yz-primary, #852237)' : 'var(--yz-border)',
+                      borderRadius: 'var(--yz-card-radius, 16px)',
+                      padding: '8px 9px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '4px',
+                      cursor: 'default',
+                      opacity: inStock ? 1 : 0.55,
+                      transition: 'all 0.14s ease',
+                      boxShadow: cartItem
+                        ? '0 0 0 2px rgba(133, 34, 55, 0.15), var(--yz-shadow-xs)'
+                        : 'var(--yz-shadow-2xs)',
+                      position: 'relative',
+                      userSelect: 'none',
+                    }}
+                  >
+                    <div>
+                      <ProductImage
+                        src={p.imageUrl}
+                        alt={p.name}
+                        productName={p.name}
+                        category={p.category}
+                        height={92}
+                        width="100%"
+                        rounded="md"
+                        iconSize={18}
+                        style={{ marginBottom: '6px' }}
+                      />
+
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '3px',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontFamily: 'var(--yz-font-mono)',
+                            color: 'var(--yz-text-muted)',
+                            fontWeight: 600,
+                            letterSpacing: '0.2px',
+                          }}
+                        >
+                          {p.sku}
+                        </span>
+                        <StockBadge
+                          status={productService.getStockStatus(p)}
+                          stockCount={p.currentStock}
+                        />
+                      </div>
+
+                      <div
+                        style={{
+                          fontWeight: 700,
+                          fontSize: '12px',
+                          lineHeight: 1.3,
+                          color: 'var(--yz-text-primary)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          marginBottom: '4px',
+                        }}
+                        title={p.name}
+                      >
+                        {p.name}
+                      </div>
+                    </div>
 
                     <div
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        marginBottom: '3px',
+                        borderTop: '1px solid var(--yz-border-subtle)',
+                        paddingTop: '6px',
+                        marginTop: 'auto',
                       }}
                     >
-                      <span
+                      <div
                         style={{
-                          fontSize: '10px',
-                          fontFamily: 'var(--yz-font-mono)',
-                          color: 'var(--yz-text-muted)',
-                          fontWeight: 600,
-                          letterSpacing: '0.2px',
-                        }}
-                      >
-                        {p.sku}
-                      </span>
-                      <StockBadge
-                        status={productService.getStockStatus(p)}
-                        stockCount={p.currentStock}
-                      />
-                    </div>
-
-                    <div
-                      style={{
-                        fontWeight: 700,
-                        fontSize: '12px',
-                        lineHeight: 1.3,
-                        color: 'var(--yz-text-primary)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        marginBottom: '4px',
-                      }}
-                      title={p.name}
-                    >
-                      {p.name}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      borderTop: '1px solid var(--yz-border-subtle)',
-                      paddingTop: '6px',
-                      marginTop: 'auto',
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: '13px',
-                        fontWeight: 800,
-                        fontFamily: 'var(--yz-font-mono)',
-                        color: 'var(--yz-text-primary)',
-                      }}
-                      className="tabular-nums"
-                    >
-                      ₹{p.sellPrice.toLocaleString('en-IN')}
-                    </div>
-
-                    {/* Compact Quantity Control: [ − ] qty [ + ] */}
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '2px',
-                        backgroundColor: currentQty > 0 ? 'var(--yz-primary-subtle, #FDF2F4)' : 'var(--yz-bg-subtle, #F1F5F9)',
-                        border: '1px solid',
-                        borderColor: currentQty > 0 ? 'var(--yz-primary-border, #F3D2D9)' : 'var(--yz-border, #E2E8F0)',
-                        borderRadius: 'var(--yz-radius-full)',
-                        padding: '2px 4px',
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button
-                        type="button"
-                        disabled={currentQty === 0 || !inStock}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (currentQty > 0) {
-                            updateQuantity(p.id, -1);
-                          }
-                        }}
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: 'var(--yz-radius-full)',
-                          border: 'none',
-                          backgroundColor: currentQty > 0 ? 'var(--yz-bg-surface)' : 'transparent',
-                          color: currentQty > 0 ? 'var(--yz-primary, #852237)' : 'var(--yz-text-muted, #94A3B8)',
-                          cursor: currentQty > 0 && inStock ? 'pointer' : 'not-allowed',
-                          opacity: currentQty > 0 && inStock ? 1 : 0.45,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: 0,
-                          boxShadow: currentQty > 0 ? 'var(--yz-shadow-2xs)' : 'none',
-                          transition: 'all 0.12s ease',
-                        }}
-                        title="Decrease quantity"
-                        aria-label={`Decrease ${p.name} quantity`}
-                      >
-                        <Minus size={11} strokeWidth={2.5} />
-                      </button>
-
-                      <span
-                        style={{
-                          minWidth: '18px',
-                          textAlign: 'center',
-                          fontSize: '11px',
+                          fontSize: '13px',
                           fontWeight: 800,
                           fontFamily: 'var(--yz-font-mono)',
-                          color: currentQty > 0 ? 'var(--yz-primary, #852237)' : 'var(--yz-text-muted, #64748B)',
-                          userSelect: 'none',
-                          padding: '0 2px',
+                          color: 'var(--yz-text-primary)',
                         }}
                         className="tabular-nums"
                       >
-                        {currentQty}
-                      </span>
+                        ₹{p.sellPrice.toLocaleString('en-IN')}
+                      </div>
 
-                      <button
-                        type="button"
-                        disabled={!inStock || currentQty >= p.currentStock}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (inStock && currentQty < p.currentStock) {
-                            if (currentQty === 0) {
-                              addToCart(p);
-                            } else {
-                              updateQuantity(p.id, 1);
-                            }
-                          }
-                        }}
+                      {/* Compact Quantity Control: [ − ] qty [ + ] */}
+                      <div
                         style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: 'var(--yz-radius-full)',
-                          border: 'none',
-                          backgroundColor: inStock && currentQty < p.currentStock ? 'var(--yz-primary, #852237)' : 'transparent',
-                          color: inStock && currentQty < p.currentStock ? '#FFFFFF' : 'var(--yz-text-muted, #94A3B8)',
-                          cursor: inStock && currentQty < p.currentStock ? 'pointer' : 'not-allowed',
-                          opacity: inStock && currentQty < p.currentStock ? 1 : 0.45,
                           display: 'inline-flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: 0,
-                          boxShadow: inStock && currentQty < p.currentStock ? 'var(--yz-shadow-2xs)' : 'none',
-                          transition: 'all 0.12s ease',
+                          gap: '2px',
+                          backgroundColor: currentQty > 0 ? 'var(--yz-primary-subtle, #FDF2F4)' : 'var(--yz-bg-subtle, #F1F5F9)',
+                          border: '1px solid',
+                          borderColor: currentQty > 0 ? 'var(--yz-primary-border, #F3D2D9)' : 'var(--yz-border, #E2E8F0)',
+                          borderRadius: 'var(--yz-radius-full)',
+                          padding: '2px 4px',
                         }}
-                        title="Increase quantity"
-                        aria-label={`Increase ${p.name} quantity`}
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <Plus size={11} strokeWidth={2.5} />
-                      </button>
+                        <button
+                          type="button"
+                          disabled={currentQty === 0 || !inStock}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (currentQty > 0) {
+                              updateQuantity(p.id, -1);
+                            }
+                          }}
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: 'var(--yz-radius-full)',
+                            border: 'none',
+                            backgroundColor: currentQty > 0 ? 'var(--yz-bg-surface)' : 'transparent',
+                            color: currentQty > 0 ? 'var(--yz-primary, #852237)' : 'var(--yz-text-muted, #94A3B8)',
+                            cursor: currentQty > 0 && inStock ? 'pointer' : 'not-allowed',
+                            opacity: currentQty > 0 && inStock ? 1 : 0.45,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: 0,
+                            boxShadow: currentQty > 0 ? 'var(--yz-shadow-2xs)' : 'none',
+                            transition: 'all 0.12s ease',
+                          }}
+                          title="Decrease quantity"
+                          aria-label={`Decrease ${p.name} quantity`}
+                        >
+                          <Minus size={11} strokeWidth={2.5} />
+                        </button>
+
+                        <span
+                          style={{
+                            minWidth: '18px',
+                            textAlign: 'center',
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            fontFamily: 'var(--yz-font-mono)',
+                            color: currentQty > 0 ? 'var(--yz-primary, #852237)' : 'var(--yz-text-muted, #64748B)',
+                            userSelect: 'none',
+                            padding: '0 2px',
+                          }}
+                          className="tabular-nums"
+                        >
+                          {currentQty}
+                        </span>
+
+                        <button
+                          type="button"
+                          disabled={!inStock || currentQty >= p.currentStock}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (inStock && currentQty < p.currentStock) {
+                              if (currentQty === 0) {
+                                addToCart(p);
+                              } else {
+                                updateQuantity(p.id, 1);
+                              }
+                            }
+                          }}
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: 'var(--yz-radius-full)',
+                            border: 'none',
+                            backgroundColor: inStock && currentQty < p.currentStock ? 'var(--yz-primary, #852237)' : 'transparent',
+                            color: inStock && currentQty < p.currentStock ? '#FFFFFF' : 'var(--yz-text-muted, #94A3B8)',
+                            cursor: inStock && currentQty < p.currentStock ? 'pointer' : 'not-allowed',
+                            opacity: inStock && currentQty < p.currentStock ? 1 : 0.45,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: 0,
+                            boxShadow: inStock && currentQty < p.currentStock ? 'var(--yz-shadow-2xs)' : 'none',
+                            transition: 'all 0.12s ease',
+                          }}
+                          title="Increase quantity"
+                          aria-label={`Increase ${p.name} quantity`}
+                        >
+                          <Plus size={11} strokeWidth={2.5} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Right Column: Active Cart / Bill Summary */}
@@ -943,101 +1314,222 @@ export const BillingPage: React.FC = () => {
           ) : (
             cart.map((item) => (
               <div
-                key={item.product.id}
+                key={item.id}
                 style={{
                   display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '6px 8px',
-                  backgroundColor: 'var(--yz-bg-subtle)',
+                  flexDirection: 'column',
+                  padding: '7px 9px',
+                  backgroundColor: item.type === 'SERVICE' ? 'var(--yz-primary-subtle, #FDF2F4)' : 'var(--yz-bg-subtle)',
                   borderRadius: 'var(--yz-radius-md)',
-                  border: '1px solid var(--yz-border-subtle)',
-                  gap: '8px',
+                  border: '1px solid',
+                  borderColor: item.type === 'SERVICE' ? 'var(--yz-primary-border, #F3D2D9)' : 'var(--yz-border-subtle)',
+                  gap: '5px',
                 }}
               >
-                <ProductImage
-                  src={item.product.imageUrl}
-                  alt={item.product.name}
-                  productName={item.product.name}
-                  category={item.product.category}
-                  width={32}
-                  height={32}
-                  rounded="sm"
-                  iconSize={14}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {item.product.name}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                  {item.type === 'PRODUCT' ? (
+                    <ProductImage
+                      src={item.product?.imageUrl}
+                      alt={item.name}
+                      productName={item.name}
+                      category={item.product?.category}
+                      width={32}
+                      height={32}
+                      rounded="sm"
+                      iconSize={14}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: 'var(--yz-radius-sm)',
+                        backgroundColor: 'var(--yz-bg-surface)',
+                        border: '1px solid var(--yz-primary-border, #F3D2D9)',
+                        color: 'var(--yz-primary, #852237)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Scissors size={15} />
+                    </div>
+                  )}
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 600, fontSize: '12px', color: 'var(--yz-text-primary)' }}>
+                        {item.name}
+                      </span>
+                      {item.type === 'SERVICE' && item.garmentType && (
+                        <span
+                          style={{
+                            fontSize: '9.5px',
+                            fontWeight: 700,
+                            padding: '1px 5px',
+                            borderRadius: 'var(--yz-radius-full)',
+                            backgroundColor: 'var(--yz-primary, #852237)',
+                            color: '#FFFFFF',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {item.garmentType}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)' }}>
+                      ₹{item.unitPrice.toLocaleString('en-IN')} × {item.quantity} (GST {item.gstRate}%)
+                    </div>
                   </div>
-                  <div style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)' }}>
-                    ₹{item.unitPrice.toLocaleString('en-IN')} × {item.quantity} (GST {item.gstRate}%)
+
+                  {/* Quantity Controls */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(item.id, -1)}
+                      style={{
+                        width: '22px',
+                        height: '22px',
+                        borderRadius: 'var(--yz-radius-sm)',
+                        border: '1px solid var(--yz-border)',
+                        backgroundColor: 'var(--yz-bg-surface)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: 'var(--yz-shadow-2xs)',
+                      }}
+                    >
+                      <Minus size={11} />
+                    </button>
+
+                    <span style={{ fontSize: '11px', fontWeight: 700, width: '20px', textAlign: 'center', fontFamily: 'var(--yz-font-mono)' }} className="tabular-nums">
+                      {item.quantity}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(item.id, 1)}
+                      style={{
+                        width: '22px',
+                        height: '22px',
+                        borderRadius: 'var(--yz-radius-sm)',
+                        border: '1px solid var(--yz-border)',
+                        backgroundColor: 'var(--yz-bg-surface)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: 'var(--yz-shadow-2xs)',
+                      }}
+                    >
+                      <Plus size={11} />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => removeFromCart(item.id)}
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'var(--yz-text-muted)',
+                        cursor: 'pointer',
+                        marginLeft: '2px',
+                        padding: '3px',
+                        borderRadius: 'var(--yz-radius-sm)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+
+                  <div style={{ fontWeight: 700, fontSize: '12px', minWidth: '60px', textAlign: 'right', fontFamily: 'var(--yz-font-mono)' }} className="tabular-nums">
+                    ₹{(item.unitPrice * item.quantity).toLocaleString('en-IN')}
                   </div>
                 </div>
 
-                {/* Quantity Controls */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                  <button
-                    onClick={() => updateQuantity(item.product.id, -1)}
-                    style={{
-                      width: '22px',
-                      height: '22px',
-                      borderRadius: 'var(--yz-radius-sm)',
-                      border: '1px solid var(--yz-border)',
-                      backgroundColor: 'var(--yz-bg-surface)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: 'var(--yz-shadow-2xs)',
-                    }}
-                  >
-                    <Minus size={11} />
-                  </button>
+                {/* Additional Service Details Badge Row */}
+                {item.type === 'SERVICE' && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center', paddingTop: '2px' }}>
+                    {item.addons && item.addons.length > 0 && (
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          backgroundColor: 'var(--yz-bg-surface)',
+                          color: 'var(--yz-primary, #852237)',
+                          border: '1px solid var(--yz-primary-border, #F3D2D9)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                        }}
+                      >
+                        <Sparkles size={10} />
+                        +{item.addons.join(', ')}
+                      </span>
+                    )}
 
-                  <span style={{ fontSize: '11px', fontWeight: 700, width: '20px', textAlign: 'center', fontFamily: 'var(--yz-font-mono)' }} className="tabular-nums">
-                    {item.quantity}
-                  </span>
+                    {item.measurementProfileName && (
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          backgroundColor: 'var(--yz-bg-surface)',
+                          color: 'var(--yz-text-secondary)',
+                          border: '1px solid var(--yz-border)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                        }}
+                      >
+                        <Ruler size={10} />
+                        {item.measurementProfileName} (v{item.measurementVersionNumber || 1})
+                      </span>
+                    )}
 
-                  <button
-                    onClick={() => updateQuantity(item.product.id, 1)}
-                    style={{
-                      width: '22px',
-                      height: '22px',
-                      borderRadius: 'var(--yz-radius-sm)',
-                      border: '1px solid var(--yz-border)',
-                      backgroundColor: 'var(--yz-bg-surface)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: 'var(--yz-shadow-2xs)',
-                    }}
-                  >
-                    <Plus size={11} />
-                  </button>
+                    {item.expectedDeliveryDate && (
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          backgroundColor: '#FEF3C7',
+                          color: '#92400E',
+                          border: '1px solid #FDE68A',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                        }}
+                      >
+                        <Calendar size={10} />
+                        Due: {item.expectedDeliveryDate}
+                      </span>
+                    )}
 
-                  <button
-                    onClick={() => removeFromCart(item.product.id)}
-                    style={{
-                      border: 'none',
-                      background: 'transparent',
-                      color: 'var(--yz-text-muted)',
-                      cursor: 'pointer',
-                      marginLeft: '2px',
-                      padding: '3px',
-                      borderRadius: 'var(--yz-radius-sm)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-
-                <div style={{ fontWeight: 700, fontSize: '12px', minWidth: '60px', textAlign: 'right', fontFamily: 'var(--yz-font-mono)' }} className="tabular-nums">
-                  ₹{(item.unitPrice * item.quantity).toLocaleString('en-IN')}
-                </div>
+                    {item.tailorInstructions && (
+                      <div
+                        style={{
+                          width: '100%',
+                          fontSize: '10px',
+                          color: 'var(--yz-text-secondary)',
+                          fontStyle: 'italic',
+                          paddingLeft: '2px',
+                        }}
+                      >
+                        ✂️ "{item.tailorInstructions}"
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -1196,7 +1688,7 @@ export const BillingPage: React.FC = () => {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--yz-text-secondary)' }}>Boutique:</span>
-                <strong>Yaazhi Boutique & Weaves</strong>
+                <strong>{storeSettings?.store_name || 'Yaazhi Boutique & Weaves'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--yz-text-secondary)' }}>Bill / SO Number:</span>
@@ -1220,6 +1712,216 @@ export const BillingPage: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--yz-text-secondary)' }}>Items Count:</span>
                 <span>{cart.reduce((s, i) => s + i.quantity, 0)} pieces</span>
+              </div>
+            </div>
+
+            {/* Itemized Order Summary (Products & Stitching) */}
+            <div
+              style={{
+                width: '100%',
+                maxHeight: '160px',
+                overflowY: 'auto',
+                backgroundColor: 'var(--yz-bg-surface)',
+                borderRadius: 'var(--yz-radius-md)',
+                border: '1px solid var(--yz-border)',
+                padding: '8px',
+                fontSize: '11px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+                textAlign: 'left',
+              }}
+            >
+              <div style={{ fontWeight: 700, fontSize: '10.5px', color: 'var(--yz-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Itemized Breakdown
+              </div>
+              {cart.map((item) => (
+                <div
+                  key={item.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    borderBottom: '1px solid var(--yz-border-subtle)',
+                    paddingBottom: '4px',
+                    gap: '6px',
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {item.type === 'SERVICE' ? (
+                        <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--yz-primary)', backgroundColor: 'var(--yz-primary-subtle)', padding: '1px 4px', borderRadius: '3px' }}>
+                          STITCHING
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '9px', fontWeight: 700, color: '#0369A1', backgroundColor: '#E0F2FE', padding: '1px 4px', borderRadius: '3px' }}>
+                          READY-MADE
+                        </span>
+                      )}
+                      <strong style={{ fontSize: '11px', color: 'var(--yz-text-primary)' }}>{item.name}</strong>
+                    </div>
+                    {item.type === 'SERVICE' && (
+                      <div style={{ fontSize: '10px', color: 'var(--yz-text-secondary)', marginTop: '2px' }}>
+                        {item.garmentType}
+                        {item.measurementProfileName && ` • 📐 ${item.measurementProfileName}`}
+                        {item.expectedDeliveryDate && ` • 📅 ${item.expectedDeliveryDate}`}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontWeight: 700, fontFamily: 'var(--yz-font-mono)' }}>
+                      ₹{(item.unitPrice * item.quantity).toLocaleString('en-IN')}
+                    </div>
+                    <div style={{ fontSize: '10px', color: 'var(--yz-text-muted)' }}>
+                      ₹{item.unitPrice.toLocaleString('en-IN')} × {item.quantity}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 3-Inch Thermal Receipt Slip (Optimized for 72-80mm thermal roll, printable via window.print()) */}
+            <div className="yz-thermal-print-slip" style={{ display: 'none' }}>
+              <div style={{ textAlign: 'center', paddingBottom: '4px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 900, textTransform: 'uppercase' }}>
+                  {storeSettings?.store_name || 'YAAZHI BOUTIQUE & WEAVES'}
+                </div>
+                <div style={{ fontSize: '8.5px', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '1px' }}>
+                  Handloom Weaves & Atelier Bespoke Tailoring
+                </div>
+                {storeSettings?.store_address && (
+                  <div style={{ fontSize: '8px', marginTop: '1px' }}>{storeSettings.store_address}</div>
+                )}
+                {storeSettings?.store_phone && (
+                  <div style={{ fontSize: '8.5px', fontWeight: 700, marginTop: '1px' }}>Ph: {storeSettings.store_phone}</div>
+                )}
+                {storeSettings?.tax_id && (
+                  <div style={{ fontSize: '8px', marginTop: '1px' }}>GSTIN: {storeSettings.tax_id}</div>
+                )}
+              </div>
+
+              <div style={{ borderTop: '1px dashed #000000', margin: '4px 0' }} />
+
+              <div style={{ textAlign: 'center', fontWeight: 900, fontSize: '11px', textTransform: 'uppercase' }}>
+                TAX INVOICE / CASH BILL
+              </div>
+              <div style={{ fontSize: '9px', marginTop: '3px', display: 'flex', justifyContent: 'space-between' }}>
+                <span>Bill: <strong>{completedBillNo}</strong></span>
+                <span>{new Date().toLocaleDateString('en-IN')}</span>
+              </div>
+              <div style={{ fontSize: '9px', marginTop: '1px' }}>
+                Customer: <strong>{customerName}</strong> {customerPhone ? `(${customerPhone})` : ''}
+              </div>
+
+              <div style={{ borderTop: '1px dashed #000000', margin: '4px 0' }} />
+
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #000000', textAlign: 'left' }}>
+                    <th style={{ padding: '2px 0' }}>Item Description</th>
+                    <th style={{ textAlign: 'center', padding: '2px 0' }}>Qty</th>
+                    <th style={{ textAlign: 'right', padding: '2px 0' }}>Rate</th>
+                    <th style={{ textAlign: 'right', padding: '2px 0' }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cart.map((item) => (
+                    <React.Fragment key={item.id}>
+                      <tr>
+                        <td style={{ padding: '2px 0', verticalAlign: 'top' }}>
+                          <div style={{ fontWeight: 700 }}>
+                            {item.type === 'SERVICE' ? `[STITCH] ${item.name}` : item.name}
+                          </div>
+                          {item.type === 'SERVICE' && (
+                            <div style={{ fontSize: '8px', color: '#334155' }}>
+                              Type: {item.garmentType}
+                              {item.measurementProfileName && ` | Meas: ${item.measurementProfileName} (v${item.measurementVersionNumber || 1})`}
+                              {item.addons && item.addons.length > 0 && ` | Add: ${item.addons.join(', ')}`}
+                              {item.expectedDeliveryDate && ` | Due: ${item.expectedDeliveryDate}`}
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ textAlign: 'center', verticalAlign: 'top', padding: '2px 0' }}>{item.quantity}</td>
+                        <td style={{ textAlign: 'right', verticalAlign: 'top', padding: '2px 0' }}>₹{item.unitPrice}</td>
+                        <td style={{ textAlign: 'right', verticalAlign: 'top', padding: '2px 0', fontWeight: 700 }}>
+                          ₹{item.unitPrice * item.quantity}
+                        </td>
+                      </tr>
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+
+              <div style={{ borderTop: '1px dashed #000000', margin: '4px 0' }} />
+
+              <div style={{ fontSize: '9px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Gross Subtotal:</span>
+                  <span>₹{grossSubtotal.toLocaleString('en-IN')}</span>
+                </div>
+                {discountAmount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Discount ({discountPercent}%):</span>
+                    <span>-₹{discountAmount.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>GST Total:</span>
+                  <span>₹{Math.round(totalTax).toLocaleString('en-IN')}</span>
+                </div>
+                <div style={{ borderTop: '1px solid #000000', paddingTop: '2px', display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontWeight: 900 }}>
+                  <span>GRAND TOTAL:</span>
+                  <span>₹{grandTotal.toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+
+              <div style={{ borderTop: '1px dashed #000000', margin: '4px 0' }} />
+
+              <div style={{ fontSize: '8.5px', display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Payment Mode:</span>
+                  <strong>{paymentMode}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Payment Status:</span>
+                  <strong>{billPaymentStatus}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Amount Received:</span>
+                  <strong>₹{computedReceivedAmount.toLocaleString('en-IN')}</strong>
+                </div>
+                {computedPendingAmount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#B45309' }}>
+                    <span>Balance Outstanding:</span>
+                    <strong>₹{computedPendingAmount.toLocaleString('en-IN')}</strong>
+                  </div>
+                )}
+                {paymentMode === 'CASH' && lastChangeReturned > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Change Returned:</span>
+                    <strong>₹{lastChangeReturned.toLocaleString('en-IN')}</strong>
+                  </div>
+                )}
+              </div>
+
+              {cart.some((i) => i.type === 'SERVICE' && i.tailorInstructions) && (
+                <>
+                  <div style={{ borderTop: '1px dashed #000000', margin: '4px 0' }} />
+                  <div style={{ fontSize: '8.5px' }}>
+                    <div style={{ fontWeight: 800, textTransform: 'uppercase' }}>Tailoring Notes:</div>
+                    {cart.filter((i) => i.type === 'SERVICE' && i.tailorInstructions).map((item, idx) => (
+                      <div key={idx} style={{ marginTop: '1px' }}>
+                        • {item.name} ({item.garmentType}): "{item.tailorInstructions}"
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <div style={{ borderTop: '1px dashed #000000', margin: '5px 0 3px 0' }} />
+              <div style={{ textAlign: 'center', fontSize: '8px', color: '#334155' }}>
+                <div>Thank you for choosing Yaazhi!</div>
+                <div>Keep this slip for bill reference & garment collection.</div>
               </div>
             </div>
           </div>
@@ -1603,6 +2305,28 @@ export const BillingPage: React.FC = () => {
         isOpen={isAddCustomerModalOpen}
         onClose={() => setIsAddCustomerModalOpen(false)}
         onCustomerCreated={handleCustomerCreated}
+      />
+
+      {/* Configure Custom Stitching Service Modal */}
+      <ConfigureStitchingModal
+        isOpen={isConfigureStitchingModalOpen}
+        onClose={() => {
+          setIsConfigureStitchingModalOpen(false);
+          setConfiguringTemplate(null);
+        }}
+        template={configuringTemplate}
+        customerId={selectedCustomerId}
+        customerName={customerName}
+        customerPhone={customerPhone}
+        recentCustomers={recentCustomers}
+        onSelectCustomer={(c) => {
+          setSelectedCustomerId(c.id);
+          setCustomerName(c.name);
+          setCustomerPhone(c.phone || '');
+        }}
+        onAddService={(svc) => {
+          handleAddStitchingService(svc);
+        }}
       />
     </div>
   );

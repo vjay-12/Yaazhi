@@ -1,5 +1,22 @@
 import { api } from './apiClient';
 
+export interface BillingCheckoutItemInput {
+  product_id?: string;
+  template_id?: string;
+  item_type?: 'PRODUCT' | 'SERVICE';
+  name?: string;
+  sku?: string;
+  quantity: number;
+  unit_price: number;
+  discount?: number;
+  tax_rate?: number;
+  measurement_version_id?: string;
+  garment_type?: string;
+  selected_addons?: string[];
+  tailor_instructions?: string;
+  delivery_date?: string;
+}
+
 export interface BillingCheckoutInput {
   customer_id?: string;
   customer_name?: string;
@@ -12,13 +29,9 @@ export interface BillingCheckoutInput {
   pending_amount?: number;
   discount_total?: number;
   notes?: string;
-  items: {
-    product_id: string;
-    quantity: number;
-    unit_price: number;
-    discount?: number;
-    tax_rate?: number;
-  }[];
+  measurement_version_id?: string;
+  measurement_version_ids?: string[];
+  items: BillingCheckoutItemInput[];
 }
 
 export interface BillingReceiptResponse {
@@ -40,6 +53,11 @@ export interface BillingReceiptResponse {
     id: string;
     name: string;
     sku: string;
+    item_type?: 'PRODUCT' | 'SERVICE' | string;
+    garment_type?: string;
+    delivery_date?: string;
+    tailor_instructions?: string;
+    selected_addons?: string[];
     quantity: number;
     price: number;
     total: number;
