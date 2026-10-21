@@ -18,6 +18,10 @@ import godownsRouter from './routes/godowns.js';
 import settingsRouter from './routes/settings.js';
 import measurementTemplatesRouter from './routes/measurementTemplates.js';
 import stitchingTemplatesRouter from './routes/stitchingTemplates.js';
+import suppliesRouter from './routes/supplies.js';
+import supplyPurchasesRouter from './routes/supplyPurchases.js';
+import operatingExpensesRouter from './routes/operatingExpenses.js';
+import expensesSuppliesReportsRouter from './routes/expensesSuppliesReports.js';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -95,6 +99,11 @@ app.use('/api/godowns', godownsRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/measurement-templates', measurementTemplatesRouter);
 app.use('/api/stitching-templates', stitchingTemplatesRouter);
+app.use('/api/supplies', suppliesRouter);
+app.use('/api/supply-purchases', supplyPurchasesRouter);
+app.use('/api/operating-expenses', operatingExpensesRouter);
+app.use('/api/expenses', operatingExpensesRouter);
+app.use('/api/expenses-supplies-reports', expensesSuppliesReportsRouter);
 
 // Central error handler
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

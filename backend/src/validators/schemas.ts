@@ -150,3 +150,101 @@ export const customerMeasurementProfileSchema = z.object({
     })
   ).default([]),
 });
+
+// Consumable Supplies & Expenses Validation Schemas
+export const createSupplyItemSchema = z.object({
+  name: z.string().min(1, 'Item name is required'),
+  sku: z.string().optional(),
+  category: z.string().default('Buttons & Fasteners'),
+  unit: z.string().default('PCS'),
+  min_stock_level: z.number().min(0).default(0),
+  unit_cost: z.number().min(0).default(0),
+  default_supplier_id: z.string().nullable().optional(),
+  initial_quantity: z.number().min(0).default(0),
+  notes: z.string().nullable().optional(),
+});
+
+export const updateSupplyItemSchema = z.object({
+  name: z.string().min(1, 'Item name is required').optional(),
+  category: z.string().optional(),
+  unit: z.string().optional(),
+  min_stock_level: z.number().min(0).optional(),
+  unit_cost: z.number().min(0).optional(),
+  default_supplier_id: z.string().nullable().optional(),
+});
+
+export const recordSupplyConsumptionSchema = z.object({
+  supply_id: z.string().min(1, 'Supply item is required'),
+  quantity: z.number().positive('Quantity must be greater than 0'),
+  stitching_order_number: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  created_by: z.string().optional(),
+});
+
+export const recordSupplyAdjustmentSchema = z.object({
+  supply_id: z.string().min(1, 'Supply item is required'),
+  physical_count: z.number().min(0, 'Quantity cannot be negative').optional(),
+  new_quantity: z.number().min(0, 'Quantity cannot be negative').optional(),
+  reason: z.string().min(1, 'Reason is required'),
+  notes: z.string().nullable().optional(),
+  created_by: z.string().optional(),
+}).refine(data => data.physical_count !== undefined || data.new_quantity !== undefined, {
+  message: 'Either physical_count or new_quantity must be provided',
+});
+
+export const supplyPurchaseItemInputSchema = z.object({
+  supply_id: z.string().min(1, 'Supply item is required'),
+  quantity: z.number().positive('Quantity must be greater than 0'),
+  unit_cost: z.number().min(0, 'Unit cost cannot be negative'),
+  tax_rate: z.number().min(0).default(0),
+});
+
+export const createSupplyPurchaseSchema = z.object({
+  supplier_id: z.string().nullable().optional(),
+  supplier_name: z.string().min(1, 'Supplier name is required'),
+  supplier_phone: z.string().nullable().optional(),
+  purchase_date: z.string().optional(),
+  invoice_number: z.string().nullable().optional(),
+  discount_total: z.number().min(0).default(0),
+  paid_amount: z.number().min(0).optional(),
+  payment_method: z.string().default('CASH'),
+  payment_status: z.enum(['PAID', 'PARTIAL', 'PENDING']).default('PAID'),
+  receipt_url: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  items: z.array(supplyPurchaseItemInputSchema).min(1, 'At least one supply item is required'),
+});
+
+export const createOperatingExpenseSchema = z.object({
+  category: z.string().min(1, 'Expense category is required'),
+  title: z.string().min(1, 'Expense title is required'),
+  amount: z.number().positive('Amount must be greater than 0'),
+  expense_date: z.string().optional(),
+  payment_method: z.string().default('UPI'),
+  vendor_id: z.string().nullable().optional(),
+  payee_name: z.string().nullable().optional(),
+  reference_number: z.string().nullable().optional(),
+  receipt_url: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+});
+
+export const updateOperatingExpenseSchema = z.object({
+  category: z.string().min(1).optional(),
+  title: z.string().min(1).optional(),
+  amount: z.number().positive().optional(),
+  expense_date: z.string().optional(),
+  payment_method: z.string().optional(),
+  vendor_id: z.string().nullable().optional(),
+  payee_name: z.string().nullable().optional(),
+  reference_number: z.string().nullable().optional(),
+  receipt_url: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+});
+
+export const voidOperatingExpenseSchema = z.object({
+  reason: z.string().optional(),
+  void_reason: z.string().optional(),
+  voided_by: z.string().optional(),
+}).refine(data => Boolean(data.reason?.trim() || data.void_reason?.trim()), {
+  message: 'Void reason is required',
+});
+
