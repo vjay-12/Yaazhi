@@ -148,7 +148,7 @@ export const TemplateManagerModal: React.FC<TemplateManagerModalProps> = ({
   };
 
   const handleRemoveField = async (field: MeasurementTemplateField) => {
-    if (!selectedTemplateId) return;
+    if (!selectedTemplateId || !field.id) return;
     try {
       await customerService.removeTemplateField(selectedTemplateId, field.id);
       showToast({

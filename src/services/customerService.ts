@@ -1,48 +1,21 @@
 import { api } from './apiClient';
-
-export interface MeasurementTemplateField {
-  id: string;
-  template_id: string;
-  field_key: string;
-  field_name: string;
-  field_type: 'number' | 'text' | 'dropdown' | 'tailor_instruction' | string;
-  default_unit: string;
-  display_order: number;
-  is_required: boolean;
-  options?: string | null;
-  validation_rules?: string | null;
-  is_active?: boolean;
-}
-
-export interface MeasurementTemplate {
-  id: string;
-  name: string;
-  code: string;
-  garment_type?: string | null;
-  description?: string | null;
-  category: string;
-  is_default: boolean;
-  is_active: boolean;
-  is_archived?: boolean;
-  archived_at?: string | null;
-  fields: MeasurementTemplateField[];
-  _count?: {
-    profiles?: number;
-  };
-}
+import type { MeasurementTemplate, MeasurementTemplateField } from '../types/template';
+export type { MeasurementTemplate, MeasurementTemplateField };
 
 export interface CustomerMeasurementValue {
   id?: string;
   field_id: string;
   field_key?: string;
   field_name?: string;
-  field_type?: 'number' | 'text';
+  field_type?: 'number' | 'text' | 'dropdown' | 'tailor_instruction' | string;
   numeric_value?: number | null;
   num_value?: number | null;
   text_value?: string | null;
-  unit: 'in' | 'cm';
+  unit: 'in' | 'cm' | string;
   notes?: string | null;
   display_order?: number;
+  options?: string[] | null;
+  validation_rules?: { min?: number; max?: number; step?: number } | null;
 }
 
 export interface CustomerMeasurementVersion {
@@ -52,6 +25,11 @@ export interface CustomerMeasurementVersion {
   measured_at: string;
   measured_by?: string | null;
   notes?: string | null;
+  fitting_preferences?: string | null;
+  tailor_instructions?: string | null;
+  order_id?: string | null;
+  order_number?: string | null;
+  field_snapshots?: any[] | null;
   is_current: boolean;
   created_at: string;
   values: CustomerMeasurementValue[];
@@ -63,6 +41,7 @@ export interface CustomerMeasurementProfile {
   template_id: string;
   template_name?: string;
   template_code?: string;
+  garment_type?: string;
   profile_name: string;
   notes?: string | null;
   is_active: boolean;
@@ -219,8 +198,12 @@ class CustomerService {
   }
 
   // --- Customer Measurement Profiles & History ---
-  public async getMeasurementProfiles(customerId: string): Promise<CustomerMeasurementProfile[]> {
-    return api.get<CustomerMeasurementProfile[]>(`/customers/${customerId}/measurement-profiles`);
+  public async getMeasurementProfiles(customerId: string, filters?: { garment_type?: string; search?: string }): Promise<CustomerMeasurementProfile[]> {
+    const params = new URLSearchParams();
+    if (filters?.garment_type && filters.garment_type !== 'ALL') params.append('garment_type', filters.garment_type);
+    if (filters?.search) params.append('search', filters.search);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return api.get<CustomerMeasurementProfile[]>(`/customers/${customerId}/measurement-profiles${qs}`);
   }
 
   public async getMeasurementProfile(customerId: string, profileId: string): Promise<CustomerMeasurementProfile> {
@@ -234,7 +217,11 @@ class CustomerService {
   public async createMeasurementProfile(customerId: string, data: {
     template_id: string;
     profile_name: string;
+    garment_type?: string;
     notes?: string;
+    fitting_preferences?: string;
+    tailor_instructions?: string;
+    order_id?: string;
     measured_by?: string;
     measured_at?: string;
     values: Array<{
@@ -250,6 +237,9 @@ class CustomerService {
 
   public async addMeasurementVersion(customerId: string, profileId: string, data: {
     notes?: string;
+    fitting_preferences?: string;
+    tailor_instructions?: string;
+    order_id?: string;
     measured_by?: string;
     measured_at?: string;
     values: Array<{
@@ -274,9 +264,22 @@ class CustomerService {
 
   public async updateMeasurementProfile(customerId: string, profileId: string, data: {
     profile_name?: string;
+    garment_type?: string;
     notes?: string;
+    fitting_preferences?: string;
+    tailor_instructions?: string;
+    measured_by?: string;
+    order_id?: string;
+    values?: any[];
   }): Promise<CustomerMeasurementProfile> {
     return api.put<CustomerMeasurementProfile>(`/customers/${customerId}/measurement-profiles/${profileId}`, data);
+  }
+
+  public async linkOrderToProfile(customerId: string, profileId: string, orderId: string, versionId?: string): Promise<CustomerMeasurementProfile> {
+    return api.post<CustomerMeasurementProfile>(`/customers/${customerId}/measurement-profiles/${profileId}/link-order`, {
+      order_id: orderId,
+      version_id: versionId,
+    });
   }
 
   public async deleteMeasurementProfile(customerId: string, profileId: string): Promise<boolean> {

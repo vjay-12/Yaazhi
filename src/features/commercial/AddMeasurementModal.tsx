@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Modal } from '../../components/common/Modal';
 import { Button } from '../../components/common/Button';
 import {
@@ -6,17 +6,56 @@ import {
   type MeasurementTemplate,
   type CustomerMeasurementProfile,
 } from '../../services/customerService';
+import { templateService } from '../../services/templateService';
 import { useToast } from '../../components/common/Toast';
-import { Loader2 } from 'lucide-react';
+import {
+  Loader2,
+  AlertCircle,
+  Sparkles,
+  Scissors,
+} from 'lucide-react';
 import { CustomDropdown } from '../../components/common/CustomDropdown';
+
+export const GARMENT_TYPES = [
+  'Blouse',
+  'Chudidar',
+  'Kurti',
+  'Shirt',
+  'Trousers',
+  'Lehenga',
+  'Salwar Kameez',
+  'Anarkali',
+  'Sherwani',
+  'Other',
+];
+
+const PRESET_FITTING_CHIPS = [
+  'Comfort Fit',
+  'Snug / Fitted',
+  'Relaxed / Loose',
+  'Princess Cut Padded',
+  'Bridal Heavy Lining',
+  'High Neck Classic',
+];
+
+const PRESET_TAILOR_SUGGESTIONS = [
+  'Leave 2-inch inner side margins for future adjustment',
+  'Deep U-shaped back neck with latkan piping',
+  'French seam finishing with cotton lining',
+  'Side zipper with hook reinforcement',
+  'Padded cups with princess cut stitch line',
+];
 
 interface AddMeasurementModalProps {
   isOpen: boolean;
   onClose: () => void;
   customerId: string;
   customerName: string;
+  customerPhone?: string;
   onSaved: () => void;
   existingProfile?: CustomerMeasurementProfile | null;
+  mode?: 'new_profile' | 'new_version' | 'edit_profile';
+  availableOrders?: Array<{ id: string; orderNumber: string; date?: string }>;
 }
 
 interface FieldValueState {
@@ -28,6 +67,9 @@ interface FieldValueState {
   unit: 'in' | 'cm';
   notes: string;
   is_required: boolean;
+  options?: string[];
+  validation_rules?: { min?: number; max?: number; step?: number } | null;
+  error?: string | null;
 }
 
 export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
@@ -35,50 +77,122 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
   onClose,
   customerId,
   customerName,
+  customerPhone,
   onSaved,
   existingProfile,
+  mode = existingProfile ? 'new_version' : 'new_profile',
+  availableOrders = [],
 }) => {
   const { showToast } = useToast();
   const [templates, setTemplates] = useState<MeasurementTemplate[]>([]);
+  const [selectedGarmentFilter, setSelectedGarmentFilter] = useState<string>('ALL');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [globalUnit, setGlobalUnit] = useState<'in' | 'cm'>('in');
   const [profileName, setProfileName] = useState<string>('');
+  const [garmentType, setGarmentType] = useState<string>('Blouse');
   const [profileNotes, setProfileNotes] = useState<string>('');
-  const [measuredBy, setMeasuredBy] = useState<string>('');
+  const [fittingPreferences, setFittingPreferences] = useState<string>('Comfort Fit');
+  const [tailorInstructions, setTailorInstructions] = useState<string>('Leave 2-inch inner side margins for future adjustment');
+  const [selectedOrderId, setSelectedOrderId] = useState<string>('');
+  const [measuredBy, setMeasuredBy] = useState<string>('Showroom Master');
   const [measuredAt, setMeasuredAt] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [fields, setFields] = useState<FieldValueState[]>([]);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasDraftNotice, setHasDraftNotice] = useState(false);
 
-  const isNewVersionMode = Boolean(existingProfile);
+  const draftKey = `yaazhi_measurement_draft_${customerId}`;
 
-  // Load templates when modal opens
+  // Filter templates: only ACTIVE and UNARCHIVED templates can be selected for new profiles
+  const selectableTemplates = useMemo(() => {
+    return templates.filter((t) => !t.is_archived && t.is_active !== false);
+  }, [templates]);
+
+  // Secondary filter by garment type if selected
+  const filteredTemplates = useMemo(() => {
+    if (selectedGarmentFilter === 'ALL') return selectableTemplates;
+    return selectableTemplates.filter(
+      (t) => (t.garment_type || '').toLowerCase() === selectedGarmentFilter.toLowerCase()
+    );
+  }, [selectableTemplates, selectedGarmentFilter]);
+
+  // Helper to map template fields to form state
+  const populateFieldsFromTemplate = (tmpl: MeasurementTemplate, unit: 'in' | 'cm') => {
+    const mapped: FieldValueState[] = (tmpl.fields || [])
+      .filter((f) => f.is_active !== false)
+      .map((f) => {
+        let parsedOptions: string[] | undefined;
+        if (f.options) {
+          try {
+            parsedOptions = typeof f.options === 'string' ? JSON.parse(f.options) : f.options;
+          } catch {
+            parsedOptions = undefined;
+          }
+        }
+
+        let parsedRules: any = null;
+        if (f.validation_rules) {
+          try {
+            parsedRules = typeof f.validation_rules === 'string' ? JSON.parse(f.validation_rules) : f.validation_rules;
+          } catch {
+            parsedRules = null;
+          }
+        }
+
+        return {
+          field_id: f.id || f.field_key || '',
+          field_name: f.field_name,
+          field_key: f.field_key,
+          field_type: f.field_type || 'number',
+          num_value: '',
+          unit: (f.default_unit as 'in' | 'cm') || unit,
+          notes: '',
+          is_required: Boolean(f.is_required),
+          options: parsedOptions,
+          validation_rules: parsedRules,
+          error: null,
+        };
+      });
+    setFields(mapped);
+  };
+
+  // Load active templates and initialize fields
   useEffect(() => {
     if (!isOpen) return;
 
     const fetchTemplates = async () => {
       setIsLoadingTemplates(true);
       try {
-        const data = await customerService.getTemplates();
-        setTemplates(data || []);
+        // Fetch only active, non-archived templates
+        const tmpls = await templateService.getMeasurementTemplates({ include_archived: false });
+        setTemplates(tmpls || []);
 
         if (existingProfile) {
-          // Version mode: prefill existing profile details and current version values
+          // Version or Edit mode
           setProfileName(existingProfile.profile_name);
-          setProfileNotes(existingProfile.notes || '');
+          setGarmentType(existingProfile.garment_type || 'Blouse');
           setSelectedTemplateId(existingProfile.template_id || '');
 
-          const tmpl = (data || []).find((t) => t.id === existingProfile.template_id) || existingProfile.template;
           const currentVer = existingProfile.current_version;
           const firstUnit = (currentVer?.values?.[0]?.unit as 'in' | 'cm') || 'in';
           setGlobalUnit(firstUnit);
-          setMeasuredBy(currentVer?.measured_by || '');
+          setProfileNotes(currentVer?.notes || existingProfile.notes || '');
+          setFittingPreferences(currentVer?.fitting_preferences || 'Comfort Fit');
+          setTailorInstructions(currentVer?.tailor_instructions || 'Leave 2-inch inner side margins for future adjustment');
+          setMeasuredBy(currentVer?.measured_by || 'Showroom Master');
+          setSelectedOrderId(currentVer?.order_id || '');
 
-          if (tmpl?.fields && tmpl.fields.length > 0) {
-            const mapped: FieldValueState[] = tmpl.fields
-              .filter((f) => f.is_active !== false)
-              .map((f) => {
+          // Find template fields (or fallback to snapshot in current version)
+          const tmpl = (tmpls || []).find((t) => t.id === existingProfile.template_id);
+          const rawFields = tmpl?.fields?.length
+            ? tmpl.fields
+            : currentVer?.field_snapshots || [];
+
+          if (rawFields && rawFields.length > 0) {
+            const mapped: FieldValueState[] = rawFields
+              .filter((f: any) => f.is_active !== false)
+              .map((f: any) => {
                 const matchedVal = currentVer?.values?.find(
                   (v) => v.field_id === f.id || v.field_key === f.field_key
                 );
@@ -89,8 +203,26 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
                     : matchedVal.text_value || ''
                   : '';
 
+                let parsedOptions: string[] | undefined;
+                if (f.options) {
+                  try {
+                    parsedOptions = typeof f.options === 'string' ? JSON.parse(f.options) : f.options;
+                  } catch {
+                    parsedOptions = undefined;
+                  }
+                }
+
+                let parsedRules: any = null;
+                if (f.validation_rules) {
+                  try {
+                    parsedRules = typeof f.validation_rules === 'string' ? JSON.parse(f.validation_rules) : f.validation_rules;
+                  } catch {
+                    parsedRules = null;
+                  }
+                }
+
                 return {
-                  field_id: f.id,
+                  field_id: f.id || f.field_key || '',
                   field_name: f.field_name,
                   field_key: f.field_key,
                   field_type: f.field_type || 'number',
@@ -98,30 +230,35 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
                   unit: (f.default_unit as 'in' | 'cm') || firstUnit,
                   notes: matchedVal?.notes || '',
                   is_required: Boolean(f.is_required),
+                  options: parsedOptions,
+                  validation_rules: parsedRules,
+                  error: null,
                 };
               });
             setFields(mapped);
           }
         } else {
-          // New profile mode: select first template by default
-          const defaultTmpl = (data || []).find((t) => t.is_default) || data?.[0];
+          // New Profile Mode
+          // Check for existing draft in localStorage
+          const savedDraftStr = localStorage.getItem(draftKey);
+          if (savedDraftStr) {
+            try {
+              const draft = JSON.parse(savedDraftStr);
+              if (draft && draft.fields && draft.fields.length > 0) {
+                setHasDraftNotice(true);
+              }
+            } catch {
+              // Ignore invalid draft
+            }
+          }
+
+          const defaultTmpl = tmpls.find((t) => t.is_default) || tmpls[0];
           if (defaultTmpl) {
             setSelectedTemplateId(defaultTmpl.id);
-            setProfileName(`${customerName} - ${defaultTmpl.name}`);
-            setFields(
-              (defaultTmpl.fields || [])
-                .filter((f) => f.is_active !== false)
-                .map((f) => ({
-                  field_id: f.id,
-                  field_name: f.field_name,
-                  field_key: f.field_key,
-                  field_type: f.field_type || 'number',
-                  num_value: '',
-                  unit: (f.default_unit as 'in' | 'cm') || 'in',
-                  notes: '',
-                  is_required: Boolean(f.is_required),
-                }))
-            );
+            const garment = defaultTmpl.garment_type || 'Blouse';
+            setGarmentType(garment);
+            setProfileName(`${customerName} — ${defaultTmpl.name}`);
+            populateFieldsFromTemplate(defaultTmpl, 'in');
           }
         }
       } catch (err: any) {
@@ -132,46 +269,97 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
     };
 
     fetchTemplates();
-  }, [isOpen, existingProfile, customerName]);
+  }, [isOpen, existingProfile, customerName, draftKey]);
+
 
   // When changing template in new mode, update fields
   const handleTemplateChange = (templateId: string) => {
     setSelectedTemplateId(templateId);
     const tmpl = templates.find((t) => t.id === templateId);
     if (tmpl) {
-      if (!isNewVersionMode) {
-        setProfileName(`${customerName} - ${tmpl.name}`);
+      if (mode === 'new_profile') {
+        setProfileName(`${customerName} — ${tmpl.name}`);
+        setGarmentType(tmpl.garment_type || 'Blouse');
       }
-      setFields(
-        (tmpl.fields || [])
-          .filter((f) => f.is_active !== false)
-          .map((f) => ({
-            field_id: f.id,
-            field_name: f.field_name,
-            field_key: f.field_key,
-            field_type: f.field_type || 'number',
-            num_value: '',
-            unit: (f.default_unit as 'in' | 'cm') || globalUnit,
-            notes: '',
-            is_required: Boolean(f.is_required),
-          }))
-      );
+      populateFieldsFromTemplate(tmpl, globalUnit);
     }
   };
 
+  // Unit switch
   const handleUnitToggle = (unit: 'in' | 'cm') => {
     setGlobalUnit(unit);
     setFields((prev) => prev.map((f) => ({ ...f, unit })));
   };
 
+  // Field change & auto-save draft
   const handleFieldValueChange = (fieldId: string, val: string) => {
     setFields((prev) =>
-      prev.map((f) => (f.field_id === fieldId ? { ...f, num_value: val } : f))
+      prev.map((f) => {
+        if (f.field_id !== fieldId) return f;
+        return { ...f, num_value: val, error: null };
+      })
     );
+
+    // Save draft in localStorage if in new profile mode
+    if (mode === 'new_profile') {
+      try {
+        localStorage.setItem(
+          draftKey,
+          JSON.stringify({
+            profileName,
+            garmentType,
+            selectedTemplateId,
+            globalUnit,
+            fittingPreferences,
+            tailorInstructions,
+            measuredBy,
+            fields: fields.map((f) => (f.field_id === fieldId ? { ...f, num_value: val } : f)),
+            updatedAt: new Date().toISOString(),
+          })
+        );
+      } catch {
+        // quota exceeded or private mode, safe to ignore
+      }
+    }
   };
 
+  // Restore draft handler
+  const handleRestoreDraft = () => {
+    try {
+      const saved = localStorage.getItem(draftKey);
+      if (saved) {
+        const d = JSON.parse(saved);
+        if (d.profileName) setProfileName(d.profileName);
+        if (d.garmentType) setGarmentType(d.garmentType);
+        if (d.selectedTemplateId) setSelectedTemplateId(d.selectedTemplateId);
+        if (d.globalUnit) setGlobalUnit(d.globalUnit);
+        if (d.fittingPreferences) setFittingPreferences(d.fittingPreferences);
+        if (d.tailorInstructions) setTailorInstructions(d.tailorInstructions);
+        if (d.measuredBy) setMeasuredBy(d.measuredBy);
+        if (d.fields && Array.isArray(d.fields)) setFields(d.fields);
+        setHasDraftNotice(false);
+        showToast({
+          type: 'info',
+          title: 'Draft Restored',
+          message: 'Restored your in-progress measurements.',
+        });
+      }
+    } catch {
+      showToast({ type: 'error', title: 'Draft Error', message: 'Could not restore draft' });
+    }
+  };
+
+  // Clear draft handler
+  const handleClearDraft = () => {
+    localStorage.removeItem(draftKey);
+    setHasDraftNotice(false);
+  };
+
+  // Validation & Form Submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
+
     if (!profileName.trim()) {
       setErrorMessage('Profile name is required');
       return;
@@ -181,11 +369,45 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
       return;
     }
 
+    // Dynamic field validation
+    let hasValidationError = false;
+    const validatedFields = fields.map((f) => {
+      let fieldError: string | null = null;
+      const trimmedVal = f.num_value.trim();
+
+      // Required check
+      if (f.is_required && !trimmedVal) {
+        fieldError = `${f.field_name} is required`;
+        hasValidationError = true;
+      } else if (f.field_type === 'number' && trimmedVal) {
+        const num = parseFloat(trimmedVal);
+        if (isNaN(num)) {
+          fieldError = 'Must be a valid number';
+          hasValidationError = true;
+        } else if (f.validation_rules) {
+          if (f.validation_rules.min !== undefined && num < f.validation_rules.min) {
+            fieldError = `Min value: ${f.validation_rules.min} ${f.unit}`;
+            hasValidationError = true;
+          } else if (f.validation_rules.max !== undefined && num > f.validation_rules.max) {
+            fieldError = `Max value: ${f.validation_rules.max} ${f.unit}`;
+            hasValidationError = true;
+          }
+        }
+      }
+
+      return { ...f, error: fieldError };
+    });
+
+    if (hasValidationError) {
+      setFields(validatedFields);
+      setErrorMessage('Please correct the validation errors in the highlighted measurement fields.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      setErrorMessage(null);
 
-      const formattedValues = fields.map((f) => {
+      const formattedValues = validatedFields.map((f) => {
         const isNum = f.field_type === 'number';
         const parsed = parseFloat(f.num_value);
         return {
@@ -197,10 +419,31 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
         };
       });
 
-      if (isNewVersionMode && existingProfile) {
-        // Add new version (v2, v3...)
+      if (mode === 'edit_profile' && existingProfile) {
+        // Edit current profile
+        await customerService.updateMeasurementProfile(customerId, existingProfile.id, {
+          profile_name: profileName.trim(),
+          garment_type: garmentType,
+          notes: profileNotes.trim() || undefined,
+          fitting_preferences: fittingPreferences.trim() || undefined,
+          tailor_instructions: tailorInstructions.trim() || undefined,
+          measured_by: measuredBy.trim() || undefined,
+          order_id: selectedOrderId || undefined,
+          values: formattedValues,
+        });
+
+        showToast({
+          type: 'success',
+          title: 'Measurement Updated',
+          message: `Saved changes for ${profileName}`,
+        });
+      } else if (mode === 'new_version' && existingProfile) {
+        // Record new version (v2, v3...)
         await customerService.addMeasurementVersion(customerId, existingProfile.id, {
           notes: profileNotes.trim() || undefined,
+          fitting_preferences: fittingPreferences.trim() || undefined,
+          tailor_instructions: tailorInstructions.trim() || undefined,
+          order_id: selectedOrderId || undefined,
           measured_by: measuredBy.trim() || undefined,
           measured_at: measuredAt,
           values: formattedValues,
@@ -209,14 +452,18 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
         showToast({
           type: 'success',
           title: 'New Version Recorded',
-          message: `Updated measurements for ${existingProfile.profile_name}`,
+          message: `Recorded updated measurements for ${existingProfile.profile_name}`,
         });
       } else {
         // Create new garment profile
         await customerService.createMeasurementProfile(customerId, {
           template_id: selectedTemplateId,
           profile_name: profileName.trim(),
+          garment_type: garmentType,
           notes: profileNotes.trim() || undefined,
+          fitting_preferences: fittingPreferences.trim() || undefined,
+          tailor_instructions: tailorInstructions.trim() || undefined,
+          order_id: selectedOrderId || undefined,
           measured_by: measuredBy.trim() || undefined,
           measured_at: measuredAt,
           values: formattedValues,
@@ -224,10 +471,13 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
 
         showToast({
           type: 'success',
-          title: 'Measurement Profile Created',
-          message: `Saved garment profile for ${customerName}`,
+          title: 'Measurement Record Created',
+          message: `Saved ${garmentType} measurements for ${customerName}`,
         });
       }
+
+      // Clear draft on successful save
+      localStorage.removeItem(draftKey);
 
       onSaved();
       onClose();
@@ -252,21 +502,62 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
       isOpen={isOpen}
       onClose={() => !isSubmitting && onClose()}
       title={
-        isNewVersionMode
-          ? `Record New Version â€” ${existingProfile?.profile_name}`
-          : `Add Garment Measurement â€” ${customerName}`
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Scissors size={17} style={{ color: 'var(--yz-primary, #832729)' }} />
+          <span>
+            {mode === 'edit_profile'
+              ? `Edit Measurements — ${existingProfile?.profile_name}`
+              : mode === 'new_version'
+              ? `Record New Version — ${existingProfile?.profile_name}`
+              : `Add Garment Measurement — ${customerName}`}
+          </span>
+        </div>
       }
       subtitle={
-        isNewVersionMode
-          ? `Current Version: v${existingProfile?.current_version?.version_number || 1} â€¢ Previous versions are preserved in audit history`
-          : 'Define tailored body parameters using standard South Indian garment specifications'
+        mode === 'new_version'
+          ? `Current Version: v${existingProfile?.current_version?.version_number || 1} • Historical versions remain permanently preserved`
+          : 'Dynamic tailoring specification with garment-specific guidelines, validation, and atelier job instructions'
       }
-      maxWidth="680px"
+      maxWidth="780px"
     >
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        {/* Draft Notice Banner */}
+        {hasDraftNotice && mode === 'new_profile' && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 12px',
+              backgroundColor: '#EFF6FF',
+              border: '1px solid #BFDBFE',
+              borderRadius: 'var(--yz-radius-sm)',
+              fontSize: '11.5px',
+              color: '#1E40AF',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Sparkles size={14} />
+              <span>You have unsaved measurement draft for this customer.</span>
+            </div>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <Button variant="secondary" size="sm" type="button" onClick={handleClearDraft} style={{ fontSize: '10.5px' }}>
+                Discard Draft
+              </Button>
+              <Button variant="primary" size="sm" type="button" onClick={handleRestoreDraft} style={{ fontSize: '10.5px' }}>
+                Restore Draft
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Error Alert Box */}
         {errorMessage && (
           <div
             style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
               padding: '8px 12px',
               backgroundColor: '#FEF2F2',
               border: '1px solid #FECACA',
@@ -276,63 +567,121 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
               fontWeight: 500,
             }}
           >
-            {errorMessage}
+            <AlertCircle size={15} style={{ flexShrink: 0 }} />
+            <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* Top Configuration Grid */}
+        {/* Garment Type & Template Filter Bar (New Profile Mode) */}
+        {mode === 'new_profile' && (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              backgroundColor: 'var(--yz-bg-subtle)',
+              padding: '10px 12px',
+              borderRadius: 'var(--yz-radius-sm)',
+              border: '1px solid var(--yz-border)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label className="yz-label" style={{ marginBottom: 0 }}>
+                1. Select Garment Type & Active Template *
+              </label>
+              <span style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)' }}>
+                {selectableTemplates.length} active templates available
+              </span>
+            </div>
+
+            {/* Garment Quick Chips */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {['ALL', 'Blouse', 'Chudidar', 'Kurti', 'Shirt', 'Trousers', 'Lehenga'].map((g) => {
+                const isSelected = selectedGarmentFilter === g;
+                return (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setSelectedGarmentFilter(g)}
+                    style={{
+                      padding: '3px 9px',
+                      borderRadius: 'var(--yz-radius-full)',
+                      fontSize: '10.5px',
+                      fontWeight: isSelected ? 700 : 500,
+                      border: isSelected
+                        ? '1px solid var(--yz-primary, #832729)'
+                        : '1px solid var(--yz-border)',
+                      backgroundColor: isSelected ? 'var(--yz-primary, #832729)' : 'var(--yz-bg-surface)',
+                      color: isSelected ? '#FFFFFF' : 'var(--yz-text-secondary)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    {g === 'ALL' ? 'All Garments' : g}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Template Dropdown */}
+            <CustomDropdown
+              value={selectedTemplateId}
+              onChange={(val) => handleTemplateChange(String(val))}
+              disabled={isLoadingTemplates}
+              options={filteredTemplates.map((t) => ({
+                value: t.id,
+                label: `${t.name} (${t.garment_type || t.category}) — ${t.fields?.length || 0} fields`,
+              }))}
+              minWidth="100%"
+              style={{ width: '100%', marginTop: '2px' }}
+            />
+          </div>
+        )}
+
+        {/* Profile Name & Units Row */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: isNewVersionMode ? '1fr 1fr' : '1.3fr 1fr 120px',
+            gridTemplateColumns: '1.2fr 1fr 140px',
             gap: '10px',
-            backgroundColor: 'var(--yz-bg-subtle)',
-            padding: '10px 12px',
-            borderRadius: 'var(--yz-radius-sm)',
-            border: '1px solid var(--yz-border)',
+            alignItems: 'flex-end',
           }}
         >
-          {/* Garment Template Selection */}
-          {!isNewVersionMode && (
-            <div>
-              <label className="yz-label">Garment Type / Template *</label>
-              <CustomDropdown
-                value={selectedTemplateId}
-                onChange={(val) => handleTemplateChange(String(val))}
-                disabled={isLoadingTemplates}
-                options={templates.map((t) => ({
-                  value: t.id,
-                  label: `${t.name} (${t.category})`,
-                }))}
-                minWidth="100%"
-                style={{ width: '100%' }}
-              />
-            </div>
-          )}
-
           {/* Profile Name */}
           <div>
-            <label className="yz-label">Profile / Garment Name *</label>
+            <label className="yz-label">Garment / Fitting Profile Name *</label>
             <input
               type="text"
               className="yz-input"
               required
-              placeholder="e.g. Saree Blouse - Wedding Zari"
+              placeholder="e.g. Saree Blouse — Wedding Zari"
               value={profileName}
               onChange={(e) => setProfileName(e.target.value)}
             />
           </div>
 
-          {/* Unit Toggle */}
+          {/* Garment Type */}
           <div>
-            <label className="yz-label">Units</label>
+            <label className="yz-label">Garment Category</label>
+            <CustomDropdown
+              value={garmentType}
+              onChange={(val) => setGarmentType(String(val))}
+              options={GARMENT_TYPES.map((gt) => ({ value: gt, label: gt }))}
+              minWidth="100%"
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          {/* Global Units Toggle */}
+          <div>
+            <label className="yz-label">Fitting Units</label>
             <div
               style={{
                 display: 'inline-flex',
                 borderRadius: 'var(--yz-radius-sm)',
                 border: '1px solid var(--yz-border)',
                 overflow: 'hidden',
-                height: '28px',
+                height: '32px',
                 width: '100%',
               }}
             >
@@ -343,10 +692,11 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
                   flex: 1,
                   border: 'none',
                   fontSize: '11px',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   cursor: 'pointer',
                   backgroundColor: globalUnit === 'in' ? 'var(--yz-primary, #832729)' : 'var(--yz-bg-surface)',
                   color: globalUnit === 'in' ? '#FFFFFF' : 'var(--yz-text-secondary)',
+                  transition: 'all 0.15s ease',
                 }}
               >
                 Inches (in)
@@ -358,10 +708,11 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
                   flex: 1,
                   border: 'none',
                   fontSize: '11px',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   cursor: 'pointer',
                   backgroundColor: globalUnit === 'cm' ? 'var(--yz-primary, #832729)' : 'var(--yz-bg-surface)',
                   color: globalUnit === 'cm' ? '#FFFFFF' : 'var(--yz-text-secondary)',
+                  transition: 'all 0.15s ease',
                 }}
               >
                 CM (cm)
@@ -370,30 +721,7 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
           </div>
         </div>
 
-        {/* Tailor & Date Metadata */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          <div>
-            <label className="yz-label">Master Tailor / Measured By</label>
-            <input
-              type="text"
-              className="yz-input"
-              placeholder="e.g. Master Tailor Velu, Senior Cutter Muthu"
-              value={measuredBy}
-              onChange={(e) => setMeasuredBy(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="yz-label">Measurement Date</label>
-            <input
-              type="date"
-              className="yz-input"
-              value={measuredAt}
-              onChange={(e) => setMeasuredAt(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Dynamic Measurement Fields Grid */}
+        {/* Dynamic Measurement Fields Form */}
         <div>
           <div
             style={{
@@ -412,122 +740,284 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
                 color: 'var(--yz-text-secondary)',
               }}
             >
-              Garment Measurement Fields ({fields.length} Parameters)
+              2. Tailoring Parameter Values ({fields.length} Fields)
             </span>
-            <span style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)' }}>
-              Values in {globalUnit === 'in' ? 'inches' : 'centimeters'}
+            <span style={{ fontSize: '10px', color: 'var(--yz-text-muted)' }}>
+              Standard Atelier Tape ({globalUnit === 'in' ? 'Inches' : 'Centimeters'}) • * Indicates required field
             </span>
           </div>
 
           <div
             style={{
-              maxHeight: '260px',
+              maxHeight: '270px',
               overflowY: 'auto',
               border: '1px solid var(--yz-border)',
-              borderRadius: 'var(--yz-radius-sm)',
-              padding: '10px',
+              borderRadius: 'var(--yz-radius-md)',
+              padding: '12px',
               backgroundColor: 'var(--yz-bg-surface)',
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: '8px',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
+              gap: '10px',
             }}
           >
-            {fields.map((f) => (
-              <div
-                key={f.field_id}
-                style={{
-                  backgroundColor: 'var(--yz-bg-subtle)',
-                  padding: '6px 8px',
-                  borderRadius: 'var(--yz-radius-sm)',
-                  border: '1px solid var(--yz-border)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '2px',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label
-                    style={{
-                      fontSize: '10.5px',
-                      fontWeight: 600,
-                      color: 'var(--yz-text-primary)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                    title={f.field_name}
-                  >
-                    {f.field_name} {f.is_required && <span style={{ color: 'var(--yz-primary, #832729)' }}>*</span>}
-                  </label>
-                  <span
-                    style={{
-                      fontSize: '9.5px',
-                      fontFamily: 'var(--yz-font-mono)',
-                      color: 'var(--yz-text-muted)',
-                    }}
-                  >
-                    {f.unit}
-                  </span>
-                </div>
+            {fields.map((f) => {
+              const hasErr = Boolean(f.error);
 
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={f.field_type === 'number' ? 'number' : 'text'}
-                    step="0.25"
-                    className="yz-input font-mono"
-                    placeholder="—"
-                    value={f.num_value}
-                    onChange={(e) => handleFieldValueChange(f.field_id, e.target.value)}
-                    style={{
-                      height: '26px',
-                      fontSize: '11.5px',
-                      padding: '2px 6px',
-                      fontWeight: 600,
-                    }}
-                  />
+              return (
+                <div
+                  key={f.field_id}
+                  style={{
+                    backgroundColor: hasErr ? '#FEF2F2' : 'var(--yz-bg-subtle)',
+                    padding: '8px 10px',
+                    borderRadius: 'var(--yz-radius-sm)',
+                    border: hasErr ? '1.5px solid #EF4444' : '1px solid var(--yz-border)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: hasErr ? '#991B1B' : 'var(--yz-text-primary)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                      title={f.field_name}
+                    >
+                      {f.field_name} {f.is_required && <span style={{ color: '#DC2626' }}>*</span>}
+                    </label>
+                    <span
+                      style={{
+                        fontSize: '9.5px',
+                        fontFamily: 'var(--yz-font-mono)',
+                        color: 'var(--yz-text-muted)',
+                      }}
+                    >
+                      {f.unit}
+                    </span>
+                  </div>
+
+                  {/* Render based on field type */}
+                  {f.field_type === 'dropdown' && f.options && f.options.length > 0 ? (
+                    <select
+                      className="yz-input"
+                      value={f.num_value}
+                      onChange={(e) => handleFieldValueChange(f.field_id, e.target.value)}
+                      style={{
+                        height: '28px',
+                        fontSize: '11px',
+                        padding: '2px 6px',
+                        backgroundColor: 'var(--yz-bg-surface)',
+                      }}
+                    >
+                      <option value="">Select style / cut...</option>
+                      {f.options.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  ) : f.field_type === 'tailor_instruction' ? (
+                    <input
+                      type="text"
+                      className="yz-input"
+                      placeholder="Special workshop notes"
+                      value={f.num_value}
+                      onChange={(e) => handleFieldValueChange(f.field_id, e.target.value)}
+                      style={{ height: '28px', fontSize: '11px', padding: '2px 6px' }}
+                    />
+                  ) : (
+                    <input
+                      type={f.field_type === 'number' ? 'number' : 'text'}
+                      step="0.25"
+                      min={f.validation_rules?.min}
+                      max={f.validation_rules?.max}
+                      className="yz-input font-mono"
+                      placeholder={f.validation_rules?.min ? `Min: ${f.validation_rules.min}` : '—'}
+                      value={f.num_value}
+                      onChange={(e) => handleFieldValueChange(f.field_id, e.target.value)}
+                      style={{
+                        height: '28px',
+                        fontSize: '12px',
+                        padding: '2px 6px',
+                        fontWeight: 700,
+                        backgroundColor: 'var(--yz-bg-surface)',
+                      }}
+                    />
+                  )}
+
+                  {/* Inline Error Notice */}
+                  {f.error && (
+                    <span style={{ fontSize: '9.5px', color: '#DC2626', fontWeight: 600 }}>
+                      {f.error}
+                    </span>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        {/* Styling Notes / Cut Details */}
-        <div>
-          <label className="yz-label">Styling Notes / Tailoring Instructions</label>
-          <textarea
-            className="yz-input"
-            rows={2}
-            placeholder="e.g. Back neck deep round with latkan dori, padded cups, 1.5 in extra margin inside"
-            value={profileNotes}
-            onChange={(e) => setProfileNotes(e.target.value)}
-            style={{ height: 'auto', padding: '6px 8px', resize: 'vertical' }}
-          />
+        {/* Fitting Preferences & Tailor Instructions Section */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '12px',
+            backgroundColor: 'var(--yz-bg-subtle)',
+            padding: '12px',
+            borderRadius: 'var(--yz-radius-md)',
+            border: '1px solid var(--yz-border)',
+          }}
+        >
+          {/* Fitting Preferences */}
+          <div>
+            <label className="yz-label">Client Fitting Preference</label>
+            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '6px' }}>
+              {PRESET_FITTING_CHIPS.map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => setFittingPreferences(chip)}
+                  style={{
+                    fontSize: '9.5px',
+                    padding: '2px 7px',
+                    borderRadius: 'var(--yz-radius-full)',
+                    border: '1px solid var(--yz-border)',
+                    backgroundColor: fittingPreferences === chip ? '#FEF2F2' : 'var(--yz-bg-surface)',
+                    color: fittingPreferences === chip ? 'var(--yz-primary, #832729)' : 'var(--yz-text-secondary)',
+                    fontWeight: fittingPreferences === chip ? 700 : 500,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              className="yz-input"
+              value={fittingPreferences}
+              onChange={(e) => setFittingPreferences(e.target.value)}
+              placeholder="e.g. Snug fitted with 1.5 in inner margins"
+            />
+          </div>
+
+          {/* Workshop Tailor Instructions */}
+          <div>
+            <label className="yz-label">Atelier Workshop Instructions</label>
+            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '6px' }}>
+              {PRESET_TAILOR_SUGGESTIONS.slice(0, 2).map((sug) => (
+                <button
+                  key={sug}
+                  type="button"
+                  onClick={() => setTailorInstructions(sug)}
+                  style={{
+                    fontSize: '9px',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    border: '1px solid #FED7AA',
+                    backgroundColor: '#FFFBEB',
+                    color: '#92400E',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '180px',
+                  }}
+                  title={sug}
+                >
+                  + {sug}
+                </button>
+              ))}
+            </div>
+            <textarea
+              className="yz-input"
+              rows={2}
+              value={tailorInstructions}
+              onChange={(e) => setTailorInstructions(e.target.value)}
+              placeholder="Specific notes for cutting and stitching masters"
+              style={{ height: 'auto', resize: 'vertical' }}
+            />
+          </div>
         </div>
 
-        {/* Modal Footer */}
+        {/* Tailor & Order Linking Metadata */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+          <div>
+            <label className="yz-label">Master Tailor / Measured By</label>
+            <input
+              type="text"
+              className="yz-input"
+              placeholder="Master Tailor Velu"
+              value={measuredBy}
+              onChange={(e) => setMeasuredBy(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="yz-label">Fitting Date</label>
+            <input
+              type="date"
+              className="yz-input"
+              value={measuredAt}
+              onChange={(e) => setMeasuredAt(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="yz-label">Link Stitching Order (Optional)</label>
+            <select
+              className="yz-input"
+              value={selectedOrderId}
+              onChange={(e) => setSelectedOrderId(e.target.value)}
+            >
+              <option value="">None (Stand-alone Fitting)</option>
+              {availableOrders.map((ord) => (
+                <option key={ord.id} value={ord.id}>
+                  {ord.orderNumber} {ord.date ? `(${ord.date})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Modal Actions Footer */}
         <div
           style={{
             display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '8px',
-            paddingTop: '10px',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingTop: '12px',
             borderTop: '1px solid var(--yz-border)',
           }}
         >
-          <Button variant="secondary" size="sm" type="button" onClick={onClose} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button variant="primary" size="sm" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <Loader2 size={13} className="animate-spin" /> Saving...
-              </span>
-            ) : isNewVersionMode ? (
-              'Save New Version'
-            ) : (
-              'Save Measurement Profile'
-            )}
-          </Button>
+          <div style={{ fontSize: '11px', color: 'var(--yz-text-muted)' }}>
+            Client: <strong>{customerName}</strong> {customerPhone && `• ${customerPhone}`}
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Button variant="secondary" size="sm" type="button" onClick={onClose} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Loader2 size={13} className="animate-spin" /> Saving...
+                </span>
+              ) : mode === 'edit_profile' ? (
+                'Save Changes'
+              ) : mode === 'new_version' ? (
+                'Record New Version'
+              ) : (
+                'Save Measurement Profile'
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </Modal>

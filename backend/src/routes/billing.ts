@@ -213,6 +213,15 @@ router.post('/checkout', async (req, res): Promise<void> => {
           },
         });
 
+        // Link measurement version if supplied
+        const mvId = req.body.measurement_version_id || req.body.measurementVersionId;
+        if (mvId) {
+          await tx.customerMeasurementVersion.updateMany({
+            where: { id: mvId },
+            data: { order_id: salesOrder.id },
+          });
+        }
+
         // 5. Create Invoice
         const invoice = await tx.invoice.create({
           data: {

@@ -1,7 +1,9 @@
-import React from 'react';
-import { Ban } from 'lucide-react';
+import React, { useState } from 'react';
+import { Ban, Scissors, Printer } from 'lucide-react';
 import { Modal } from '../../components/common/Modal';
+import { Button } from '../../components/common/Button';
 import type { SalesOrderData } from '../../services/salesOrderService';
+import { PrintTailorSheetModal } from './PrintTailorSheetModal';
 
 interface OrderDetailModalProps {
   order: SalesOrderData | null;
@@ -15,6 +17,8 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const [measurementForPrint, setMeasurementForPrint] = useState<any | null>(null);
+
   if (!order || !isOpen) return null;
 
   const formatDisplayDate = (dateStr: string | Date | undefined): string => {
@@ -121,6 +125,154 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Linked Bespoke Atelier Measurements */}
+        {order.measurements && order.measurements.length > 0 && (
+          <div
+            style={{
+              backgroundColor: 'var(--yz-bg-surface)',
+              border: '1px solid var(--yz-border)',
+              borderRadius: 'var(--yz-radius-md)',
+              padding: '12px 14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--yz-primary, #832729)' }}>
+                <Scissors size={14} />
+                <span>LINKED BESPOKE ATELIER MEASUREMENTS ({order.measurements.length})</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {order.measurements.map((m, idx) => {
+                const values = m.values || [];
+                return (
+                  <div
+                    key={m.version_id || idx}
+                    style={{
+                      border: '1px solid var(--yz-border)',
+                      borderRadius: 'var(--yz-radius-sm)',
+                      padding: '10px 12px',
+                      backgroundColor: 'var(--yz-bg-subtle)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            fontSize: '12px',
+                            color: 'var(--yz-text-primary)',
+                          }}
+                        >
+                          {m.profile_name || `${m.garment_type || 'Garment'} Fitting`}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            padding: '1px 8px',
+                            borderRadius: 'var(--yz-radius-full)',
+                            backgroundColor: 'var(--yz-primary-light, #FDF2F2)',
+                            color: 'var(--yz-primary, #832729)',
+                            border: '1px solid var(--yz-primary, #832729)',
+                          }}
+                        >
+                          {m.garment_type || 'Custom'} • v{m.version_number}
+                        </span>
+                      </div>
+
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        icon={<Printer size={12} />}
+                        onClick={() => {
+                          const profileMock: any = {
+                            id: m.profile_id,
+                            profile_name: m.profile_name || `${m.garment_type || 'Garment'} Fitting`,
+                            garment_type: m.garment_type || 'Blouse',
+                            notes: m.fitting_preferences,
+                            current_version: {
+                              id: m.version_id,
+                              version_number: m.version_number,
+                              is_current: true,
+                              measured_at: m.measured_at,
+                              measured_by: m.measured_by || 'Workshop Tailor',
+                              fitting_preferences: m.fitting_preferences,
+                              tailor_instructions: m.tailor_instructions,
+                              order_number: order.orderNumber,
+                              order_id: order.id,
+                              values: values.map((v) => ({
+                                field_id: v.field_id,
+                                field_name: v.field_name,
+                                numeric_value: v.numeric_value,
+                                text_value: v.text_value,
+                                unit: v.unit || 'in',
+                              })),
+                            },
+                          };
+                          setMeasurementForPrint(profileMock);
+                        }}
+                      >
+                        Print Tailor Slip
+                      </Button>
+                    </div>
+
+                    {/* Quick values pills */}
+                    {values.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
+                        {values.map((v, valIdx) => (
+                          <span
+                            key={v.field_id || valIdx}
+                            style={{
+                              fontSize: '10.5px',
+                              backgroundColor: 'var(--yz-bg-surface)',
+                              border: '1px solid var(--yz-border)',
+                              borderRadius: '4px',
+                              padding: '2px 6px',
+                              fontFamily: 'var(--yz-font-mono)',
+                            }}
+                          >
+                            <span style={{ color: 'var(--yz-text-muted)', fontFamily: 'var(--yz-font-sans)' }}>
+                              {v.field_name}:{' '}
+                            </span>
+                            <strong>
+                              {v.numeric_value !== null && v.numeric_value !== undefined ? `${v.numeric_value} ${v.unit || 'in'}` : (v.text_value || '—')}
+                            </strong>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {(m.fitting_preferences || m.tailor_instructions) && (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '10.5px', marginTop: '4px' }}>
+                        {m.fitting_preferences && (
+                          <div style={{ color: 'var(--yz-text-secondary)' }}>
+                            <strong style={{ color: 'var(--yz-text-primary)' }}>Fit:</strong> {m.fitting_preferences}
+                          </div>
+                        )}
+                        {m.tailor_instructions && (
+                          <div style={{ color: 'var(--yz-alert-warning-text, #92400E)' }}>
+                            <strong style={{ color: 'var(--yz-alert-warning-text, #92400E)' }}>Tailor:</strong> {m.tailor_instructions}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Itemized Garments Table */}
         <div>
@@ -536,6 +688,18 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Printable Workshop Tailor Slip Modal */}
+      {measurementForPrint && (
+        <PrintTailorSheetModal
+          isOpen={true}
+          onClose={() => setMeasurementForPrint(null)}
+          customerName={order.customerName}
+          customerPhone={order.customerPhone}
+          profile={measurementForPrint}
+          version={measurementForPrint.current_version}
+        />
+      )}
     </Modal>
   );
 };

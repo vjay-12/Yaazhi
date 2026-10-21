@@ -93,6 +93,24 @@ function formatOrderWithPayments(o: any) {
       createdAt: p.created_at,
       index: idx + 1,
     })),
+    measurements: (o.measurement_versions || []).map((mv: any) => ({
+      version_id: mv.id,
+      profile_id: mv.profile_id,
+      profile_name: mv.profile?.profile_name || 'Boutique Fitting',
+      garment_type: mv.profile?.garment_type || 'Blouse',
+      version_number: mv.version_number,
+      fitting_preferences: mv.fitting_preferences,
+      tailor_instructions: mv.tailor_instructions,
+      measured_at: mv.measured_at,
+      measured_by: mv.measured_by,
+      values: (mv.values || []).map((val: any) => ({
+        field_id: val.field_id,
+        field_name: val.field?.field_name || 'Parameter',
+        numeric_value: val.numeric_value ? Number(val.numeric_value) : null,
+        text_value: val.text_value,
+        unit: val.unit || 'in',
+      })),
+    })),
     createdAt: o.created_at,
   };
 }
@@ -113,6 +131,12 @@ router.get('/', async (_req, res): Promise<void> => {
         },
         items: {
           include: { product: true },
+        },
+        measurement_versions: {
+          include: {
+            profile: true,
+            values: { include: { field: true } },
+          },
         },
       },
     });
@@ -138,6 +162,12 @@ router.get('/:id', async (req, res): Promise<void> => {
         },
         items: { include: { product: true } },
         invoices: { include: { payments: { orderBy: { payment_date: 'asc' } } } },
+        measurement_versions: {
+          include: {
+            profile: true,
+            values: { include: { field: true } },
+          },
+        },
       },
     });
 
@@ -294,6 +324,15 @@ router.post('/', async (req, res): Promise<void> => {
         items: { include: { product: true } },
       },
     });
+
+    // If measurement version ID was provided, link it to this order
+    const mvId = req.body.measurement_version_id || req.body.measurementVersionId;
+    if (mvId) {
+      await prisma.customerMeasurementVersion.updateMany({
+        where: { id: mvId },
+        data: { order_id: order.id },
+      });
+    }
 
     res.status(201).json(order);
   } catch (err: any) {

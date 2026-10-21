@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Modal } from '../../components/common/Modal';
 import { Button } from '../../components/common/Button';
 import {
@@ -20,10 +20,13 @@ import {
   Trash2,
   Archive,
   RotateCcw,
+  Printer,
+  Search,
 } from 'lucide-react';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { AddMeasurementModal } from './AddMeasurementModal';
 import { MeasurementHistoryModal } from './MeasurementHistoryModal';
+import { PrintTailorSheetModal } from './PrintTailorSheetModal';
 
 interface CustomerDetailModalProps {
   isOpen: boolean;
@@ -49,9 +52,15 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
 
   // Sub-modal states
   const [isAddMeasurementOpen, setIsAddMeasurementOpen] = useState(false);
+  const [measurementModalMode, setMeasurementModalMode] = useState<'new_profile' | 'new_version' | 'edit_profile'>('new_profile');
   const [profileForNewVersion, setProfileForNewVersion] = useState<CustomerMeasurementProfile | null>(null);
   const [profileForHistory, setProfileForHistory] = useState<CustomerMeasurementProfile | null>(null);
+  const [profileToPrint, setProfileToPrint] = useState<CustomerMeasurementProfile | null>(null);
   const [isCloningId, setIsCloningId] = useState<string | null>(null);
+
+  // Measurement filtering & search
+  const [selectedGarmentFilter, setSelectedGarmentFilter] = useState<string>('ALL');
+  const [measurementSearchQuery, setMeasurementSearchQuery] = useState<string>('');
 
   // Confirmation dialog states
   const [profileToArchive, setProfileToArchive] = useState<CustomerMeasurementProfile | null>(null);
@@ -98,20 +107,46 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
     }
   }, [isOpen, customer, loadData]);
 
+  const filteredProfiles = useMemo(() => {
+    return profiles.filter((p) => {
+      const matchGarment =
+        selectedGarmentFilter === 'ALL' ||
+        (p.garment_type || '').toLowerCase() === selectedGarmentFilter.toLowerCase();
+      const matchSearch =
+        !measurementSearchQuery.trim() ||
+        p.profile_name.toLowerCase().includes(measurementSearchQuery.toLowerCase()) ||
+        (p.notes || '').toLowerCase().includes(measurementSearchQuery.toLowerCase()) ||
+        (p.garment_type || '').toLowerCase().includes(measurementSearchQuery.toLowerCase());
+      return matchGarment && matchSearch;
+    });
+  }, [profiles, selectedGarmentFilter, measurementSearchQuery]);
+
   if (!isOpen || !customer || !currentCustomer) return null;
 
   const handleOpenAddMeasurement = () => {
     setProfileForNewVersion(null);
+    setMeasurementModalMode('new_profile');
+    setIsAddMeasurementOpen(true);
+  };
+
+  const handleOpenEditProfile = (prof: CustomerMeasurementProfile) => {
+    setProfileForNewVersion(prof);
+    setMeasurementModalMode('edit_profile');
     setIsAddMeasurementOpen(true);
   };
 
   const handleOpenNewVersion = (prof: CustomerMeasurementProfile) => {
     setProfileForNewVersion(prof);
+    setMeasurementModalMode('new_version');
     setIsAddMeasurementOpen(true);
   };
 
   const handleOpenHistory = (prof: CustomerMeasurementProfile) => {
     setProfileForHistory(prof);
+  };
+
+  const handleOpenPrint = (prof: CustomerMeasurementProfile) => {
+    setProfileToPrint(prof);
   };
 
   const handleCloneProfile = async (prof: CustomerMeasurementProfile) => {
@@ -452,6 +487,8 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                   backgroundColor: 'var(--yz-bg-subtle)',
                   borderRadius: 'var(--yz-radius-md)',
                   border: '1px solid var(--yz-border)',
+                  flexWrap: 'wrap',
+                  gap: '8px',
                 }}
               >
                 <div>
@@ -470,11 +507,11 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                         borderRadius: 'var(--yz-radius-full)',
                       }}
                     >
-                      {profiles.length} Garments
+                      {profiles.length} Recorded
                     </span>
                   </div>
                   <span style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)' }}>
-                    Custom tailored garment measurements with versioned historical audit trail.
+                    Garment-specific tailored fitting records with permanent historical version preservation.
                   </span>
                 </div>
 
@@ -485,9 +522,69 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                   onClick={handleOpenAddMeasurement}
                   style={{ fontSize: '11px', height: '32px' }}
                 >
-                  Add Measurement
+                  Record Measurement
                 </Button>
               </div>
+
+              {/* Garment Filters & Search Bar */}
+              {profiles.length > 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '10px',
+                    flexWrap: 'wrap',
+                    padding: '8px 12px',
+                    backgroundColor: 'var(--yz-bg-surface)',
+                    border: '1px solid var(--yz-border)',
+                    borderRadius: 'var(--yz-radius-md)',
+                  }}
+                >
+                  {/* Garment Type Pills */}
+                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--yz-text-muted)', textTransform: 'uppercase', marginRight: '4px' }}>
+                      Garment:
+                    </span>
+                    {['ALL', 'Blouse', 'Chudidar', 'Kurti', 'Shirt', 'Trousers', 'Lehenga'].map((g) => {
+                      const isSelected = selectedGarmentFilter === g;
+                      return (
+                        <button
+                          key={g}
+                          type="button"
+                          onClick={() => setSelectedGarmentFilter(g)}
+                          style={{
+                            padding: '2px 8px',
+                            borderRadius: 'var(--yz-radius-full)',
+                            fontSize: '10.5px',
+                            fontWeight: isSelected ? 700 : 500,
+                            border: isSelected ? '1px solid var(--yz-primary, #832729)' : '1px solid var(--yz-border)',
+                            backgroundColor: isSelected ? 'var(--yz-primary, #832729)' : 'transparent',
+                            color: isSelected ? '#FFFFFF' : 'var(--yz-text-secondary)',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          {g === 'ALL' ? 'All' : g}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Search Input */}
+                  <div style={{ position: 'relative', width: '200px' }}>
+                    <Search size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--yz-text-muted)' }} />
+                    <input
+                      type="text"
+                      className="yz-input"
+                      placeholder="Search profiles..."
+                      value={measurementSearchQuery}
+                      onChange={(e) => setMeasurementSearchQuery(e.target.value)}
+                      style={{ height: '26px', fontSize: '10.5px', paddingLeft: '26px' }}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Profiles Cards Grid */}
               {isLoading ? (
@@ -505,20 +602,47 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                     backgroundColor: 'var(--yz-bg-surface)',
                   }}
                 >
-                  <SlidersHorizontal size={24} style={{ color: 'var(--yz-text-muted)', margin: '0 auto 8px' }} />
-                  <div style={{ fontSize: '12.5px', fontWeight: 700, color: 'var(--yz-text-primary)' }}>
+                  <SlidersHorizontal size={26} style={{ color: 'var(--yz-text-muted)', margin: '0 auto 8px' }} />
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--yz-text-primary)' }}>
                     No Measurement Profiles Recorded Yet
                   </div>
                   <p style={{ fontSize: '11px', color: 'var(--yz-text-muted)', marginTop: '4px', maxWidth: '380px', margin: '4px auto 12px' }}>
-                    Record custom measurements for {customer.name} across Saree Blouse, Churidar, Kurti, or Bottom pants.
+                    Record custom measurements for {customer.name} across Saree Blouse, Churidar, Kurti, or Trousers using active boutique templates.
                   </p>
                   <Button variant="primary" size="sm" icon={<Plus size={12} />} onClick={handleOpenAddMeasurement}>
                     Record First Measurement
                   </Button>
                 </div>
+              ) : filteredProfiles.length === 0 ? (
+                <div
+                  style={{
+                    padding: '28px',
+                    textAlign: 'center',
+                    border: '1px dashed var(--yz-border)',
+                    borderRadius: 'var(--yz-radius-md)',
+                    backgroundColor: 'var(--yz-bg-surface)',
+                  }}
+                >
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--yz-text-secondary)' }}>
+                    No measurement profiles match your selected filters.
+                  </span>
+                  <div style={{ marginTop: '8px' }}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedGarmentFilter('ALL');
+                        setMeasurementSearchQuery('');
+                      }}
+                      style={{ fontSize: '11px' }}
+                    >
+                      Clear Filters
+                    </Button>
+                  </div>
+                </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '10px' }}>
-                  {profiles.map((prof) => {
+                  {filteredProfiles.map((prof) => {
                     const currentVer = prof.current_version;
                     const dateStr = currentVer?.measured_at
                       ? new Date(currentVer.measured_at).toLocaleDateString('en-IN', {
@@ -534,6 +658,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                       return num !== null && num !== undefined && (typeof num === 'string' ? (num as string).trim() !== '' : true);
                     });
                     const previewValues = (filled.length > 0 ? filled : values).slice(0, 6);
+                    const garment = prof.garment_type || 'Blouse';
 
                     return (
                       <div
@@ -553,7 +678,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                           {/* Card Header */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--yz-border)', paddingBottom: '6px' }}>
                             <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                                 <span style={{ fontSize: '12.5px', fontWeight: 700, color: 'var(--yz-text-primary)' }}>
                                   {prof.profile_name}
                                 </span>
@@ -569,11 +694,11 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                                     borderRadius: '3px',
                                   }}
                                 >
-                                  v{currentVer?.version_number || 1}
+                                  v{currentVer?.version_number || 1} • CURRENT
                                 </span>
                               </div>
                               <div style={{ fontSize: '10.5px', color: 'var(--yz-text-muted)', marginTop: '2px' }}>
-                                Updated: {dateStr}
+                                Measured: {dateStr}
                                 {currentVer?.measured_by && ` • Tailor: ${currentVer.measured_by}`}
                               </div>
                             </div>
@@ -581,33 +706,74 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                             <span
                               style={{
                                 fontSize: '10px',
-                                fontWeight: 600,
+                                fontWeight: 700,
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.3px',
                                 color: 'var(--yz-text-secondary)',
                                 backgroundColor: 'var(--yz-bg-subtle)',
-                                padding: '2px 6px',
+                                border: '1px solid var(--yz-border)',
+                                padding: '2px 7px',
                                 borderRadius: 'var(--yz-radius-sm)',
                               }}
                             >
-                              {prof.template_name || 'Garment'}
+                              {garment}
                             </span>
                           </div>
 
-                          {/* Styling Notes if present */}
-                          {(currentVer?.notes || prof.notes) && (
+                          {/* Linked Order Badge if attached */}
+                          {currentVer?.order_number && (
+                            <div
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                marginTop: '6px',
+                                padding: '2px 7px',
+                                backgroundColor: '#EFF6FF',
+                                border: '1px solid #BFDBFE',
+                                borderRadius: '3px',
+                                fontSize: '10px',
+                                color: '#1E40AF',
+                                fontWeight: 600,
+                              }}
+                            >
+                              <FileText size={11} />
+                              <span>Stitching Order: {currentVer.order_number}</span>
+                            </div>
+                          )}
+
+                          {/* Fitting Preferences / Workshop Instructions Callout */}
+                          {(currentVer?.fitting_preferences || currentVer?.tailor_instructions || currentVer?.notes || prof.notes) && (
                             <div
                               style={{
                                 marginTop: '6px',
-                                padding: '4px 8px',
+                                padding: '6px 8px',
                                 backgroundColor: 'var(--yz-bg-subtle)',
+                                border: '1px solid var(--yz-border)',
                                 borderRadius: 'var(--yz-radius-sm)',
                                 fontSize: '10.5px',
-                                color: 'var(--yz-text-secondary)',
-                                fontStyle: 'italic',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '2px',
                               }}
                             >
-                              "{currentVer?.notes || prof.notes}"
+                              {currentVer?.fitting_preferences && (
+                                <div style={{ color: 'var(--yz-text-primary)' }}>
+                                  <strong style={{ color: 'var(--yz-text-muted)', fontSize: '9.5px', textTransform: 'uppercase' }}>Fit: </strong>
+                                  {currentVer.fitting_preferences}
+                                </div>
+                              )}
+                              {currentVer?.tailor_instructions && (
+                                <div style={{ color: '#92400E', fontStyle: 'italic' }}>
+                                  <strong style={{ color: '#B45309', fontSize: '9.5px', textTransform: 'uppercase' }}>Workshop Note: </strong>
+                                  {currentVer.tailor_instructions}
+                                </div>
+                              )}
+                              {!currentVer?.fitting_preferences && !currentVer?.tailor_instructions && (currentVer?.notes || prof.notes) && (
+                                <div style={{ color: 'var(--yz-text-secondary)', fontStyle: 'italic' }}>
+                                  "{currentVer?.notes || prof.notes}"
+                                </div>
+                              )}
                             </div>
                           )}
 
@@ -689,26 +855,50 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                             borderTop: '1px solid var(--yz-border)',
                             paddingTop: '6px',
                             marginTop: '4px',
+                            flexWrap: 'wrap',
+                            gap: '4px',
                           }}
                         >
-                          <button
-                            type="button"
-                            onClick={() => handleOpenHistory(prof)}
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              fontSize: '10.5px',
-                              fontWeight: 600,
-                              color: 'var(--yz-text-secondary)',
-                              background: 'none',
-                              border: 'none',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <Clock size={12} />
-                            <span>History ({prof.total_versions || 1})</span>
-                          </button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenPrint(prof)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                fontSize: '10.5px',
+                                fontWeight: 700,
+                                color: 'var(--yz-primary, #832729)',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                              }}
+                              title="Print tailor workshop job slip"
+                            >
+                              <Printer size={12} />
+                              <span>Print Slip</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenHistory(prof)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                fontSize: '10.5px',
+                                fontWeight: 600,
+                                color: 'var(--yz-text-secondary)',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <Clock size={12} />
+                              <span>History ({prof.total_versions || 1})</span>
+                            </button>
+                          </div>
 
                           <div style={{ display: 'flex', gap: '4px' }}>
                             <Button
@@ -723,14 +913,24 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                               Clone
                             </Button>
                             <Button
-                              variant="primary"
+                              variant="secondary"
                               size="sm"
                               icon={<Edit size={11} />}
+                              onClick={() => handleOpenEditProfile(prof)}
+                              style={{ padding: '2px 6px', height: '22px', fontSize: '10.5px' }}
+                              title="Edit current profile"
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              icon={<Plus size={11} />}
                               onClick={() => handleOpenNewVersion(prof)}
                               style={{ padding: '2px 8px', height: '22px', fontSize: '10.5px' }}
                               title="Record new version of measurements"
                             >
-                              New Version
+                              New Ver
                             </Button>
                             <button
                               type="button"
@@ -996,7 +1196,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
         </div>
       </Modal>
 
-      {/* Add / Edit Measurement Modal */}
+      {/* Add / Edit / New Version Measurement Modal */}
       {isAddMeasurementOpen && (
         <AddMeasurementModal
           isOpen={isAddMeasurementOpen}
@@ -1006,7 +1206,14 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
           }}
           customerId={customer.id}
           customerName={customer.name}
+          customerPhone={customer.phone}
           existingProfile={profileForNewVersion}
+          mode={measurementModalMode}
+          availableOrders={(orders || []).map((o: any) => ({
+            id: o.id,
+            orderNumber: o.order_number || o.orderNumber || 'Order',
+            date: o.order_date ? new Date(o.order_date).toLocaleDateString('en-IN') : undefined,
+          }))}
           onSaved={async () => {
             await loadData();
             onCustomerUpdated?.();
@@ -1021,6 +1228,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
           onClose={() => setProfileForHistory(null)}
           customerId={currentCustomer.id}
           customerName={currentCustomer.name}
+          customerPhone={currentCustomer.phone}
           profile={profileForHistory}
           onRecordNewVersion={() => {
             const p = profileForHistory;
@@ -1031,6 +1239,17 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
             await loadData();
             onCustomerUpdated?.();
           }}
+        />
+      )}
+
+      {/* Print Tailor Workshop Job Sheet Modal */}
+      {profileToPrint && (
+        <PrintTailorSheetModal
+          isOpen={Boolean(profileToPrint)}
+          onClose={() => setProfileToPrint(null)}
+          customerName={currentCustomer.name}
+          customerPhone={currentCustomer.phone}
+          profile={profileToPrint}
         />
       )}
 

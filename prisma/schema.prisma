@@ -279,6 +279,7 @@ model SalesOrder {
   items            SalesOrderItem[]
   invoices         Invoice[]
   payments         Payment[]
+  measurement_versions CustomerMeasurementVersion[]
 
   @@index([customer_id])
   @@index([godown_id])
@@ -432,6 +433,7 @@ model CustomerMeasurementProfile {
   customer_id   String
   template_id   String
   profile_name  String
+  garment_type  String?                     @default("Blouse")
   notes         String?
   is_active     Boolean                     @default(true)
   created_at    DateTime                    @default(now())
@@ -447,20 +449,26 @@ model CustomerMeasurementProfile {
 }
 
 model CustomerMeasurementVersion {
-  id             String                      @id @default(uuid())
-  profile_id     String
-  version_number Int                         @default(1)
-  measured_at    DateTime                    @default(now())
-  measured_by    String?
-  notes          String?
-  is_current     Boolean                     @default(true)
-  created_at     DateTime                    @default(now())
+  id                  String                      @id @default(uuid())
+  profile_id          String
+  version_number      Int                         @default(1)
+  measured_at         DateTime                    @default(now())
+  measured_by         String?
+  notes               String?
+  fitting_preferences String?
+  tailor_instructions String?
+  order_id            String?
+  field_snapshots     String?
+  is_current          Boolean                     @default(true)
+  created_at          DateTime                    @default(now())
 
-  profile        CustomerMeasurementProfile  @relation(fields: [profile_id], references: [id], onDelete: Cascade)
-  values         CustomerMeasurementValue[]
+  profile             CustomerMeasurementProfile  @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+  order               SalesOrder?                 @relation(fields: [order_id], references: [id], onDelete: SetNull)
+  values              CustomerMeasurementValue[]
 
   @@index([profile_id, is_current])
   @@index([profile_id, version_number])
+  @@index([order_id])
   @@map("customer_measurement_versions")
 }
 

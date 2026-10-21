@@ -27,6 +27,25 @@ export interface OrderPaymentRecord {
   index: number;
 }
 
+export interface OrderMeasurementSummary {
+  version_id: string;
+  profile_id: string;
+  profile_name: string;
+  garment_type?: string;
+  version_number: number;
+  fitting_preferences?: string | null;
+  tailor_instructions?: string | null;
+  measured_at?: string;
+  measured_by?: string | null;
+  values?: Array<{
+    field_id: string;
+    field_name: string;
+    numeric_value?: number | null;
+    text_value?: string | null;
+    unit?: string;
+  }>;
+}
+
 export interface SalesOrderData {
   id: string;
   orderNumber: string;
@@ -51,6 +70,7 @@ export interface SalesOrderData {
   invoiceNumber?: string | null;
   items: SalesOrderItemData[];
   payments?: OrderPaymentRecord[];
+  measurements?: OrderMeasurementSummary[];
   createdAt: string;
 }
 
