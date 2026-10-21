@@ -874,10 +874,10 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                                 border: 'none',
                                 cursor: 'pointer',
                               }}
-                              title="Print tailor workshop job slip"
+                              title="Print Measurement Sheet (3-inch thermal printer)"
                             >
                               <Printer size={12} />
-                              <span>Print Slip</span>
+                              <span>Print Measurement Sheet</span>
                             </button>
 
                             <button
@@ -1250,6 +1250,8 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
           customerName={currentCustomer.name}
           customerPhone={currentCustomer.phone}
           profile={profileToPrint}
+          version={profileToPrint.current_version}
+          availableVersions={profileToPrint.versions}
         />
       )}
 

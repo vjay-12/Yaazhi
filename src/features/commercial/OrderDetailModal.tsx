@@ -222,8 +222,9 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                           };
                           setMeasurementForPrint(profileMock);
                         }}
+                        title="Print Measurement Sheet (3-inch thermal printer)"
                       >
-                        Print Tailor Slip
+                        Print Measurement Sheet
                       </Button>
                     </div>
 
@@ -698,6 +699,9 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           customerPhone={order.customerPhone}
           profile={measurementForPrint}
           version={measurementForPrint.current_version}
+          orderNumber={order.orderNumber}
+          orderId={order.id}
+          orderDate={order.date}
         />
       )}
     </Modal>

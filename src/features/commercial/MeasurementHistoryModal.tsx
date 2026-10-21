@@ -143,9 +143,9 @@ export const MeasurementHistoryModal: React.FC<MeasurementHistoryModalProps> = (
                 onClick={() => setIsPrintModalOpen(true)}
                 disabled={!activeVersion}
                 style={{ fontSize: '11px' }}
-                title="Print this version for workshop tailor"
+                title="Print Measurement Sheet (3-inch thermal printer)"
               >
-                Print Version Slip
+                Print Measurement Sheet
               </Button>
               <Button
                 variant="secondary"
@@ -481,6 +481,7 @@ export const MeasurementHistoryModal: React.FC<MeasurementHistoryModalProps> = (
           customerPhone={customerPhone}
           profile={profile}
           version={activeVersion}
+          availableVersions={versions.length > 0 ? versions : profile?.versions}
         />
       )}
     </>
