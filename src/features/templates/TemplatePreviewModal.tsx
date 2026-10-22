@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Modal } from '../../components/common/Modal';
-import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
-import { Ruler, Scissors, Check, Copy, Calculator } from 'lucide-react';
+import { Ruler, Scissors, Check, Calculator } from 'lucide-react';
 import type { MeasurementTemplate, StitchingTemplate } from '../../types/template';
 
 interface TemplatePreviewModalProps {
@@ -10,8 +9,6 @@ interface TemplatePreviewModalProps {
   onClose: () => void;
   measurementTemplate?: MeasurementTemplate | null;
   stitchingTemplate?: StitchingTemplate | null;
-  onEdit?: () => void;
-  onDuplicate?: () => void;
 }
 
 export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
@@ -19,8 +16,6 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
   onClose,
   measurementTemplate,
   stitchingTemplate,
-  onEdit,
-  onDuplicate,
 }) => {
   // Addon selection state for interactive price calculator in stitching preview
   const [selectedAddonIds, setSelectedAddonIds] = useState<Record<string, boolean>>({});
@@ -92,28 +87,6 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
           : `Atelier Rate Card for ${stitchingTemplate?.garment_type || 'Boutique'} • HSN SAC ${stitchingTemplate?.hsn_code || '9988'}`
       }
       maxWidth="740px"
-      footer={
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-          <div style={{ fontSize: '11px', color: 'var(--yz-text-muted)' }}>
-            Code: <code>{isMeasurement ? measurementTemplate?.code : stitchingTemplate?.code}</code>
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {onDuplicate && (
-              <Button variant="secondary" size="sm" onClick={onDuplicate}>
-                <Copy size={13} style={{ marginRight: '4px' }} /> Duplicate
-              </Button>
-            )}
-            {onEdit && (
-              <Button variant="primary" size="sm" onClick={onEdit}>
-                Edit Template
-              </Button>
-            )}
-            <Button variant="secondary" size="sm" onClick={onClose}>
-              Close
-            </Button>
-          </div>
-        </div>
-      }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {/* Description Banner */}
@@ -380,6 +353,28 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
             </div>
           </div>
         )}
+
+        {/* Template Code & System ID */}
+        <div
+          style={{
+            paddingTop: '10px',
+            borderTop: '1px solid var(--yz-border)',
+            fontSize: '11px',
+            color: 'var(--yz-text-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <span>
+            Template Code: <code style={{ fontFamily: 'var(--yz-font-mono)', fontWeight: 600, color: 'var(--yz-text-secondary)' }}>{isMeasurement ? measurementTemplate?.code : stitchingTemplate?.code}</code>
+          </span>
+          <span style={{ fontSize: '10.5px' }}>
+            {isMeasurement
+              ? `${measurementTemplate?.fields?.length || 0} tailor parameters configured`
+              : `${stitchingTemplate?.addons?.length || 0} atelier finish options`}
+          </span>
+        </div>
       </div>
     </Modal>
   );

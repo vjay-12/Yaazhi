@@ -5,12 +5,10 @@ import {
   Plus,
   Search,
   RotateCcw,
-  Copy,
   Archive,
   RefreshCw,
   Trash2,
   Edit,
-  Eye,
 } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
@@ -251,34 +249,6 @@ export const TemplatesPage: React.FC = () => {
     await loadTemplates();
   };
 
-  // Duplication
-  const handleDuplicate = async (id: string, type: 'measurement' | 'stitching') => {
-    try {
-      if (type === 'measurement') {
-        const cloned = await templateService.duplicateMeasurementTemplate(id);
-        showToast({
-          type: 'success',
-          title: 'Template Cloned',
-          message: `Created duplicate "${cloned.name}"`,
-        });
-      } else {
-        const cloned = await templateService.duplicateStitchingTemplate(id);
-        showToast({
-          type: 'success',
-          title: 'Service Rate Cloned',
-          message: `Created duplicate "${cloned.name}" with add-ons`,
-        });
-      }
-      await loadTemplates();
-    } catch (err: any) {
-      showToast({
-        type: 'error',
-        title: 'Duplication Failed',
-        message: err.message || 'Could not duplicate template',
-      });
-    }
-  };
-
   // Confirm Archive
   const handleConfirmArchive = async () => {
     if (!archiveTarget) return;
@@ -320,7 +290,7 @@ export const TemplatesPage: React.FC = () => {
       showToast({
         type: 'success',
         title: 'Template Restored',
-        message: `"${restoreTarget.name}" restored to active templates.`,
+        message: `"${restoreTarget.name}" restored to active directory.`,
       });
       setRestoreTarget(null);
       await loadTemplates();
@@ -335,7 +305,7 @@ export const TemplatesPage: React.FC = () => {
     }
   };
 
-  // Confirm Delete
+  // Confirm Delete (Only for archived templates)
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     try {
@@ -364,198 +334,45 @@ export const TemplatesPage: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '32px' }}>
-      {/* Page Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          flexWrap: 'wrap',
-          gap: '16px',
-        }}
-      >
-        <div>
-          <h1
-            style={{
-              fontSize: '22px',
-              fontWeight: 700,
-              color: 'var(--yz-text-primary)',
-              margin: '0 0 4px 0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-            }}
-          >
-            Unified Templates & Catalogs
-          </h1>
-          <p style={{ fontSize: '13px', color: 'var(--yz-text-secondary)', margin: 0 }}>
-            Configure client measurement fitting parameters and standard atelier stitching service price rates.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <Button variant="secondary" size="md" onClick={loadTemplates} disabled={isLoading}>
-            <RefreshCw size={14} className={isLoading ? 'yz-spin' : ''} style={{ marginRight: '6px' }} /> Refresh
-          </Button>
-          {activeTab === 'measurements' ? (
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => {
-                setMeasurementToEdit(null);
-                setIsMeasurementModalOpen(true);
-              }}
-            >
-              <Plus size={15} style={{ marginRight: '6px' }} /> New Measurement Template
-            </Button>
-          ) : (
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => {
-                setStitchingToEdit(null);
-                setIsStitchingModalOpen(true);
-              }}
-            >
-              <Plus size={15} style={{ marginRight: '6px' }} /> New Stitching Rate Template
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Functional Distinction Banner */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '12px 16px',
-          backgroundColor: 'var(--yz-bg-surface)',
-          border: '1px solid var(--yz-border)',
-          borderRadius: 'var(--yz-card-radius)',
-          boxShadow: 'var(--yz-shadow-2xs)',
-        }}
-      >
-        <div
-          style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: 'var(--yz-radius-md)',
-            backgroundColor: 'var(--yz-primary-subtle)',
-            color: 'var(--yz-primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          {activeTab === 'measurements' ? <Ruler size={18} /> : <Scissors size={18} />}
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--yz-text-primary)' }}>
-            {activeTab === 'measurements'
-              ? 'Customer Measurement Templates'
-              : 'Stitching Price & Service Templates'}
-          </div>
-          <div style={{ fontSize: '12px', color: 'var(--yz-text-muted)', lineHeight: 1.4 }}>
-            {activeTab === 'measurements'
-              ? 'Defines what tailor parameters, units, and guidelines to collect during client fittings (e.g. blouse length, bust, armhole, neckline cut). Editing fields does not silently alter historical customer measurement records.'
-              : 'Defines baseline atelier service rates, applicable GST rates, and optional add-on finishes (lining, embroidery, express delivery). Baseline prices remain protected and separate from custom orders.'}
-          </div>
-        </div>
-      </div>
-
-      {/* KPI Stats Ribbon */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {/* 1. Compact KPI Stat Cards (Matching Products & Stock Layout) */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '12px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+          gap: '8px',
         }}
       >
-        <div
-          style={{
-            padding: '14px 16px',
-            backgroundColor: 'var(--yz-bg-surface)',
-            border: '1px solid var(--yz-border)',
-            borderRadius: 'var(--yz-card-radius)',
-            boxShadow: 'var(--yz-shadow-2xs)',
-          }}
-        >
-          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--yz-text-muted)', textTransform: 'uppercase' }}>
-            Measurement Templates
-          </div>
-          <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--yz-text-primary)', marginTop: '4px' }}>
-            {stats.activeM}{' '}
-            <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--yz-text-muted)' }}>
-              active ({stats.totalM} total)
-            </span>
-          </div>
+        <div className="yz-stat-card">
+          <span className="yz-stat-label">Measurement Templates</span>
+          <span className="yz-stat-value tabular-nums">{stats.activeM}</span>
+          <span className="yz-stat-subtext">
+            {stats.activeM} active ({stats.totalM} total)
+          </span>
         </div>
 
-        <div
-          style={{
-            padding: '14px 16px',
-            backgroundColor: 'var(--yz-bg-surface)',
-            border: '1px solid var(--yz-border)',
-            borderRadius: 'var(--yz-card-radius)',
-            boxShadow: 'var(--yz-shadow-2xs)',
-          }}
-        >
-          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--yz-text-muted)', textTransform: 'uppercase' }}>
-            Stitching Rate Templates
-          </div>
-          <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--yz-text-primary)', marginTop: '4px' }}>
-            {stats.activeS}{' '}
-            <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--yz-text-muted)' }}>
-              active ({stats.totalS} total)
-            </span>
-          </div>
+        <div className="yz-stat-card">
+          <span className="yz-stat-label">Stitching Rate Templates</span>
+          <span className="yz-stat-value tabular-nums">{stats.activeS}</span>
+          <span className="yz-stat-subtext">
+            {stats.activeS} active ({stats.totalS} total)
+          </span>
         </div>
 
-        <div
-          style={{
-            padding: '14px 16px',
-            backgroundColor: 'var(--yz-bg-surface)',
-            border: '1px solid var(--yz-border)',
-            borderRadius: 'var(--yz-card-radius)',
-            boxShadow: 'var(--yz-shadow-2xs)',
-          }}
-        >
-          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--yz-text-muted)', textTransform: 'uppercase' }}>
-            Client Fitting Records Linked
-          </div>
-          <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--yz-text-primary)', marginTop: '4px' }}>
-            {stats.totalProfilesLinked}{' '}
-            <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--yz-text-muted)' }}>
-              profiles protected
-            </span>
-          </div>
+        <div className="yz-stat-card">
+          <span className="yz-stat-label">Client Fitting Records</span>
+          <span className="yz-stat-value tabular-nums">{stats.totalProfilesLinked}</span>
+          <span className="yz-stat-subtext">{stats.totalProfilesLinked} profiles protected</span>
         </div>
 
-        <div
-          style={{
-            padding: '14px 16px',
-            backgroundColor: 'var(--yz-bg-surface)',
-            border: '1px solid var(--yz-border)',
-            borderRadius: 'var(--yz-card-radius)',
-            boxShadow: 'var(--yz-shadow-2xs)',
-          }}
-        >
-          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--yz-text-muted)', textTransform: 'uppercase' }}>
-            Atelier Add-on Finishes
-          </div>
-          <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--yz-text-primary)', marginTop: '4px' }}>
-            {stats.totalAddons}{' '}
-            <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--yz-text-muted)' }}>
-              options cataloged
-            </span>
-          </div>
+        <div className="yz-stat-card">
+          <span className="yz-stat-label">Atelier Add-on Finishes</span>
+          <span className="yz-stat-value tabular-nums">{stats.totalAddons}</span>
+          <span className="yz-stat-subtext">{stats.totalAddons} options cataloged</span>
         </div>
       </div>
 
-      {/* Main Section Container */}
+      {/* 2. Main Section Container */}
       <div
         style={{
           backgroundColor: 'var(--yz-bg-surface)',
@@ -565,27 +382,29 @@ export const TemplatesPage: React.FC = () => {
           overflow: 'hidden',
         }}
       >
-        {/* Tab Switcher Bar */}
+        {/* Tab Switcher & Action Bar */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '8px 16px',
+            padding: '8px 12px',
             backgroundColor: 'var(--yz-bg-subtle)',
             borderBottom: '1px solid var(--yz-border)',
             flexWrap: 'wrap',
-            gap: '10px',
+            gap: '8px',
           }}
         >
+          {/* Left: Tab Switcher Buttons */}
           <div style={{ display: 'flex', gap: '6px' }}>
             <button
+              type="button"
               onClick={() => setActiveTab('measurements')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '8px 16px',
+                padding: '6px 14px',
                 borderRadius: 'var(--yz-radius-md)',
                 border: 'none',
                 backgroundColor:
@@ -595,14 +414,14 @@ export const TemplatesPage: React.FC = () => {
                     ? 'var(--yz-primary)'
                     : 'var(--yz-text-secondary)',
                 fontWeight: activeTab === 'measurements' ? 600 : 500,
-                fontSize: '13px',
+                fontSize: '12.5px',
                 cursor: 'pointer',
                 boxShadow:
                   activeTab === 'measurements' ? 'var(--yz-shadow-xs)' : 'none',
                 transition: 'all 0.15s ease',
               }}
             >
-              <Ruler size={15} />
+              <Ruler size={14} />
               <span>Customer Measurement Templates</span>
               <span
                 style={{
@@ -624,12 +443,13 @@ export const TemplatesPage: React.FC = () => {
             </button>
 
             <button
+              type="button"
               onClick={() => setActiveTab('stitching')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '8px 16px',
+                padding: '6px 14px',
                 borderRadius: 'var(--yz-radius-md)',
                 border: 'none',
                 backgroundColor:
@@ -639,14 +459,14 @@ export const TemplatesPage: React.FC = () => {
                     ? 'var(--yz-primary)'
                     : 'var(--yz-text-secondary)',
                 fontWeight: activeTab === 'stitching' ? 600 : 500,
-                fontSize: '13px',
+                fontSize: '12.5px',
                 cursor: 'pointer',
                 boxShadow:
                   activeTab === 'stitching' ? 'var(--yz-shadow-xs)' : 'none',
                 transition: 'all 0.15s ease',
               }}
             >
-              <Scissors size={15} />
+              <Scissors size={14} />
               <span>Stitching Price Templates</span>
               <span
                 style={{
@@ -668,57 +488,107 @@ export const TemplatesPage: React.FC = () => {
             </button>
           </div>
 
-          {/* Status Filter Segmented Control */}
-          <div
-            style={{
-              display: 'flex',
-              backgroundColor: 'var(--yz-bg-canvas)',
-              borderRadius: 'var(--yz-radius-md)',
-              padding: '2px',
-              border: '1px solid var(--yz-border)',
-            }}
-          >
-            {(['active', 'archived', 'all'] as StatusFilter[]).map((st) => (
-              <button
-                key={st}
-                onClick={() => setStatusFilter(st)}
-                style={{
-                  padding: '4px 12px',
-                  borderRadius: 'var(--yz-radius-sm)',
-                  border: 'none',
-                  backgroundColor: statusFilter === st ? 'var(--yz-bg-surface)' : 'transparent',
-                  color: statusFilter === st ? 'var(--yz-text-primary)' : 'var(--yz-text-muted)',
-                  fontSize: '12px',
-                  fontWeight: statusFilter === st ? 600 : 500,
-                  cursor: 'pointer',
-                  boxShadow: statusFilter === st ? 'var(--yz-shadow-xs)' : 'none',
-                  textTransform: 'capitalize',
+          {/* Right: Active/Archived/All Filter AND New Template Action Button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Status Filter Segmented Control */}
+            <div
+              style={{
+                display: 'flex',
+                backgroundColor: 'var(--yz-bg-canvas)',
+                borderRadius: 'var(--yz-radius-md)',
+                padding: '2px',
+                border: '1px solid var(--yz-border)',
+              }}
+            >
+              {(['active', 'archived', 'all'] as StatusFilter[]).map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setStatusFilter(st)}
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: 'var(--yz-radius-sm)',
+                    border: 'none',
+                    backgroundColor: statusFilter === st ? 'var(--yz-bg-surface)' : 'transparent',
+                    color: statusFilter === st ? 'var(--yz-text-primary)' : 'var(--yz-text-muted)',
+                    fontSize: '11.5px',
+                    fontWeight: statusFilter === st ? 600 : 500,
+                    cursor: 'pointer',
+                    boxShadow: statusFilter === st ? 'var(--yz-shadow-xs)' : 'none',
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
+
+            {/* Refresh Button */}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={loadTemplates}
+              disabled={isLoading}
+              title="Refresh templates"
+              style={{
+                height: '30px',
+                width: '30px',
+                padding: 0,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <RefreshCw size={13} className={isLoading ? 'yz-spin' : ''} />
+            </Button>
+
+            {/* New Template Button */}
+            {activeTab === 'measurements' ? (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setMeasurementToEdit(null);
+                  setIsMeasurementModalOpen(true);
                 }}
+                style={{ height: '30px', fontSize: '11.5px', fontWeight: 600 }}
               >
-                {st}
-              </button>
-            ))}
+                <Plus size={14} style={{ marginRight: '4px' }} /> New Measurement Template
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setStitchingToEdit(null);
+                  setIsStitchingModalOpen(true);
+                }}
+                style={{ height: '30px', fontSize: '11.5px', fontWeight: 600 }}
+              >
+                <Plus size={14} style={{ marginRight: '4px' }} /> New Stitching Rate Template
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Filter Controls Bar */}
+        {/* Search & Filter Bar */}
         <div
           style={{
-            padding: '12px 16px',
+            padding: '8px 12px',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
+            gap: '8px',
+            borderBottom: '1px solid var(--yz-border)',
             flexWrap: 'wrap',
-            borderBottom: '1px solid var(--yz-border-subtle)',
           }}
         >
-          {/* Search Input */}
-          <div style={{ position: 'relative', flex: '1', minWidth: '220px' }}>
+          {/* Search Box */}
+          <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
             <Search
-              size={15}
+              size={14}
               style={{
                 position: 'absolute',
-                left: '10px',
+                left: '9px',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 color: 'var(--yz-text-muted)',
@@ -726,42 +596,35 @@ export const TemplatesPage: React.FC = () => {
             />
             <input
               type="text"
+              placeholder={
+                activeTab === 'measurements'
+                  ? 'Search measurement templates by name, garment, or code...'
+                  : 'Search stitching rate templates by name, garment, or code...'
+              }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={`Search ${activeTab === 'measurements' ? 'measurement templates' : 'stitching services'}...`}
-              style={{
-                width: '100%',
-                height: 'var(--yz-control-height-md)',
-                paddingLeft: '32px',
-                paddingRight: '12px',
-                borderRadius: 'var(--yz-input-radius)',
-                border: '1px solid var(--yz-border)',
-                backgroundColor: 'var(--yz-bg-canvas)',
-                color: 'var(--yz-text-primary)',
-                fontSize: '13px',
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
+              className="yz-input"
+              style={{ paddingLeft: '28px', height: '32px', fontSize: '11.5px', width: '100%' }}
             />
           </div>
 
-          {/* Garment Type Dropdown */}
-          <div style={{ width: '170px' }}>
+          {/* Garment Dropdown */}
+          <div style={{ width: '140px' }}>
             <CustomDropdown
               value={selectedGarment}
               onChange={(val) => setSelectedGarment(val as string)}
               options={GARMENT_FILTER_OPTIONS}
-              placeholder="Garment Type"
+              placeholder="All Garments"
             />
           </div>
 
           {/* Category Dropdown */}
-          <div style={{ width: '160px' }}>
+          <div style={{ width: '140px' }}>
             <CustomDropdown
               value={selectedCategory}
               onChange={(val) => setSelectedCategory(val as string)}
               options={CATEGORY_FILTER_OPTIONS}
-              placeholder="Category"
+              placeholder="All Categories"
             />
           </div>
 
@@ -776,6 +639,7 @@ export const TemplatesPage: React.FC = () => {
                 setSelectedCategory('ALL');
                 setStatusFilter('active');
               }}
+              style={{ height: '32px', fontSize: '11.5px' }}
             >
               <RotateCcw size={13} style={{ marginRight: '4px' }} /> Reset
             </Button>
@@ -785,7 +649,7 @@ export const TemplatesPage: React.FC = () => {
         {/* Content Body */}
         {isLoading ? (
           <div style={{ padding: '24px 16px' }}>
-            <TableSkeleton rows={5} columns={6} />
+            <TableSkeleton rows={5} columns={5} />
           </div>
         ) : paginatedList.length === 0 ? (
           <div style={{ padding: '40px 16px' }}>
@@ -805,46 +669,28 @@ export const TemplatesPage: React.FC = () => {
             />
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table
-              style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontSize: '13px',
-                textAlign: 'left',
-              }}
-            >
+          <div className="yz-table-container">
+            <table className="yz-table" style={{ width: '100%' }}>
               <thead>
-                <tr
-                  style={{
-                    backgroundColor: 'var(--yz-bg-subtle)',
-                    borderBottom: '1px solid var(--yz-border)',
-                    color: 'var(--yz-text-secondary)',
-                    fontWeight: 600,
-                    fontSize: '11px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                  }}
-                >
-                  <th style={{ padding: '10px 16px' }}>
-                    {activeTab === 'measurements' ? 'Template Name' : 'Service Name'}
+                <tr>
+                  <th style={{ padding: '8px 12px' }}>
+                    {activeTab === 'measurements' ? 'TEMPLATE NAME' : 'SERVICE NAME'}
                   </th>
-                  <th style={{ padding: '10px 14px' }}>Garment Type</th>
-                  <th style={{ padding: '10px 14px' }}>Category</th>
+                  <th style={{ padding: '8px 10px', width: '120px' }}>GARMENT TYPE</th>
+                  <th style={{ padding: '8px 10px', width: '110px' }}>CATEGORY</th>
                   {activeTab === 'measurements' ? (
                     <>
-                      <th style={{ padding: '10px 14px' }}>Parameters</th>
-                      <th style={{ padding: '10px 14px' }}>Profiles Linked</th>
+                      <th style={{ padding: '8px 10px', width: '100px' }}>PARAMETERS</th>
+                      <th style={{ padding: '8px 10px', width: '130px' }}>PROFILES LINKED</th>
                     </>
                   ) : (
                     <>
-                      <th style={{ padding: '10px 14px' }}>Standard Base</th>
-                      <th style={{ padding: '10px 14px' }}>Tax / GST</th>
-                      <th style={{ padding: '10px 14px' }}>Add-on Finishes</th>
+                      <th style={{ padding: '8px 10px', width: '130px' }}>STANDARD BASE</th>
+                      <th style={{ padding: '8px 10px', width: '100px' }}>TAX / GST</th>
+                      <th style={{ padding: '8px 10px', width: '130px' }}>ADD-ON FINISHES</th>
                     </>
                   )}
-                  <th style={{ padding: '10px 14px' }}>Status</th>
-                  <th style={{ padding: '10px 16px', textAlign: 'right' }}>Actions</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'right', width: '90px' }}>ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
@@ -853,20 +699,18 @@ export const TemplatesPage: React.FC = () => {
                   return (
                     <tr
                       key={item.id}
-                      style={{
-                        borderBottom: '1px solid var(--yz-border-subtle)',
-                        backgroundColor: 'var(--yz-bg-surface)',
-                        transition: 'background-color 0.15s ease',
+                      onClick={() => {
+                        if (isM) {
+                          setPreviewMeasurement(item);
+                        } else {
+                          setPreviewStitching(item);
+                        }
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'var(--yz-bg-surface-hover)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'var(--yz-bg-surface)';
-                      }}
+                      style={{ cursor: 'pointer' }}
+                      title="Click to view details"
                     >
                       {/* Name & Code */}
-                      <td style={{ padding: '12px 16px' }}>
+                      <td style={{ padding: '8px 12px' }}>
                         <div style={{ fontWeight: 600, color: 'var(--yz-text-primary)' }}>
                           {item.name}
                         </div>
@@ -875,7 +719,7 @@ export const TemplatesPage: React.FC = () => {
                             fontSize: '11px',
                             color: 'var(--yz-text-muted)',
                             fontFamily: 'var(--yz-font-mono)',
-                            marginTop: '2px',
+                            marginTop: '1px',
                           }}
                         >
                           {item.code}
@@ -898,12 +742,12 @@ export const TemplatesPage: React.FC = () => {
                       </td>
 
                       {/* Garment Type */}
-                      <td style={{ padding: '12px 14px' }}>
+                      <td style={{ padding: '8px 10px' }}>
                         <Badge variant="neutral">{item.garment_type || 'Other'}</Badge>
                       </td>
 
                       {/* Category */}
-                      <td style={{ padding: '12px 14px' }}>
+                      <td style={{ padding: '8px 10px' }}>
                         <span style={{ fontSize: '12px', color: 'var(--yz-text-secondary)' }}>
                           {item.category}
                         </span>
@@ -912,15 +756,17 @@ export const TemplatesPage: React.FC = () => {
                       {/* Dynamic Columns based on Tab */}
                       {isM ? (
                         <>
-                          <td style={{ padding: '12px 14px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontWeight: 600 }}>{item.fields?.length || 0}</span>
+                          <td style={{ padding: '8px 10px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontWeight: 600, fontFamily: 'var(--yz-font-mono)' }}>
+                                {item.fields?.length || 0}
+                              </span>
                               <span style={{ fontSize: '11px', color: 'var(--yz-text-muted)' }}>
                                 fields
                               </span>
                             </div>
                           </td>
-                          <td style={{ padding: '12px 14px' }}>
+                          <td style={{ padding: '8px 10px' }}>
                             <span
                               style={{
                                 fontSize: '12px',
@@ -931,26 +777,27 @@ export const TemplatesPage: React.FC = () => {
                                 fontWeight: (item._count?.profiles ?? 0) > 0 ? 600 : 400,
                               }}
                             >
-                              {item._count?.profiles ?? 0} client fitting{item._count?.profiles === 1 ? '' : 's'}
+                              {item._count?.profiles ?? 0} client fitting
+                              {item._count?.profiles === 1 ? '' : 's'}
                             </span>
                           </td>
                         </>
                       ) : (
                         <>
-                          <td style={{ padding: '12px 14px' }}>
-                            <strong style={{ color: 'var(--yz-primary)' }}>
+                          <td style={{ padding: '8px 10px' }}>
+                            <strong style={{ color: 'var(--yz-primary)', fontFamily: 'var(--yz-font-mono)' }}>
                               ₹
                               {parseFloat(String(item.base_price)).toLocaleString('en-IN', {
                                 minimumFractionDigits: 2,
                               })}
                             </strong>
                           </td>
-                          <td style={{ padding: '12px 14px' }}>
+                          <td style={{ padding: '8px 10px' }}>
                             <span style={{ fontSize: '12px', color: 'var(--yz-text-secondary)' }}>
                               {parseFloat(String(item.tax_rate))}% GST
                             </span>
                           </td>
-                          <td style={{ padding: '12px 14px' }}>
+                          <td style={{ padding: '8px 10px' }}>
                             <span style={{ fontSize: '12px', color: 'var(--yz-text-secondary)' }}>
                               {item.addons?.length || 0} add-on{item.addons?.length === 1 ? '' : 's'}
                             </span>
@@ -958,156 +805,127 @@ export const TemplatesPage: React.FC = () => {
                         </>
                       )}
 
-                      {/* Status */}
-                      <td style={{ padding: '12px 14px' }}>
-                        <Badge variant={item.is_archived ? 'danger' : 'success'}>
-                          {item.is_archived ? 'Archived' : 'Active'}
-                        </Badge>
-                      </td>
-
                       {/* Actions */}
-                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                      <td
+                        style={{ padding: '8px 12px', textAlign: 'right' }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px' }}>
-                          {/* Preview / Simulate */}
-                          <button
-                            onClick={() => {
-                              if (isM) {
-                                setPreviewMeasurement(item);
-                              } else {
-                                setPreviewStitching(item);
-                              }
-                            }}
-                            style={{
-                              padding: '5px 8px',
-                              backgroundColor: 'transparent',
-                              border: '1px solid var(--yz-border)',
-                              borderRadius: 'var(--yz-radius-sm)',
-                              color: 'var(--yz-text-secondary)',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                            }}
-                            title="Preview specifications"
-                          >
-                            <Eye size={13} />
-                          </button>
+                          {!item.is_archived ? (
+                            <>
+                              {/* Edit Action for Active Templates */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (isM) {
+                                    setMeasurementToEdit(item);
+                                    setIsMeasurementModalOpen(true);
+                                  } else {
+                                    setStitchingToEdit(item);
+                                    setIsStitchingModalOpen(true);
+                                  }
+                                }}
+                                style={{
+                                  padding: '4px 7px',
+                                  backgroundColor: 'transparent',
+                                  border: '1px solid var(--yz-border)',
+                                  borderRadius: 'var(--yz-radius-sm)',
+                                  color: 'var(--yz-text-secondary)',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                                title="Edit template"
+                              >
+                                <Edit size={13} />
+                              </button>
 
-                          {/* Edit */}
-                          <button
-                            onClick={() => {
-                              if (isM) {
-                                setMeasurementToEdit(item);
-                                setIsMeasurementModalOpen(true);
-                              } else {
-                                setStitchingToEdit(item);
-                                setIsStitchingModalOpen(true);
-                              }
-                            }}
-                            style={{
-                              padding: '5px 8px',
-                              backgroundColor: 'transparent',
-                              border: '1px solid var(--yz-border)',
-                              borderRadius: 'var(--yz-radius-sm)',
-                              color: 'var(--yz-text-secondary)',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                            }}
-                            title="Edit template"
-                          >
-                            <Edit size={13} />
-                          </button>
-
-                          {/* Duplicate */}
-                          <button
-                            onClick={() => handleDuplicate(item.id, isM ? 'measurement' : 'stitching')}
-                            style={{
-                              padding: '5px 8px',
-                              backgroundColor: 'transparent',
-                              border: '1px solid var(--yz-border)',
-                              borderRadius: 'var(--yz-radius-sm)',
-                              color: 'var(--yz-text-secondary)',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                            }}
-                            title="Duplicate template"
-                          >
-                            <Copy size={13} />
-                          </button>
-
-                          {/* Archive / Restore */}
-                          {item.is_archived ? (
-                            <button
-                              onClick={() =>
-                                setRestoreTarget({
-                                  id: item.id,
-                                  name: item.name,
-                                  type: isM ? 'measurement' : 'stitching',
-                                })
-                              }
-                              style={{
-                                padding: '5px 8px',
-                                backgroundColor: 'transparent',
-                                border: '1px solid var(--yz-border)',
-                                borderRadius: 'var(--yz-radius-sm)',
-                                color: 'var(--yz-status-in-stock)',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                              }}
-                              title="Restore template"
-                            >
-                              <RotateCcw size={13} />
-                            </button>
+                              {/* Archive Action for Active Templates */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setArchiveTarget({
+                                    id: item.id,
+                                    name: item.name,
+                                    type: isM ? 'measurement' : 'stitching',
+                                  });
+                                }}
+                                style={{
+                                  padding: '4px 7px',
+                                  backgroundColor: 'transparent',
+                                  border: '1px solid var(--yz-border)',
+                                  borderRadius: 'var(--yz-radius-sm)',
+                                  color: 'var(--yz-status-low-stock, #d97706)',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                                title="Archive template"
+                              >
+                                <Archive size={13} />
+                              </button>
+                            </>
                           ) : (
-                            <button
-                              onClick={() =>
-                                setArchiveTarget({
-                                  id: item.id,
-                                  name: item.name,
-                                  type: isM ? 'measurement' : 'stitching',
-                                })
-                              }
-                              style={{
-                                padding: '5px 8px',
-                                backgroundColor: 'transparent',
-                                border: '1px solid var(--yz-border)',
-                                borderRadius: 'var(--yz-radius-sm)',
-                                color: 'var(--yz-status-low-stock)',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                              }}
-                              title="Archive template"
-                            >
-                              <Archive size={13} />
-                            </button>
-                          )}
+                            <>
+                              {/* Restore Action for Archived Templates */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setRestoreTarget({
+                                    id: item.id,
+                                    name: item.name,
+                                    type: isM ? 'measurement' : 'stitching',
+                                  });
+                                }}
+                                style={{
+                                  padding: '4px 7px',
+                                  backgroundColor: 'transparent',
+                                  border: '1px solid var(--yz-border)',
+                                  borderRadius: 'var(--yz-radius-sm)',
+                                  color: 'var(--yz-status-in-stock, #16a34a)',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                                title="Restore template"
+                              >
+                                <RotateCcw size={13} />
+                              </button>
 
-                          {/* Delete */}
-                          <button
-                            onClick={() =>
-                              setDeleteTarget({
-                                id: item.id,
-                                name: item.name,
-                                type: isM ? 'measurement' : 'stitching',
-                              })
-                            }
-                            style={{
-                              padding: '5px 8px',
-                              backgroundColor: 'transparent',
-                              border: '1px solid var(--yz-border)',
-                              borderRadius: 'var(--yz-radius-sm)',
-                              color: 'var(--yz-status-out-stock)',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                            }}
-                            title="Delete permanently"
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                              {/* Delete Action: ONLY for Archived Templates */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteTarget({
+                                    id: item.id,
+                                    name: item.name,
+                                    type: isM ? 'measurement' : 'stitching',
+                                  });
+                                }}
+                                style={{
+                                  padding: '4px 7px',
+                                  backgroundColor: 'transparent',
+                                  border: '1px solid var(--yz-border)',
+                                  borderRadius: 'var(--yz-radius-sm)',
+                                  color: 'var(--yz-status-out-stock, #dc2626)',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                                title="Delete permanently"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1115,42 +933,50 @@ export const TemplatesPage: React.FC = () => {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
 
-            {/* Pagination Controls */}
-            {totalItems > pageSize && (
-              <div style={{ padding: '12px 16px', borderTop: '1px solid var(--yz-border-subtle)' }}>
-                <Pagination
-                  currentPage={currentPage}
-                  totalItems={totalItems}
-                  pageSize={pageSize}
-                  pageSizeOptions={[5, 10, 20, 50]}
-                  onPageChange={setCurrentPage}
-                  onPageSizeChange={setPageSize}
-                  itemLabel="templates"
-                />
-              </div>
-            )}
+        {/* Pagination Controls */}
+        {totalItems > pageSize && (
+          <div style={{ padding: '10px 16px', borderTop: '1px solid var(--yz-border)' }}>
+            <Pagination
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalItems={totalItems}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+              itemLabel="templates"
+            />
           </div>
         )}
       </div>
 
-      {/* Measurement Template Modal */}
+      {/* Measurement Template Edit/Create Modal */}
       <MeasurementTemplateModal
         isOpen={isMeasurementModalOpen}
-        onClose={() => setIsMeasurementModalOpen(false)}
+        onClose={() => {
+          setIsMeasurementModalOpen(false);
+          setMeasurementToEdit(null);
+        }}
         onSubmit={handleSaveMeasurementTemplate}
         templateToEdit={measurementToEdit}
       />
 
-      {/* Stitching Template Modal */}
+      {/* Stitching Template Edit/Create Modal */}
       <StitchingTemplateModal
         isOpen={isStitchingModalOpen}
-        onClose={() => setIsStitchingModalOpen(false)}
+        onClose={() => {
+          setIsStitchingModalOpen(false);
+          setStitchingToEdit(null);
+        }}
         onSubmit={handleSaveStitchingTemplate}
         templateToEdit={stitchingToEdit}
       />
 
-      {/* Preview Modal */}
+      {/* Template Preview / Details Modal (View Only, Closed via Top-Right X) */}
       <TemplatePreviewModal
         isOpen={Boolean(previewMeasurement || previewStitching)}
         onClose={() => {
@@ -1159,26 +985,6 @@ export const TemplatesPage: React.FC = () => {
         }}
         measurementTemplate={previewMeasurement}
         stitchingTemplate={previewStitching}
-        onEdit={() => {
-          if (previewMeasurement) {
-            setMeasurementToEdit(previewMeasurement);
-            setIsMeasurementModalOpen(true);
-            setPreviewMeasurement(null);
-          } else if (previewStitching) {
-            setStitchingToEdit(previewStitching);
-            setIsStitchingModalOpen(true);
-            setPreviewStitching(null);
-          }
-        }}
-        onDuplicate={() => {
-          if (previewMeasurement) {
-            handleDuplicate(previewMeasurement.id, 'measurement');
-            setPreviewMeasurement(null);
-          } else if (previewStitching) {
-            handleDuplicate(previewStitching.id, 'stitching');
-            setPreviewStitching(null);
-          }
-        }}
       />
 
       {/* Confirm Archive Dialog */}
@@ -1221,7 +1027,7 @@ export const TemplatesPage: React.FC = () => {
         isLoading={isActionLoading}
       />
 
-      {/* Confirm Delete Dialog */}
+      {/* Confirm Delete Dialog (For Archived Templates) */}
       <ConfirmDialog
         isOpen={Boolean(deleteTarget)}
         onClose={() => setDeleteTarget(null)}
@@ -1247,3 +1053,5 @@ export const TemplatesPage: React.FC = () => {
     </div>
   );
 };
+
+export default TemplatesPage;
