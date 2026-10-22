@@ -285,6 +285,16 @@ export const AddMeasurementModal: React.FC<AddMeasurementModalProps> = ({
     }
   };
 
+  // Auto-switch template when garment filter changes in new mode if current selection is outside filter
+  useEffect(() => {
+    if (mode === 'new_profile' && filteredTemplates.length > 0) {
+      const isStillInList = filteredTemplates.some((t) => t.id === selectedTemplateId);
+      if (!isStillInList) {
+        handleTemplateChange(filteredTemplates[0].id);
+      }
+    }
+  }, [filteredTemplates, selectedTemplateId, mode]);
+
   // Unit switch
   const handleUnitToggle = (unit: 'in' | 'cm') => {
     setGlobalUnit(unit);

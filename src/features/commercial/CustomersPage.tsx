@@ -3,7 +3,6 @@ import {
   Search,
   Scissors,
   Loader2,
-  SlidersHorizontal,
   Edit,
   Trash2,
   Archive,
@@ -17,7 +16,6 @@ import { usePagination } from '../../hooks/usePagination';
 import { customerService, type CustomerData } from '../../services/customerService';
 import { useToast } from '../../components/common/Toast';
 import { AddCustomerModal } from './AddCustomerModal';
-import { TemplateManagerModal } from './TemplateManagerModal';
 import { CustomerDetailModal } from './CustomerDetailModal';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 
@@ -40,7 +38,6 @@ export const CustomersPage: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerData | null>(null);
   const [customerToEdit, setCustomerToEdit] = useState<CustomerData | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
 
   // Archive, Restore & Permanent Delete confirmation states
   const [customerToArchive, setCustomerToArchive] = useState<CustomerData | null>(null);
@@ -354,17 +351,6 @@ export const CustomersPage: React.FC = () => {
         {/* Right: Action Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Button
-            variant="secondary"
-            size="sm"
-            icon={<SlidersHorizontal size={13} />}
-            onClick={() => setIsTemplateModalOpen(true)}
-            style={{ height: '32px', fontSize: '11.5px', fontWeight: 600 }}
-            title="Manage garment templates and measurement parameters"
-          >
-            Measurement Templates
-          </Button>
-
-          <Button
             variant="primary"
             size="sm"
             onClick={() => {
@@ -648,14 +634,7 @@ export const CustomersPage: React.FC = () => {
         />
       )}
 
-      {/* Measurement Templates Manager Modal */}
-      {isTemplateModalOpen && (
-        <TemplateManagerModal
-          isOpen={isTemplateModalOpen}
-          onClose={() => setIsTemplateModalOpen(false)}
-          onTemplatesUpdated={loadCustomers}
-        />
-      )}
+
 
       {/* Archive Customer Confirmation Dialog */}
       <ConfirmDialog

@@ -132,8 +132,8 @@ export const TemplatesPage: React.FC = () => {
   // Filtered Measurement Templates
   const filteredMeasurementTemplates = useMemo(() => {
     return measurementTemplates.filter((t) => {
-      // Status filter
-      if (statusFilter === 'active' && t.is_archived) return false;
+      // Lifecycle status filter
+      if (statusFilter === 'active' && (t.is_archived || t.is_active === false)) return false;
       if (statusFilter === 'archived' && !t.is_archived) return false;
 
       // Garment filter
@@ -159,8 +159,8 @@ export const TemplatesPage: React.FC = () => {
   // Filtered Stitching Templates
   const filteredStitchingTemplates = useMemo(() => {
     return stitchingTemplates.filter((t) => {
-      // Status filter
-      if (statusFilter === 'active' && t.is_archived) return false;
+      // Lifecycle status filter
+      if (statusFilter === 'active' && (t.is_archived || t.is_active === false)) return false;
       if (statusFilter === 'archived' && !t.is_archived) return false;
 
       // Garment filter
@@ -194,9 +194,9 @@ export const TemplatesPage: React.FC = () => {
   // Statistics
   const stats = useMemo(() => {
     const totalM = measurementTemplates.length;
-    const activeM = measurementTemplates.filter((t) => !t.is_archived).length;
+    const activeM = measurementTemplates.filter((t) => !t.is_archived && t.is_active !== false).length;
     const totalS = stitchingTemplates.length;
-    const activeS = stitchingTemplates.filter((t) => !t.is_archived).length;
+    const activeS = stitchingTemplates.filter((t) => !t.is_archived && t.is_active !== false).length;
     const totalProfilesLinked = measurementTemplates.reduce(
       (sum, t) => sum + (t._count?.profiles ?? 0),
       0
@@ -654,18 +654,30 @@ export const TemplatesPage: React.FC = () => {
         ) : paginatedList.length === 0 ? (
           <div style={{ padding: '40px 16px' }}>
             <EmptyState
-              title={`No ${activeTab === 'measurements' ? 'measurement templates' : 'stitching templates'} found`}
-              description="Try adjusting your search criteria, garment filter, or create a new template."
-              actionLabel="Create Template"
-              onAction={() => {
-                if (activeTab === 'measurements') {
-                  setMeasurementToEdit(null);
-                  setIsMeasurementModalOpen(true);
-                } else {
-                  setStitchingToEdit(null);
-                  setIsStitchingModalOpen(true);
-                }
-              }}
+              title={
+                statusFilter === 'archived'
+                  ? `No archived ${activeTab === 'measurements' ? 'measurement templates' : 'stitching templates'}`
+                  : `No ${activeTab === 'measurements' ? 'measurement templates' : 'stitching templates'} found`
+              }
+              description={
+                statusFilter === 'archived'
+                  ? 'There are currently no archived templates in this category.'
+                  : 'Try adjusting your search criteria, garment filter, or create a new template.'
+              }
+              actionLabel={statusFilter === 'archived' ? undefined : 'Create Template'}
+              onAction={
+                statusFilter === 'archived'
+                  ? undefined
+                  : () => {
+                      if (activeTab === 'measurements') {
+                        setMeasurementToEdit(null);
+                        setIsMeasurementModalOpen(true);
+                      } else {
+                        setStitchingToEdit(null);
+                        setIsStitchingModalOpen(true);
+                      }
+                    }
+              }
             />
           </div>
         ) : (
@@ -736,6 +748,22 @@ export const TemplatesPage: React.FC = () => {
                               }}
                             >
                               Default
+                            </span>
+                          )}
+                          {item.is_archived && (
+                            <span
+                              style={{
+                                marginLeft: '6px',
+                                padding: '1px 5px',
+                                borderRadius: '4px',
+                                backgroundColor: 'var(--yz-status-out-stock-bg, #FEF2F2)',
+                                color: 'var(--yz-status-out-stock, #DC2626)',
+                                border: '1px solid var(--yz-status-out-stock-border, #FECACA)',
+                                fontSize: '10px',
+                                fontWeight: 600,
+                              }}
+                            >
+                              Archived
                             </span>
                           )}
                         </div>
